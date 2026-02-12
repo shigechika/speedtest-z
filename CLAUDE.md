@@ -51,6 +51,41 @@ python -m build
 - Chrome ブラウザが実行環境に必要（pip では入らない）
 - テストサイトの DOM 構造変更によりセレクタが壊れる可能性がある（定期的な確認が必要）
 
+## README スクリーンショットの差し替え手順
+
+README に埋め込む animation GIF (`docs/demo.gif`) の更新手順。
+
+```bash
+# 1. 全サイト計測（snapshot が snapshots/ に保存される）
+speedtest-z --dry-run
+
+# 2. frequency でスキップされたサイトがあれば明示指定で再実行
+speedtest-z --dry-run ookla mlab
+
+# 3. 8サイト分の PNG から animation GIF を生成（3秒/枚、640px幅）
+magick \
+  -delay 300x100 snapshots/cloudflare.png \
+  -delay 300x100 snapshots/netflix.png \
+  -delay 300x100 snapshots/google.png \
+  -delay 300x100 snapshots/ookla.png \
+  -delay 300x100 snapshots/boxtest.png \
+  -delay 300x100 snapshots/mlab.png \
+  -delay 300x100 snapshots/usen.png \
+  -delay 300x100 snapshots/inonius.png \
+  -resize 640x -loop 0 docs/demo.gif
+
+# 4. ブラウザで確認（macOS Preview は GIF アニメ非対応）
+open -a "Google Chrome" docs/demo.gif
+
+# 5. README への埋め込み（両方に追加）
+#   README.md:    ![Demo](docs/demo.gif)
+#   README.ja.md: ![デモ](docs/demo.gif)
+```
+
+- `magick` (ImageMagick) が必要: `brew install imagemagick`
+- delay 値: 100=1秒, 200=2秒, 300=3秒（現在は3秒/枚を採用）
+- ディゾルブ（`-morph`）はファイルサイズが大幅に増えるため不採用
+
 ## テストサイト固有の注意
 
 - **Google Fiber** (`speed.googlefiber.net`): HTTPS 非対応。HTTP のみで接続すること。安易に https:// に変更しないこと
