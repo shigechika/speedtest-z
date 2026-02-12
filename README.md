@@ -1,8 +1,10 @@
 # speedtest-z
 
-[Japanese / Japanese](README.ja.md)
+[日本語](README.ja.md)
 
 An automated multi-site speed test runner using Selenium, with Zabbix trapper integration.
+
+![Cloudflare Speed Test Result](docs/screenshot-cloudflare.png)
 
 ## Features
 
