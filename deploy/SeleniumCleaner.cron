@@ -1,0 +1,1 @@
+0  *    * * *   root    find /tmp -mmin +180 \( -name "*com.google.Chrome.*" -or -name "*org.chromium.Chromium.*" \) -type d -exec rm -vfr {} \; | logger --tag SeleniumCleaner

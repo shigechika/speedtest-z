@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68.0", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "speedtest-z"
+dynamic = ["version"]
+description = "Automated multi-site speed test runner with Selenium and Zabbix integration"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [
+    {name = "AIKAWA Shigechika"},
+]
+keywords = ["speedtest", "selenium", "zabbix", "monitoring", "network"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: System Administrators",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Monitoring",
+    "Topic :: System :: Networking",
+]
+dependencies = [
+    "selenium",
+    "zappix",
+]
+
+[project.urls]
+Homepage = "https://github.com/shigechika/speedtest-z"
+Repository = "https://github.com/shigechika/speedtest-z"
+Issues = "https://github.com/shigechika/speedtest-z/issues"
+
+[project.scripts]
+speedtest-z = "speedtest_z.main:main"
+
+[tool.setuptools]
+packages = ["speedtest_z"]
+
+[tool.setuptools_scm]

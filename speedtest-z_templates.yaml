@@ -1,0 +1,365 @@
+zabbix_export:
+  version: '6.0'
+  date: '2026-02-12T10:21:43Z'
+  groups:
+    - uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    - uuid: 4f21346e26824770b064edc3818ce011
+      template: 'Template Speedtest Zabbix'
+      name: 'Template Speedtest Zabbix'
+      groups:
+        - name: Templates
+      items:
+        - uuid: 22aaf7fc2412460291e45ea15b6341a6
+          name: boxtest.DownloadDuration
+          type: TRAP
+          key: boxtest.DownloadDuration
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: 1e43ff3bea934265a9657c6158c6a47b
+          name: boxtest.DownloadRTT
+          type: TRAP
+          key: boxtest.DownloadRTT
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: 8caf4f49d7b94e6aa4b32e23b216dde2
+          name: boxtest.DownloadSpeed
+          type: TRAP
+          key: boxtest.DownloadSpeed
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: bb210dd5d74e408db63f6e4d60a16e59
+          name: boxtest.latency
+          type: TRAP
+          key: boxtest.latency
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: 49f420f15a75463d9f4e41240dfddec8
+          name: boxtest.POP
+          type: TRAP
+          key: boxtest.POP
+          delay: '0'
+          trends: '0'
+          value_type: CHAR
+        - uuid: febba62379464bcdb3cbe60f5e090c4b
+          name: boxtest.UploadDuration
+          type: TRAP
+          key: boxtest.UploadDuration
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: 217a62f414c34096b6cb941c8d40a42a
+          name: boxtest.UploadRTT
+          type: TRAP
+          key: boxtest.UploadRTT
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: d02fb27d724e44c0bcd14b2d8a4d355c
+          name: boxtest.UploadSpeed
+          type: TRAP
+          key: boxtest.UploadSpeed
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: 8310a64db6964027bf94bb79b7c7912a
+          name: cloudflare.download
+          type: TRAP
+          key: cloudflare.download
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: 934701f53e6a4680ae869fbc39a9a171
+          name: cloudflare.jitter
+          type: TRAP
+          key: cloudflare.jitter
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: 8547500bb7244984b45a8273a5dea3d1
+          name: cloudflare.latency
+          type: TRAP
+          key: cloudflare.latency
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: f1492f447dd042628253d47ecbfa238b
+          name: cloudflare.upload
+          type: TRAP
+          key: cloudflare.upload
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: a97bd0641b8a4599a6a9dfc9eff6c227
+          name: google.download
+          type: TRAP
+          key: google.download
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: c4f90c4802344e2aa5b8a659c801f138
+          name: google.ping
+          type: TRAP
+          key: google.ping
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: cdf37ef21ff04504a0d29a553fe192e0
+          name: google.upload
+          type: TRAP
+          key: google.upload
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: 7596303ae15a43e3b7ecbce86ac4ad99
+          name: 'inonius IPv4 Download'
+          type: TRAP
+          key: inonius.IPv4_DL
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: 9082d5e2fad24d63aa74d04c70121cd5
+          name: 'inonius IPv4 Jitter'
+          type: TRAP
+          key: inonius.IPv4_JIT
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: a9fc12f7ed3341df8e3c02676ead92d2
+          name: 'inonius IPv4 MSS'
+          type: TRAP
+          key: inonius.IPv4_MSS
+          delay: '0'
+          value_type: FLOAT
+          units: bytes
+        - uuid: 94c705c647a14d40bbe7fc37a030351a
+          name: 'inonius IPv4 RTT'
+          type: TRAP
+          key: inonius.IPv4_RTT
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: 475937505c5541dd964c128c1c35029a
+          name: 'inonius IPv4 Upload'
+          type: TRAP
+          key: inonius.IPv4_UL
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: 81a01ba7b5524bbb903907d936c40dbe
+          name: 'inonius IPv6 Download'
+          type: TRAP
+          key: inonius.IPv6_DL
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: ab6fff302ff649e58edcdb66fffeac8d
+          name: 'inonius IPv6 Jitter'
+          type: TRAP
+          key: inonius.IPv6_JIT
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: a43f278adca5434586882b39380fcb63
+          name: 'inonius IPv6 MSS'
+          type: TRAP
+          key: inonius.IPv6_MSS
+          delay: '0'
+          value_type: FLOAT
+          units: bytes
+        - uuid: 3977064424eb48fc9c25f5a565d3f037
+          name: 'inonius IPv6 RTT'
+          type: TRAP
+          key: inonius.IPv6_RTT
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: 9936d321535a4edc9d696c57e180b46c
+          name: 'inonius IPv6 Upload'
+          type: TRAP
+          key: inonius.IPv6_UL
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: c9f241aa7eb640c69615f06c1031e17b
+          name: mlab.download
+          type: TRAP
+          key: mlab.download
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: 440215f7971b48f6b85be34beaef662d
+          name: mlab.latency
+          type: TRAP
+          key: mlab.latency
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: df28ab0359094046902210f14e053d1e
+          name: mlab.retrans
+          type: TRAP
+          key: mlab.retrans
+          delay: '0'
+          value_type: FLOAT
+          units: '%'
+        - uuid: 08f7c0c9b897490aa0d9838e6ffa037f
+          name: mlab.upload
+          type: TRAP
+          key: mlab.upload
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: 9ec712e3b04f4330bdf9bcaa79ef2ca4
+          name: netflix.download
+          type: TRAP
+          key: netflix.download
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: 81d46712e6ff441f80002ace5c6d22b7
+          name: netflix.latency
+          type: TRAP
+          key: netflix.latency
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: e43dcae8bc0846829c7196f61ef2a315
+          name: netflix.server-locations
+          type: TRAP
+          key: netflix.server-locations
+          delay: '0'
+          trends: '0'
+          value_type: CHAR
+        - uuid: 8be1067011ab4c8a860c71908092a691
+          name: netflix.upload
+          type: TRAP
+          key: netflix.upload
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: 4cf4d8ef287f441db3e73321e3f63245
+          name: ookla.download
+          type: TRAP
+          key: ookla.download
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: 7ae8ac48ad2d4332b104686372469e07
+          name: ookla.ping
+          type: TRAP
+          key: ookla.ping
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: e3dcba210dd34abd9f555242e439ec63
+          name: ookla.upload
+          type: TRAP
+          key: ookla.upload
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: 685543c668df4a5b803f83cc2bbc810d
+          name: usen.download
+          type: TRAP
+          key: usen.download
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'
+        - uuid: 37bc54be477b4642912f7ca0d1514663
+          name: usen.jitter
+          type: TRAP
+          key: usen.jitter
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: 9705f9e35b5c48fdb9df37dd5160cb56
+          name: usen.ping
+          type: TRAP
+          key: usen.ping
+          delay: '0'
+          value_type: FLOAT
+          units: ms
+        - uuid: 5fcd0ecf075948bbaa7442e0c2d08e23
+          name: usen.upload
+          type: TRAP
+          key: usen.upload
+          delay: '0'
+          value_type: FLOAT
+          units: bps
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '1000000'

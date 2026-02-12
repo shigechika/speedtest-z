@@ -1,0 +1,8 @@
+[Unit]
+Description=speedtest-z timer
+
+[Timer]
+OnCalendar=*-*-* *:00/6:00
+
+[Install]
+WantedBy=timers.target

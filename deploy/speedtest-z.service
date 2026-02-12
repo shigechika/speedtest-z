@@ -1,0 +1,12 @@
+[Unit]
+Description=speedtest-z service
+
+[Service]
+Type=simple
+ExecStart=%h/speedtest-z/.venv/bin/speedtest-z
+WorkingDirectory=%h/speedtest-z
+User=shige
+Group=shige
+
+[Install]
+WantedBy=multi-user.target
