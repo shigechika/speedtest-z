@@ -42,7 +42,7 @@ python -m build
 
 ## CI/CD
 
-- `.github/workflows/ci.yml` — push/PR 時に構文チェック + ビルドテスト（Python 3.10, 3.12, 3.13）
+- `.github/workflows/ci.yml` — push/PR 時に構文チェック + ビルドテスト（Python 3.10〜3.14）
 - `.github/workflows/release.yml` — `v*` タグ push 時に PyPI へ自動公開（Trusted Publishers）
 
 ## 注意事項
@@ -50,3 +50,8 @@ python -m build
 - `config.ini` は `.gitignore` で除外（`config.ini-sample` をコピーして使用）
 - Chrome ブラウザが実行環境に必要（pip では入らない）
 - テストサイトの DOM 構造変更によりセレクタが壊れる可能性がある（定期的な確認が必要）
+
+## テストサイト固有の注意
+
+- **Google Fiber** (`speed.googlefiber.net`): HTTPS 非対応。HTTP のみで接続すること。安易に https:// に変更しないこと
+- **Netflix** (`fast.com`): `/ja/` 等の言語パスを付けない。ブラウザのロケールで自動判定される

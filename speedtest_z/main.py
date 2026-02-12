@@ -559,7 +559,8 @@ class SpeedtestZ:
 
         try:
             logger.info("google: OPEN")
-            if not self._load_with_retry("https://speed.googlefiber.net/"):
+            # 注意: speed.googlefiber.net は HTTPS 非対応（HTTP のみ）
+            if not self._load_with_retry("http://speed.googlefiber.net/"):
                 return
 
             time.sleep(3)
