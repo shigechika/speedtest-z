@@ -1333,6 +1333,7 @@ def _build_parser():
     )
     parser.add_argument(
         "--no-headless",
+        "--headed",
         action="store_false",
         dest="headless",
         help="run Chrome with GUI (non-headless)",
