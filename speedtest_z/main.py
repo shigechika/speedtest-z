@@ -115,6 +115,7 @@ class SpeedtestZ:
         self.ookla_server = self.config.get("general", "ookla_server", fallback=None)
 
         # CLI 引数でオーバーライド
+        self.explicit_sites = False
         if args:
             if args.dry_run:
                 self.dryrun = True
@@ -122,6 +123,8 @@ class SpeedtestZ:
                 self.headless = args.headless
             if args.timeout is not None:
                 self.timeout = args.timeout
+            if args.sites:
+                self.explicit_sites = True
 
         # [zabbix]
         self.zabbix_server = self.config.get("zabbix", "server", fallback="127.0.0.1")
@@ -192,7 +195,10 @@ class SpeedtestZ:
             sys.exit(1)
 
     def _should_run(self, site_name):
-        """実行判定: [frequency] セクションを参照"""
+        """実行判定: CLI でサイト明示指定時は常に実行、それ以外は [frequency] を参照"""
+        if self.explicit_sites:
+            return True
+
         frequency = self.config.getint("frequency", site_name, fallback=100)
 
         if frequency <= 0:
