@@ -1,0 +1,63 @@
+name: "Share your speed test result"
+description: "Share your speedtest-z results from your network"
+title: "[Result] "
+labels: ["result"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing your speed test result!
+        Please attach at least one screenshot from speedtest-z.
+
+  - type: input
+    id: location
+    attributes:
+      label: Location / Network
+      description: "Where did you run the test? (e.g., Tokyo / JANOG57, Home / NTT FLETS)"
+      placeholder: "Tokyo, Japan / Conference Wi-Fi"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sites
+    attributes:
+      label: Test sites
+      description: "Which sites did you test?"
+      multiple: true
+      options:
+        - cloudflare
+        - netflix
+        - google
+        - ookla
+        - boxtest
+        - mlab
+        - usen
+        - inonius
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: "Drag & drop your screenshot PNG files here (from snapshots/ directory)"
+      placeholder: "Drag & drop PNG files here"
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: CLI log output (optional)
+      description: "Paste the terminal output of speedtest-z (optional but appreciated)"
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: "Any observations? (e.g., IPv6 available, surprisingly fast/slow, etc.)"
+    validations:
+      required: false
