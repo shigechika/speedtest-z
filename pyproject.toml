@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "speedtest-z"
 dynamic = ["version"]
-description = "Automated multi-site speed test runner with Selenium and Zabbix integration"
+description = "Automates major speed test sites with a web browser for continuous network quality monitoring"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
