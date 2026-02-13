@@ -121,7 +121,7 @@ speedtest-z [options] [site ...]
 | `-c`, `--config CONFIG` | Config file path (default: `./config.ini` or `~/.config/speedtest-z/config.ini`) |
 | `-n`, `--dry-run` | Test run (do not send data to Zabbix) |
 | `--headless` | Run Chrome in headless mode |
-| `--no-headless` | Run Chrome with GUI (non-headless) |
+| `--no-headless`, `--headed` | Run Chrome with GUI (non-headless) |
 | `--timeout SECONDS` | Timeout in seconds for each test |
 | `--list-sites` | List available test sites and exit |
 | `-d`, `--debug` | Enable debug output |

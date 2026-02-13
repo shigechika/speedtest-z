@@ -121,7 +121,7 @@ speedtest-z [options] [site ...]
 | `-c`, `--config CONFIG` | 設定ファイル指定 |
 | `-n`, `--dry-run` | テスト実行（Zabbix へ送信しない） |
 | `--headless` | ヘッドレスモードで実行 |
-| `--no-headless` | GUI モードで実行 |
+| `--no-headless`, `--headed` | GUI モードで実行 |
 | `--timeout SECONDS` | 各テストのタイムアウト（秒） |
 | `--list-sites` | 利用可能なテストサイト一覧を表示して終了 |
 | `-d`, `--debug` | デバッグ出力を有効化 |
