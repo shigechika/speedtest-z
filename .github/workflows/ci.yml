@@ -22,11 +22,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
 
-      - name: Install package
-        run: pip install -e .
+      - name: Install package with test dependencies
+        run: pip install -e ".[test]"
 
       - name: Syntax check
         run: python3 -c "import speedtest_z.main"
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
 
       - name: CLI version check
         run: speedtest-z --version
