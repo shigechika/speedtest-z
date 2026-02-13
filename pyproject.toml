@@ -31,6 +31,9 @@ dependencies = [
     "zappix",
 ]
 
+[project.optional-dependencies]
+test = ["pytest"]
+
 [project.urls]
 Homepage = "https://github.com/shigechika/speedtest-z"
 Repository = "https://github.com/shigechika/speedtest-z"
