@@ -1,6 +1,6 @@
 # speedtest-z
 
-[日本語](README.ja.md)
+[日本語](https://github.com/shigechika/speedtest-z/blob/main/README.ja.md)
 
 An automated multi-site speed test runner using Selenium, with Zabbix trapper integration.
 

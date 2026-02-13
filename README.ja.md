@@ -1,6 +1,6 @@
 # speedtest-z
 
-[English](README.md)
+[English](https://github.com/shigechika/speedtest-z/blob/main/README.md)
 
 Seleniumを使った複数サイト速度テスト自動実行ツール。Zabbix トラッパー連携対応。
 
