@@ -229,6 +229,16 @@ Chrome の一時ファイルを定期的に削除する cron 設定も含まれ�
 sudo cp deploy/SeleniumCleaner.cron /etc/cron.d/SeleniumCleaner
 ```
 
+## 計測結果を共有しませんか？
+
+爆速回線や激遅 Wi-Fi の計測結果をお待ちしています！
+
+[GitHub Issues](https://github.com/shigechika/speedtest-z/issues/new?template=speedtest-result.yml) から以下を添えて投稿してください:
+- `snapshots/` ディレクトリのスクリーンショット
+- CLI ログ出力（`speedtest-z --dry-run`）
+
+データセンターの超高速回線でも、山小屋の激遅 Wi-Fi でも大歓迎です。
+
 ## License
 
 [Apache License 2.0](LICENSE)

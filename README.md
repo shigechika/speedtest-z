@@ -229,6 +229,16 @@ Optionally, install the cron job for cleaning up stale Chrome temporary director
 sudo cp deploy/SeleniumCleaner.cron /etc/cron.d/SeleniumCleaner
 ```
 
+## Share Your Results!
+
+Got the fastest or slowest speed test result? We'd love to see it!
+
+Submit your results via [GitHub Issues](https://github.com/shigechika/speedtest-z/issues/new?template=speedtest-result.yml) with:
+- Screenshot(s) from the `snapshots/` directory
+- CLI log output (`speedtest-z --dry-run`)
+
+Whether it's blazing fast datacenter fiber or painfully slow hotel Wi-Fi, all results are welcome.
+
 ## License
 
 [Apache License 2.0](LICENSE)
