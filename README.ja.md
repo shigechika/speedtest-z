@@ -2,7 +2,11 @@
 
 [English](https://github.com/shigechika/speedtest-z/blob/main/README.md)
 
-Seleniumを使った複数サイト速度テスト自動実行ツール。Zabbix トラッパー連携対応。
+speedtest-z は Web ブラウザで主要な速度テストサイトを自動巡回。ユーザ体験そのままの回線品質を定点観測できます。
+
+- 8つの速度テストサイトに対応（Cloudflare, Netflix, Ookla, M-Lab 等）
+- Zabbix 連携で回線品質を継続監視
+- `pip install speedtest-z` ですぐ使える
 
 ![デモ - 8サイト速度テスト結果](docs/demo.gif)
 

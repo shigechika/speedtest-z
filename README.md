@@ -2,7 +2,11 @@
 
 [日本語](https://github.com/shigechika/speedtest-z/blob/main/README.ja.md)
 
-An automated multi-site speed test runner using Selenium, with Zabbix trapper integration.
+speedtest-z automates major speed test sites with a web browser, capturing real user-experience network quality for continuous monitoring.
+
+- Supports 8 speed test sites (Cloudflare, Netflix, Ookla, M-Lab, and more)
+- Zabbix integration for continuous network quality monitoring
+- Quick start: `pip install speedtest-z`
 
 ![Demo - 8 speed test sites](docs/demo.gif)
 
