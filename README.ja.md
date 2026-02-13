@@ -4,6 +4,8 @@
 
 Seleniumを使った複数サイト速度テスト自動実行ツール。Zabbix トラッパー連携対応。
 
+![デモ - 8サイト速度テスト結果](docs/demo.gif)
+
 ## 特徴
 
 - 8つの速度テストサイトを自動実行（Cloudflare, Netflix/fast.com, Google Fiber, Ookla, Box-test, M-Lab, USEN, inonius）
@@ -140,6 +142,38 @@ speedtest-z --no-headless -d google
 # 利用可能なサイト一覧を表示
 speedtest-z --list-sites
 ```
+
+## 実行例
+
+JANOG57 Meeting（2026年2月、大阪）にて計測:
+
+```
+$ speedtest-z --dry-run
+2026-02-13 09:39:27 [INFO] speedtest-z: START
+2026-02-13 09:39:27 [INFO] Config loaded: config.ini
+2026-02-13 09:39:27 [INFO] Initializing Chrome WebDriver...
+2026-02-13 09:39:28 [INFO] cloudflare: OPEN
+2026-02-13 09:39:35 [INFO] cloudflare: Test started
+2026-02-13 09:40:24 [INFO] cloudflare: COMPLETED (Quality Scores appeared)
+2026-02-13 09:40:27 [INFO] Dryrun: True - Data not sent.
+2026-02-13 09:40:27 [INFO] netflix: OPEN
+2026-02-13 09:40:53 [INFO] netflix: COMPLETED (succeeded class detected)
+2026-02-13 09:40:53 [INFO] google: OPEN
+2026-02-13 09:41:20 [INFO] google: COMPLETED
+2026-02-13 09:41:20 [INFO] ookla: OPEN (Attempt 1/3)
+2026-02-13 09:42:00 [INFO] ookla: COMPLETED
+2026-02-13 09:42:02 [INFO] boxtest: OPEN
+2026-02-13 09:43:17 [INFO] boxtest: COMPLETED
+2026-02-13 09:43:17 [INFO] mlab: OPEN
+2026-02-13 09:44:05 [INFO] mlab: COMPLETED
+2026-02-13 09:44:05 [INFO] usen: OPEN
+2026-02-13 09:44:34 [INFO] usen: COMPLETED (speedtest_wait class removed)
+2026-02-13 09:44:34 [INFO] inonius: OPEN
+2026-02-13 09:45:31 [INFO] inonius: COMPLETED
+2026-02-13 09:45:31 [INFO] speedtest-z: FINISH
+```
+
+全8サイトの計測が約6分で完了しています。
 
 ## 対応テストサイト
 
