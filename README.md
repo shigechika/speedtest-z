@@ -8,7 +8,7 @@ An automated multi-site speed test runner using Selenium, with Zabbix trapper in
 
 ## Features
 
-- Runs speed tests on 8 different sites automatically (Cloudflare, Netflix/fast.com, Google Fiber, Ookla, Box-test, M-Lab, USEN, inonius)
+- Runs speed tests on 8 different sites automatically (Cloudflare, Netflix/fast.com, Google Fiber, Ookla, Box-test, M-Lab, USEN, iNonius)
 - Sends results to Zabbix via trapper items (using [zappix](https://pypi.org/project/zappix/))
 - Configurable test frequency per site (probability-based throttling)
 - Screenshot capture for debugging

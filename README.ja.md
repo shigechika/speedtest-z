@@ -8,7 +8,7 @@ Seleniumを使った複数サイト速度テスト自動実行ツール。Zabbix
 
 ## 特徴
 
-- 8つの速度テストサイトを自動実行（Cloudflare, Netflix/fast.com, Google Fiber, Ookla, Box-test, M-Lab, USEN, inonius）
+- 8つの速度テストサイトを自動実行（Cloudflare, Netflix/fast.com, Google Fiber, Ookla, Box-test, M-Lab, USEN, iNonius）
 - Zabbixへトラッパーアイテムとして結果送信（[zappix](https://pypi.org/project/zappix/) 使用）
 - サイトごとの実行頻度設定（確率ベースのスロットリング）
 - デバッグ用スクリーンショット保存

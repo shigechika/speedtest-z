@@ -7,7 +7,7 @@
 
 ## プロジェクト概要
 
-Selenium を使って複数の速度テストサイト（Cloudflare, Netflix/fast.com, Google Fiber, Ookla, Box-test, M-Lab, USEN, inonius）を自動実行し、結果を Zabbix へトラッパーアイテムとして送信するツール。
+Selenium を使って複数の速度テストサイト（Cloudflare, Netflix/fast.com, Google Fiber, Ookla, Box-test, M-Lab, USEN, iNonius）を自動実行し、結果を Zabbix へトラッパーアイテムとして送信するツール。
 
 ## アーキテクチャ
 
