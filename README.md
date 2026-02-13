@@ -1,6 +1,6 @@
 # speedtest-z
 
-[日本語](https://github.com/shigechika/speedtest-z/blob/main/README.ja.md)
+[日本語版 / Japanese](https://github.com/shigechika/speedtest-z/blob/main/README.ja.md)
 
 speedtest-z automates major speed test sites with a web browser, capturing real user-experience network quality for continuous monitoring.
 
