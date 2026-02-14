@@ -61,6 +61,15 @@ pip install -e .
 - [selenium](https://pypi.org/project/selenium/) -- Browser automation
 - [zappix](https://pypi.org/project/zappix/) -- Zabbix sender protocol
 
+### Tab Completion (optional)
+
+```bash
+pip install speedtest-z[completion]
+eval "$(register-python-argcomplete speedtest-z)"
+```
+
+Add the `eval` line to your shell profile (`~/.bashrc` or `~/.zshrc`) to enable it permanently.
+
 ## Configuration
 
 ### config.ini

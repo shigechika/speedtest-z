@@ -50,6 +50,15 @@ pip install -e .
 - [selenium](https://pypi.org/project/selenium/) — ブラウザ自動操作
 - [zappix](https://pypi.org/project/zappix/) — Zabbix トラッパー送信
 
+### タブ補完（任意）
+
+```bash
+pip install speedtest-z[completion]
+eval "$(register-python-argcomplete speedtest-z)"
+```
+
+`eval` の行を `~/.bashrc` や `~/.zshrc` に追記すると常時有効になります。
+
 ## 設定ファイル
 
 ### config.ini
