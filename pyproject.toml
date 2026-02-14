@@ -33,6 +33,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
+completion = ["argcomplete"]
 
 [project.urls]
 Homepage = "https://github.com/shigechika/speedtest-z"

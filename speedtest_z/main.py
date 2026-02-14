@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""speedtest-z: 複数サイトの速度テストを自動実行し Zabbix に送信する"""
+"""Main module for speedtest-z.
+
+Contains the SpeedtestZ class which drives browser-based speed tests,
+configuration loading, and the CLI entry point.
+"""
 
 import sys
 import time
@@ -33,7 +37,7 @@ from speedtest_z import __version__
 
 logger = logging.getLogger("speedtest-z")
 
-# 利用可能なテストサイト一覧
+# Available test sites
 AVAILABLE_SITES = [
     "cloudflare",
     "netflix",
@@ -47,11 +51,12 @@ AVAILABLE_SITES = [
 
 
 def _find_config(name, cli_path=None):
-    """設定ファイルを探索順に返す
+    """Search for a configuration file in standard locations.
 
-    1. CLI で指定されたパス
-    2. カレントディレクトリ
-    3. ~/.config/speedtest-z/（XDG_CONFIG_HOME）
+    Lookup order:
+        1. Path specified via CLI (``-c`` / ``--config``)
+        2. Current working directory
+        3. ``~/.config/speedtest-z/`` (XDG_CONFIG_HOME)
     """
     if cli_path:
         if os.path.isfile(cli_path):
@@ -71,7 +76,7 @@ def _find_config(name, cli_path=None):
 
 
 def _setup_logging(debug=False):
-    """logging 設定を初期化"""
+    """Initialize logging configuration."""
     logging_ini = _find_config("logging.ini")
     if logging_ini:
         logging.config.fileConfig(logging_ini, disable_existing_loggers=False)
@@ -86,7 +91,9 @@ def _setup_logging(debug=False):
 
 
 class SpeedtestZ:
-    # クラス定数
+    """Browser-based speed test runner with Zabbix integration."""
+
+    # Class constants
     DEFAULT_TIMEOUT = 45
     BOXTEST_TIMEOUT = 90
     WINDOW_WIDTH = 1024
@@ -95,6 +102,7 @@ class SpeedtestZ:
     RETRY_DELAY = 5
 
     def __init__(self, args=None):
+        """Initialize SpeedtestZ with CLI arguments and config file."""
         # 設定ファイルの読み込み
         self.config = configparser.ConfigParser()
         config_path = _find_config("config.ini", getattr(args, "config", None))
@@ -151,13 +159,13 @@ class SpeedtestZ:
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
     def _handle_sigterm(self, signum, frame):
-        """SIGTERM を受けて graceful shutdown"""
+        """Handle SIGTERM signal for graceful shutdown."""
         logger.info("SIGTERM received, shutting down...")
         self.close()
         sys.exit(0)
 
     def _init_driver(self):
-        """Chrome Driver の初期化"""
+        """Initialize Chrome WebDriver."""
         logger.info("Initializing Chrome WebDriver...")
 
         options = webdriver.ChromeOptions()
@@ -196,7 +204,7 @@ class SpeedtestZ:
             sys.exit(1)
 
     def _should_run(self, site_name):
-        """実行判定: CLI でサイト明示指定時は常に実行、それ以外は [frequency] を参照"""
+        """Determine whether to run a site based on frequency config."""
         if self.explicit_sites:
             return True
 
@@ -219,13 +227,13 @@ class SpeedtestZ:
             return False
 
     def close(self):
-        """ブラウザ終了処理"""
+        """Close the browser and clean up."""
         if hasattr(self, "driver"):
             logger.info("Closing browser session...")
             self.driver.quit()
 
     def take_snapshot(self, filename_base):
-        """スクリーンショット保存"""
+        """Save a screenshot of the current page."""
         if not self.snapshot_enable:
             return
 
@@ -238,7 +246,7 @@ class SpeedtestZ:
             logger.warning(f"Failed to take snapshot: {e}")
 
     def send_to_zabbix(self, data_list):
-        """Zabbix へデータ送信"""
+        """Send measurement results to Zabbix via trapper protocol."""
         if not data_list:
             return
 
@@ -262,14 +270,14 @@ class SpeedtestZ:
             logger.error(f"Failed to send to Zabbix: {e}")
 
     def _get_window_position(self) -> tuple:
-        """OS に応じてウィンドウ位置(右上)を計算"""
+        """Calculate top-right window position based on OS."""
         if platform.system() == "Linux":
             return self._get_position_linux()
         else:
             return self._get_position_via_driver()
 
     def _get_position_linux(self) -> tuple:
-        """Linux 環境用: xrandr で画面幅を取得"""
+        """Get screen width via xrandr on Linux."""
         try:
             import subprocess
 
@@ -288,7 +296,7 @@ class SpeedtestZ:
         return (0, 0)
 
     def _get_position_via_driver(self) -> tuple:
-        """macOS/Windows 用: JavaScript で画面幅を取得"""
+        """Get screen width via JavaScript on macOS/Windows."""
         try:
             screen_width = self.driver.execute_script(
                 "return window.screen.availWidth"
@@ -303,7 +311,7 @@ class SpeedtestZ:
     def _load_with_retry(
         self, url: str, max_retries: int = None, delay: int = None
     ) -> bool:
-        """URL をリトライ付きでロードする"""
+        """Load a URL with retry logic."""
         if max_retries is None:
             max_retries = self.MAX_RETRIES
         if delay is None:
@@ -341,7 +349,7 @@ class SpeedtestZ:
     # --- Test Modules ---
 
     def run_cloudflare(self):
-        """Cloudflare Speed Test"""
+        """Run Cloudflare Speed Test (speed.cloudflare.com)."""
         if not self._should_run("cloudflare"):
             return
 
@@ -474,7 +482,7 @@ class SpeedtestZ:
             self.take_snapshot("cloudflare")
 
     def run_netflix(self):
-        """fast.com (Netflix)"""
+        """Run Netflix fast.com speed test."""
         if not self._should_run("netflix"):
             return
 
@@ -554,7 +562,7 @@ class SpeedtestZ:
             self.take_snapshot("netflix")
 
     def run_google(self):
-        """Google Fiber Speedtest"""
+        """Run Google Fiber Speedtest (speed.googlefiber.net)."""
         if not self._should_run("google"):
             return
 
@@ -654,7 +662,7 @@ class SpeedtestZ:
             self.take_snapshot("google")
 
     def run_ookla(self):
-        """Ookla Speedtest (speedtest.net)"""
+        """Run Ookla Speedtest (speedtest.net)."""
         if not self._should_run("ookla"):
             return
 
@@ -869,7 +877,7 @@ class SpeedtestZ:
         logger.error("ookla: Failed after all retries.")
 
     def wait_for_stability(self):
-        """box-test 用: 3 秒ごとにチェックし、前回と同じ値なら安定とみなす"""
+        """Wait for box-test results to stabilize (same value twice in a row)."""
         logger.info("Checking latency stability...")
         last_value = None
         xpath = (
@@ -891,7 +899,7 @@ class SpeedtestZ:
         logger.warning("Timeout or not stabilized.")
 
     def run_boxtest(self):
-        """box-test.com"""
+        """Run box-test.com speed test."""
         if not self._should_run("boxtest"):
             return
 
@@ -1030,7 +1038,7 @@ class SpeedtestZ:
             self.take_snapshot("boxtest_final")
 
     def run_mlab(self):
-        """M-Lab Speed Test (NDT)"""
+        """Run M-Lab Speed Test (speed.measurementlab.net)."""
         if not self._should_run("mlab"):
             return
 
@@ -1132,7 +1140,7 @@ class SpeedtestZ:
             self.take_snapshot("mlab")
 
     def run_usen(self):
-        """USEN GATE 02"""
+        """Run USEN GATE 02 speed test (speedtest.gate02.ne.jp)."""
         if not self._should_run("usen"):
             return
 
@@ -1226,7 +1234,7 @@ class SpeedtestZ:
             self.take_snapshot("usen")
 
     def run_inonius(self):
-        """inonius.net"""
+        """Run iNonius speed test (inonius.net)."""
         if not self._should_run("inonius"):
             return
 
@@ -1312,7 +1320,7 @@ class SpeedtestZ:
 
 
 def _show_manual():
-    """マニュアル (README) を pager で表示する"""
+    """Display the manual (README) using a pager."""
     from importlib.resources import files
     import pydoc
 
@@ -1345,7 +1353,7 @@ def _show_manual():
 
 
 def _build_parser():
-    """argparse パーサーを構築"""
+    """Build the argparse parser."""
     parser = argparse.ArgumentParser(
         prog="speedtest-z",
         description="Automated multi-site speed test runner with Zabbix integration",
@@ -1410,8 +1418,16 @@ def _build_parser():
 
 
 def main():
-    """エントリポイント"""
+    """CLI entry point."""
     parser = _build_parser()
+
+    # Tab completion (requires: pip install speedtest-z[completion])
+    try:
+        import argcomplete
+        argcomplete.autocomplete(parser)
+    except ImportError:
+        pass
+
     args = parser.parse_args()
 
     # --man は Chrome 不要で応答
