@@ -45,4 +45,7 @@ speedtest-z = "speedtest_z.main:main"
 [tool.setuptools]
 packages = ["speedtest_z"]
 
+[tool.setuptools.package-data]
+speedtest_z = ["README.md", "README.ja.md"]
+
 [tool.setuptools_scm]

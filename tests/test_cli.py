@@ -2,7 +2,7 @@
 
 from unittest.mock import patch, MagicMock
 
-from speedtest_z.main import _build_parser, main, AVAILABLE_SITES
+from speedtest_z.main import _build_parser, _show_manual, main, AVAILABLE_SITES
 
 
 class TestBuildParser:
@@ -86,6 +86,66 @@ class TestBuildParser:
         args = parser.parse_args(["--list-sites"])
         assert args.list_sites is True
 
+    def test_man_flag(self):
+        """-m で man=True"""
+        parser = _build_parser()
+        args = parser.parse_args(["-m"])
+        assert args.man is True
+
+    def test_man_long_flag(self):
+        """--man でも同様"""
+        parser = _build_parser()
+        args = parser.parse_args(["--man"])
+        assert args.man is True
+
+    def test_man_default_false(self):
+        """デフォルトで man=False"""
+        parser = _build_parser()
+        args = parser.parse_args([])
+        assert args.man is False
+
+
+class TestShowManual:
+    """_show_manual() のテスト"""
+
+    def test_manual_text_contains_speedtest(self):
+        """マニュアルテキストに speedtest-z が含まれること"""
+        with patch("pydoc.pager") as mock_pager:
+            _show_manual()
+            text = mock_pager.call_args[0][0]
+            assert "speedtest-z" in text
+
+    def test_manual_japanese_locale(self):
+        """日本語ロケールで README.ja.md が表示されること"""
+        with patch("pydoc.pager") as mock_pager, \
+             patch("locale.getlocale", return_value=("ja_JP", "UTF-8")):
+            _show_manual()
+            text = mock_pager.call_args[0][0]
+            assert "特徴" in text
+
+    def test_manual_english_locale(self):
+        """英語ロケールで README.md が表示されること"""
+        with patch("pydoc.pager") as mock_pager, \
+             patch("locale.getlocale", return_value=("en_US", "UTF-8")):
+            _show_manual()
+            text = mock_pager.call_args[0][0]
+            assert "Features" in text
+
+
+class TestMainMan:
+    """main() の --man 分岐テスト"""
+
+    def test_man_calls_show_manual(self):
+        """--man で _show_manual() が呼ばれること"""
+        with patch("speedtest_z.main._build_parser") as mock_parser, \
+             patch("speedtest_z.main._show_manual") as mock_show:
+            mock_args = MagicMock()
+            mock_args.man = True
+            mock_args.list_sites = False
+            mock_parser.return_value.parse_args.return_value = mock_args
+            main()
+            mock_show.assert_called_once()
+
 
 class TestMainListSites:
     """main() の --list-sites 分岐テスト"""
@@ -94,6 +154,7 @@ class TestMainListSites:
         """--list-sites でサイト一覧を出力して終了"""
         with patch("speedtest_z.main._build_parser") as mock_parser:
             mock_args = MagicMock()
+            mock_args.man = False
             mock_args.list_sites = True
             mock_parser.return_value.parse_args.return_value = mock_args
             main()

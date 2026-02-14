@@ -10,6 +10,7 @@ import os
 import signal
 import argparse
 import configparser
+import locale
 import re
 import platform
 
@@ -1310,6 +1311,39 @@ class SpeedtestZ:
             self.take_snapshot("inonius")
 
 
+def _show_manual():
+    """マニュアル (README) を pager で表示する"""
+    from importlib.resources import files
+    import pydoc
+
+    # LANG/LC_ALL が ja で始まる場合は日本語版を表示
+    lang = locale.getlocale()[0] or os.environ.get("LANG", "")
+    readme = "README.ja.md" if lang.startswith("ja") else "README.md"
+
+    text = None
+
+    # 1. importlib.resources でパッケージ内から読み込み (pip install 時)
+    try:
+        text = files("speedtest_z").joinpath(readme).read_text(encoding="utf-8")
+    except (FileNotFoundError, TypeError):
+        pass
+
+    # 2. フォールバック: リポジトリルートの README (開発時)
+    if not text:
+        dev_path = os.path.normpath(
+            os.path.join(os.path.dirname(__file__), os.pardir, readme)
+        )
+        if os.path.isfile(dev_path):
+            with open(dev_path, encoding="utf-8") as f:
+                text = f.read()
+
+    if not text:
+        print("マニュアルが見つかりません。", file=sys.stderr)
+        sys.exit(1)
+
+    pydoc.pager(text)
+
+
 def _build_parser():
     """argparse パーサーを構築"""
     parser = argparse.ArgumentParser(
@@ -1318,6 +1352,9 @@ def _build_parser():
     )
     parser.add_argument(
         "-V", "--version", action="version", version=f"%(prog)s {__version__}"
+    )
+    parser.add_argument(
+        "-m", "--man", action="store_true", help="show manual and exit"
     )
     parser.add_argument(
         "-c",
@@ -1376,6 +1413,11 @@ def main():
     """エントリポイント"""
     parser = _build_parser()
     args = parser.parse_args()
+
+    # --man は Chrome 不要で応答
+    if args.man:
+        _show_manual()
+        return
 
     # --list-sites は Chrome 不要で応答
     if args.list_sites:
