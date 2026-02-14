@@ -39,6 +39,7 @@ completion = ["argcomplete"]
 Homepage = "https://github.com/shigechika/speedtest-z"
 Repository = "https://github.com/shigechika/speedtest-z"
 Issues = "https://github.com/shigechika/speedtest-z/issues"
+Changelog = "https://github.com/shigechika/speedtest-z/blob/main/CHANGELOG.md"
 
 [project.scripts]
 speedtest-z = "speedtest_z.main:main"

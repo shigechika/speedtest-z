@@ -1,5 +1,9 @@
 # speedtest-z
 
+[![PyPI version](https://img.shields.io/pypi/v/speedtest-z)](https://pypi.org/project/speedtest-z/)
+[![CI](https://github.com/shigechika/speedtest-z/actions/workflows/ci.yml/badge.svg)](https://github.com/shigechika/speedtest-z/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/pypi/pyversions/speedtest-z)](https://pypi.org/project/speedtest-z/)
+
 [日本語版 / Japanese](https://github.com/shigechika/speedtest-z/blob/main/README.ja.md)
 
 speedtest-z automates major speed test sites with a web browser, capturing real user-experience network quality for continuous monitoring.
