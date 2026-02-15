@@ -5,10 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.4] - 2026-02-15
+
+### Fixed
+- CHANGELOG wording improvements
+
 ## [0.4.3] - 2026-02-15
 
 ### Fixed
-- Remove hidden `--yes` option from README
+- README wording improvements for confirmation prompt section
 
 ## [0.4.2] - 2026-02-15
 
@@ -82,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - systemd timer deployment files
 - PyPI release workflow (TestPyPI + PyPI)
 
+[0.4.4]: https://github.com/shigechika/speedtest-z/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/shigechika/speedtest-z/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/shigechika/speedtest-z/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/shigechika/speedtest-z/compare/v0.4.0...v0.4.1
