@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [0.4.6] - 2026-02-15
 
-### Changed
-- `config.ini-sample`: default `headless` to `false`, comments to English
+### Fixed
+- Release without README update (superseded by 0.4.7)
 
 ## [0.4.5] - 2026-02-15
 
