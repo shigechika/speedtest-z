@@ -90,6 +90,11 @@ class TestBuildParser:
         args = parser.parse_args(["--list-sites"])
         assert args.list_sites is True
 
+    def test_epilog_contains_github_url(self):
+        """epilog に GitHub URL が含まれること"""
+        parser = _build_parser()
+        assert "https://github.com/shigechika/speedtest-z" in parser.epilog
+
     def test_man_flag(self):
         """-m で man=True"""
         parser = _build_parser()

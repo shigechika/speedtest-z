@@ -62,21 +62,29 @@ _MESSAGES = {
         "config.ini が見つかりません。\n"
         "  config.ini-sample を以下のいずれかにコピーしてください:\n"
         "    ./config.ini\n"
-        "    ~/.config/speedtest-z/config.ini",
+        "    ~/.config/speedtest-z/config.ini\n"
+        "  config.ini-sample:\n"
+        "    https://github.com/shigechika/speedtest-z/blob/main/config.ini-sample",
         "config.ini not found.\n"
         "  Copy config.ini-sample to one of the following locations:\n"
         "    ./config.ini\n"
-        "    ~/.config/speedtest-z/config.ini",
+        "    ~/.config/speedtest-z/config.ini\n"
+        "  config.ini-sample:\n"
+        "    https://github.com/shigechika/speedtest-z/blob/main/config.ini-sample",
     ),
     "config_not_found_fallback": (
         "config.ini が見つかりません。デフォルト設定で動作します。\n"
         "  config.ini-sample を以下のいずれかにコピーしてください:\n"
         "    ./config.ini\n"
-        "    ~/.config/speedtest-z/config.ini",
+        "    ~/.config/speedtest-z/config.ini\n"
+        "  config.ini-sample:\n"
+        "    https://github.com/shigechika/speedtest-z/blob/main/config.ini-sample",
         "config.ini not found. Using default settings.\n"
         "  Copy config.ini-sample to one of the following locations:\n"
         "    ./config.ini\n"
-        "    ~/.config/speedtest-z/config.ini",
+        "    ~/.config/speedtest-z/config.ini\n"
+        "  config.ini-sample:\n"
+        "    https://github.com/shigechika/speedtest-z/blob/main/config.ini-sample",
     ),
     "chrome_init_failed": (
         "Chrome WebDriver の初期化に失敗しました: {error}\n"
@@ -1409,6 +1417,7 @@ def _build_parser():
     parser = argparse.ArgumentParser(
         prog="speedtest-z",
         description="Automated multi-site speed test runner with Zabbix integration",
+        epilog="https://github.com/shigechika/speedtest-z",
     )
     parser.add_argument(
         "-V", "--version", action="version", version=f"%(prog)s {__version__}"
