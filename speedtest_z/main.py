@@ -1402,6 +1402,10 @@ def _build_parser():
         help="list available test sites and exit",
     )
     parser.add_argument(
+        "-y", "--yes", action="store_true",
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
         "-d",
         "--debug",
         action="store_true",
@@ -1444,6 +1448,28 @@ def main():
 
     # logging 設定（--debug 対応）
     _setup_logging(debug=args.debug)
+
+    # config.ini の存在チェック（必須）
+    config_path = _find_config("config.ini", args.config)
+    if config_path is None:
+        logger.error(
+            "config.ini が見つかりません。\n"
+            "  config.ini-sample を以下のいずれかにコピーしてください:\n"
+            "    ./config.ini\n"
+            "    ~/.config/speedtest-z/config.ini"
+        )
+        sys.exit(1)
+    args.config = config_path  # 見つかったパスで上書き
+
+    # TTY 実行時の確認プロンプト
+    if not args.yes and sys.stdin.isatty():
+        sites = args.sites if args.sites else AVAILABLE_SITES
+        site_list = ", ".join(sites)
+        print(f"speedtest-z: {len(sites)} サイトに接続します ({site_list})")
+        answer = input("続行しますか？ [y/N]: ").strip().lower()
+        if answer not in ("y", "yes"):
+            print("中止しました。")
+            return
 
     logger.info("speedtest-z: START")
 
