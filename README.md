@@ -85,11 +85,11 @@ Copy `config.ini-sample` to one of these locations and edit as needed.
 
 ```ini
 [general]
-# Execution mode
+# Run mode
 dryrun = true          # true = do not send data to Zabbix
-headless = true        # true = run Chrome in headless mode
+headless = false       # true = run Chrome in headless mode
 timeout = 30           # timeout in seconds for each test
-# ookla_server = IPA CyberLab   # Ookla test server (omit for auto-select)
+# ookla_server = IPA CyberLab 400G   # Ookla test server (omit for auto-select)
 
 [zabbix]
 # Zabbix server settings

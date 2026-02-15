@@ -77,9 +77,9 @@ eval "$(register-python-argcomplete speedtest-z)"
 [general]
 # 実行モード設定
 dryrun = true           # true にすると Zabbix へ送信しない
-headless = true         # ヘッドレスモード（GUI なし）
+headless = false        # ヘッドレスモード（GUI なし）
 timeout = 30            # 各テストのタイムアウト（秒）
-# ookla_server = IPA CyberLab   # Ookla テストサーバ（省略時: 自動選択）
+# ookla_server = IPA CyberLab 400G   # Ookla テストサーバ（省略時: 自動選択）
 ```
 
 #### `[zabbix]` セクション
