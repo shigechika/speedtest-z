@@ -141,13 +141,12 @@ speedtest-z [options] [site ...]
 | `--no-headless`, `--headed` | Run Chrome with GUI (non-headless) |
 | `--timeout SECONDS` | Timeout in seconds for each test |
 | `--list-sites` | List available test sites and exit |
-| `-y`, `--yes` | Skip confirmation prompt |
 | `-d`, `--debug` | Enable debug output |
 | `site` | Positional argument(s): test site(s) to run (default: all) |
 
 ### Confirmation Prompt
 
-When run from an interactive terminal (TTY), speedtest-z asks for confirmation before connecting to test sites. Use `-y` to skip this prompt, or pipe input to suppress it automatically (e.g., cron, systemd).
+When run from an interactive terminal (TTY), speedtest-z asks for confirmation before connecting to test sites. Non-interactive environments (cron, systemd, piped input) skip the prompt automatically.
 
 ```
 $ speedtest-z -n

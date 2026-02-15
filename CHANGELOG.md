@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [0.4.2] - 2026-02-15
 
 ### Added
-- Confirmation prompt (`-y` / `--yes`) documented in README
+- Confirmation prompt section in README
 
 ## [0.4.1] - 2026-02-15
 
