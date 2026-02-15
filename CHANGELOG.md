@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.6] - 2026-02-15
+
+### Changed
+- `config.ini-sample`: default `headless` to `false`, comments to English
+
 ## [0.4.5] - 2026-02-15
 
 ### Added
@@ -93,6 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - systemd timer deployment files
 - PyPI release workflow (TestPyPI + PyPI)
 
+[0.4.6]: https://github.com/shigechika/speedtest-z/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/shigechika/speedtest-z/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/shigechika/speedtest-z/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/shigechika/speedtest-z/compare/v0.4.2...v0.4.3
