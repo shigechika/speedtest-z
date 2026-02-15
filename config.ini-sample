@@ -1,31 +1,31 @@
 [general]
-# 実行モード設定
+# Run mode
 dryrun = true
-headless = true
-# タイムアウト(秒)
+headless = false
+# Timeout in seconds
 timeout = 30
-# Ookla テストサーバ (省略時: 自動選択)
-# ookla_server = IPA CyberLab
+# Ookla test server (omit for auto-select)
+# ookla_server = IPA CyberLab 400G
 
 [zabbix]
-# 送信先 Zabbix Server
+# Zabbix Server destination
 server = 127.0.0.1
 port = 10051
 host = speedtest-agent
 
 [snapshot]
-# 画面キャプチャ設定
+# Screenshot settings
 enable = true
 save_dir = ./snapshots
 
 [frequency]
-# 実行確率 (0-100)
-# CDN系
+# Execution probability (0-100)
+# CDN-based
 cloudflare = 100
 netflix = 100
 google = 100
 
-# その他
+# Others
 ookla = 50
 boxtest = 50
 mlab = 10
