@@ -51,6 +51,7 @@ python -m build
 - `config.ini` は `.gitignore` で除外（`config.ini-sample` をコピーして使用）
 - Chrome ブラウザが実行環境に必要（pip では入らない）
 - テストサイトの DOM 構造変更によりセレクタが壊れる可能性がある（定期的な確認が必要）
+- `-y` / `--yes` は隠しオプション（`argparse.SUPPRESS`）。README や CHANGELOG に記載しないこと
 
 ## README スクリーンショットの差し替え手順
 
