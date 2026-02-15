@@ -30,19 +30,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [0.3.0] - 2026-02-13
 
-### Changed
-- Standardized all docstrings to English
-
-### Added
-- `python -m speedtest_z` support
-- argcomplete tab completion (optional dependency)
-
-## [0.2.0] - 2026-02-13
-
 ### Added
 - `--man` / `-m` option for manual display
+- `python -m speedtest_z` support
+- argcomplete tab completion (optional dependency)
 - Unit tests (42 tests) with mock-based testing
 - CI pytest integration
+
+### Changed
+- Standardized all docstrings to English
 
 ## [0.1.3] - 2026-02-12
 
@@ -59,6 +55,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 [0.4.7]: https://github.com/shigechika/speedtest-z/compare/v0.4.4...v0.4.7
 [0.4.4]: https://github.com/shigechika/speedtest-z/compare/v0.3.0...v0.4.4
-[0.3.0]: https://github.com/shigechika/speedtest-z/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/shigechika/speedtest-z/compare/v0.1.3...v0.2.0
+[0.3.0]: https://github.com/shigechika/speedtest-z/compare/v0.1.3...v0.3.0
 [0.1.3]: https://github.com/shigechika/speedtest-z/releases/tag/v0.1.3
