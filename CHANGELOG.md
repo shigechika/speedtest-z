@@ -17,31 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [0.4.4] - 2026-02-15
 
-### Fixed
-- CHANGELOG wording improvements
-
-## [0.4.3] - 2026-02-15
-
-### Fixed
-- README wording improvements for confirmation prompt section
-
-## [0.4.2] - 2026-02-15
-
-### Added
-- Confirmation prompt section in README
-
-## [0.4.1] - 2026-02-15
-
-### Fixed
-- Include CHANGELOG in release package (missing from v0.4.0)
-
-## [0.4.0] - 2026-02-15
-
 ### Added
 - Locale-based message switching (Japanese/English) using `_LANG_JA` flag and `_MESSAGES` dictionary
 - TTY confirmation prompt before connecting to test sites
 - `config.ini` required check at startup (exit with error if not found)
-- Tab completion instructions in README
 - CHANGELOG, README badges, and GitHub Releases workflow
 - 8 new i18n tests (67 tests total)
 
@@ -98,11 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - PyPI release workflow (TestPyPI + PyPI)
 
 [0.4.7]: https://github.com/shigechika/speedtest-z/compare/v0.4.4...v0.4.7
-[0.4.4]: https://github.com/shigechika/speedtest-z/compare/v0.4.3...v0.4.4
-[0.4.3]: https://github.com/shigechika/speedtest-z/compare/v0.4.2...v0.4.3
-[0.4.2]: https://github.com/shigechika/speedtest-z/compare/v0.4.1...v0.4.2
-[0.4.1]: https://github.com/shigechika/speedtest-z/compare/v0.4.0...v0.4.1
-[0.4.0]: https://github.com/shigechika/speedtest-z/compare/v0.3.0...v0.4.0
+[0.4.4]: https://github.com/shigechika/speedtest-z/compare/v0.3.0...v0.4.4
 [0.3.0]: https://github.com/shigechika/speedtest-z/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/shigechika/speedtest-z/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/shigechika/speedtest-z/compare/v0.1.2...v0.1.3
