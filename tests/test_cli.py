@@ -3,7 +3,9 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from speedtest_z.main import _build_parser, _show_manual, main, AVAILABLE_SITES
+from speedtest_z.main import (
+    _build_parser, _show_manual, _msg, main, AVAILABLE_SITES,
+)
 
 
 class TestBuildParser:
@@ -132,7 +134,7 @@ class TestShowManual:
     def test_manual_japanese_locale(self):
         """日本語ロケールで README.ja.md が表示されること"""
         with patch("pydoc.pager") as mock_pager, \
-             patch("locale.getlocale", return_value=("ja_JP", "UTF-8")):
+             patch("speedtest_z.main._LANG_JA", True):
             _show_manual()
             text = mock_pager.call_args[0][0]
             assert "特徴" in text
@@ -140,7 +142,7 @@ class TestShowManual:
     def test_manual_english_locale(self):
         """英語ロケールで README.md が表示されること"""
         with patch("pydoc.pager") as mock_pager, \
-             patch("locale.getlocale", return_value=("en_US", "UTF-8")):
+             patch("speedtest_z.main._LANG_JA", False):
             _show_manual()
             text = mock_pager.call_args[0][0]
             assert "Features" in text
@@ -247,8 +249,8 @@ class TestMainConfirmPrompt:
             mock_stdin.isatty.return_value = True
             main()
         captured = capsys.readouterr()
-        assert "サイトに接続します" in captured.out
-        assert "中止しました。" in captured.out
+        # ロケールに依存しないアサーション
+        assert _msg("confirm_abort") in captured.out
 
     def test_prompt_yes_continues(self):
         """確認プロンプトで y を入力すると続行されること"""
@@ -312,7 +314,6 @@ class TestMainConfirmPrompt:
             mock_stdin.isatty.return_value = True
             main()
         captured = capsys.readouterr()
-        assert "2 サイト" in captured.out
         assert "cloudflare, netflix" in captured.out
 
     def test_prompt_abort_with_empty_input(self, capsys):
@@ -328,5 +329,91 @@ class TestMainConfirmPrompt:
             mock_stdin.isatty.return_value = True
             main()
         captured = capsys.readouterr()
-        assert "中止しました。" in captured.out
+        assert _msg("confirm_abort") in captured.out
         mock_stz.assert_not_called()
+
+
+class TestI18nMessages:
+    """_msg() の日英切り替えテスト"""
+
+    def test_msg_japanese(self):
+        """_LANG_JA=True で日本語メッセージが返ること"""
+        with patch("speedtest_z.main._LANG_JA", True):
+            assert _msg("confirm_abort") == "中止しました。"
+            assert _msg("manual_not_found") == "マニュアルが見つかりません。"
+
+    def test_msg_english(self):
+        """_LANG_JA=False で英語メッセージが返ること"""
+        with patch("speedtest_z.main._LANG_JA", False):
+            assert _msg("confirm_abort") == "Aborted."
+            assert _msg("manual_not_found") == "Manual not found."
+
+    def test_msg_with_kwargs_japanese(self):
+        """日本語メッセージのフォーマット引数が展開されること"""
+        with patch("speedtest_z.main._LANG_JA", True):
+            result = _msg("config_not_found_cli", path="/tmp/test.ini")
+            assert "/tmp/test.ini が見つかりません" == result
+
+    def test_msg_with_kwargs_english(self):
+        """英語メッセージのフォーマット引数が展開されること"""
+        with patch("speedtest_z.main._LANG_JA", False):
+            result = _msg("config_not_found_cli", path="/tmp/test.ini")
+            assert "/tmp/test.ini not found" == result
+
+    def test_confirm_prompt_japanese(self):
+        """日本語の確認プロンプトメッセージ"""
+        with patch("speedtest_z.main._LANG_JA", True):
+            result = _msg("confirm_prompt", count=2, sites="cloudflare, netflix")
+            assert "2 サイトに接続します" in result
+            assert "cloudflare, netflix" in result
+
+    def test_confirm_prompt_english(self):
+        """英語の確認プロンプトメッセージ"""
+        with patch("speedtest_z.main._LANG_JA", False):
+            result = _msg("confirm_prompt", count=2, sites="cloudflare, netflix")
+            assert "connecting to 2 site(s)" in result
+            assert "cloudflare, netflix" in result
+
+    def test_prompt_shown_japanese(self, capsys):
+        """日本語ロケールで日本語プロンプトが表示されること"""
+        with patch("speedtest_z.main._build_parser") as mock_parser, \
+             patch("speedtest_z.main._setup_logging"), \
+             patch("speedtest_z.main._find_config", return_value="/tmp/config.ini"), \
+             patch("sys.stdin") as mock_stdin, \
+             patch("builtins.input", return_value="n"), \
+             patch("speedtest_z.main._LANG_JA", True):
+            mock_args = MagicMock()
+            mock_args.man = False
+            mock_args.list_sites = False
+            mock_args.debug = False
+            mock_args.config = None
+            mock_args.yes = False
+            mock_args.sites = ["cloudflare"]
+            mock_parser.return_value.parse_args.return_value = mock_args
+            mock_stdin.isatty.return_value = True
+            main()
+        captured = capsys.readouterr()
+        assert "サイトに接続します" in captured.out
+        assert "中止しました。" in captured.out
+
+    def test_prompt_shown_english(self, capsys):
+        """英語ロケールで英語プロンプトが表示されること"""
+        with patch("speedtest_z.main._build_parser") as mock_parser, \
+             patch("speedtest_z.main._setup_logging"), \
+             patch("speedtest_z.main._find_config", return_value="/tmp/config.ini"), \
+             patch("sys.stdin") as mock_stdin, \
+             patch("builtins.input", return_value="n"), \
+             patch("speedtest_z.main._LANG_JA", False):
+            mock_args = MagicMock()
+            mock_args.man = False
+            mock_args.list_sites = False
+            mock_args.debug = False
+            mock_args.config = None
+            mock_args.yes = False
+            mock_args.sites = ["cloudflare"]
+            mock_parser.return_value.parse_args.return_value = mock_args
+            mock_stdin.isatty.return_value = True
+            main()
+        captured = capsys.readouterr()
+        assert "connecting to 1 site(s)" in captured.out
+        assert "Aborted." in captured.out

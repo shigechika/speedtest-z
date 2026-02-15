@@ -49,6 +49,68 @@ AVAILABLE_SITES = [
     "inonius",
 ]
 
+# ロケール判定（ja_JP 等で始まれば日本語）
+_LANG_JA = (locale.getlocale()[0] or os.environ.get("LANG", "")).startswith("ja")
+
+# ユーザ向けメッセージ辞書 (日本語, 英語)
+_MESSAGES = {
+    "config_not_found_cli": (
+        "{path} が見つかりません",
+        "{path} not found",
+    ),
+    "config_not_found": (
+        "config.ini が見つかりません。\n"
+        "  config.ini-sample を以下のいずれかにコピーしてください:\n"
+        "    ./config.ini\n"
+        "    ~/.config/speedtest-z/config.ini",
+        "config.ini not found.\n"
+        "  Copy config.ini-sample to one of the following locations:\n"
+        "    ./config.ini\n"
+        "    ~/.config/speedtest-z/config.ini",
+    ),
+    "config_not_found_fallback": (
+        "config.ini が見つかりません。デフォルト設定で動作します。\n"
+        "  config.ini-sample を以下のいずれかにコピーしてください:\n"
+        "    ./config.ini\n"
+        "    ~/.config/speedtest-z/config.ini",
+        "config.ini not found. Using default settings.\n"
+        "  Copy config.ini-sample to one of the following locations:\n"
+        "    ./config.ini\n"
+        "    ~/.config/speedtest-z/config.ini",
+    ),
+    "chrome_init_failed": (
+        "Chrome WebDriver の初期化に失敗しました: {error}\n"
+        "  Google Chrome がインストールされているか確認してください。\n"
+        "  https://www.google.com/chrome/",
+        "Failed to initialize Chrome WebDriver: {error}\n"
+        "  Please make sure Google Chrome is installed.\n"
+        "  https://www.google.com/chrome/",
+    ),
+    "confirm_prompt": (
+        "speedtest-z: {count} サイトに接続します ({sites})",
+        "speedtest-z: connecting to {count} site(s) ({sites})",
+    ),
+    "confirm_input": (
+        "続行しますか？ [y/N]: ",
+        "Continue? [y/N]: ",
+    ),
+    "confirm_abort": (
+        "中止しました。",
+        "Aborted.",
+    ),
+    "manual_not_found": (
+        "マニュアルが見つかりません。",
+        "Manual not found.",
+    ),
+}
+
+
+def _msg(key, **kwargs):
+    """Return a localized message string."""
+    ja, en = _MESSAGES[key]
+    text = ja if _LANG_JA else en
+    return text.format(**kwargs) if kwargs else text
+
 
 def _find_config(name, cli_path=None):
     """Search for a configuration file in standard locations.
@@ -61,7 +123,7 @@ def _find_config(name, cli_path=None):
     if cli_path:
         if os.path.isfile(cli_path):
             return cli_path
-        logger.warning(f"{cli_path} が見つかりません")
+        logger.warning(_msg("config_not_found_cli", path=cli_path))
         return None
 
     if os.path.isfile(name):
@@ -110,12 +172,7 @@ class SpeedtestZ:
             self.config.read(config_path)
             logger.info(f"Config loaded: {config_path}")
         else:
-            logger.warning(
-                "config.ini が見つかりません。デフォルト設定で動作します。\n"
-                "  config.ini-sample を以下のいずれかにコピーしてください:\n"
-                "    ./config.ini\n"
-                "    ~/.config/speedtest-z/config.ini"
-            )
+            logger.warning(_msg("config_not_found_fallback"))
 
         # [general]
         self.dryrun = self.config.getboolean("general", "dryrun", fallback=True)
@@ -196,11 +253,7 @@ class SpeedtestZ:
                     logger.info(f"Window moved to Top-Right: {pos}")
 
         except Exception as e:
-            logger.error(
-                f"Chrome WebDriver の初期化に失敗しました: {e}\n"
-                "  Google Chrome がインストールされているか確認してください。\n"
-                "  https://www.google.com/chrome/"
-            )
+            logger.error(_msg("chrome_init_failed", error=e))
             sys.exit(1)
 
     def _should_run(self, site_name):
@@ -1324,9 +1377,8 @@ def _show_manual():
     from importlib.resources import files
     import pydoc
 
-    # LANG/LC_ALL が ja で始まる場合は日本語版を表示
-    lang = locale.getlocale()[0] or os.environ.get("LANG", "")
-    readme = "README.ja.md" if lang.startswith("ja") else "README.md"
+    # ロケールに応じて日本語版/英語版を選択
+    readme = "README.ja.md" if _LANG_JA else "README.md"
 
     text = None
 
@@ -1346,7 +1398,7 @@ def _show_manual():
                 text = f.read()
 
     if not text:
-        print("マニュアルが見つかりません。", file=sys.stderr)
+        print(_msg("manual_not_found"), file=sys.stderr)
         sys.exit(1)
 
     pydoc.pager(text)
@@ -1452,12 +1504,7 @@ def main():
     # config.ini の存在チェック（必須）
     config_path = _find_config("config.ini", args.config)
     if config_path is None:
-        logger.error(
-            "config.ini が見つかりません。\n"
-            "  config.ini-sample を以下のいずれかにコピーしてください:\n"
-            "    ./config.ini\n"
-            "    ~/.config/speedtest-z/config.ini"
-        )
+        logger.error(_msg("config_not_found"))
         sys.exit(1)
     args.config = config_path  # 見つかったパスで上書き
 
@@ -1465,10 +1512,10 @@ def main():
     if not args.yes and sys.stdin.isatty():
         sites = args.sites if args.sites else AVAILABLE_SITES
         site_list = ", ".join(sites)
-        print(f"speedtest-z: {len(sites)} サイトに接続します ({site_list})")
-        answer = input("続行しますか？ [y/N]: ").strip().lower()
+        print(_msg("confirm_prompt", count=len(sites), sites=site_list))
+        answer = input(_msg("confirm_input")).strip().lower()
         if answer not in ("y", "yes"):
-            print("中止しました。")
+            print(_msg("confirm_abort"))
             return
 
     logger.info("speedtest-z: START")
