@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-02-15
+
+### Added
+- Locale-based message switching (Japanese/English) using `_LANG_JA` flag and `_MESSAGES` dictionary
+- TTY confirmation prompt before connecting to test sites
+- `config.ini` required check at startup (exit with error if not found)
+- Tab completion instructions in README
+- CHANGELOG, README badges, and GitHub Releases workflow
+- 8 new i18n tests (67 tests total)
+
+### Changed
+- User-facing messages now use `_msg()` helper for consistent localization
+- `_show_manual()` locale detection unified with module-level `_LANG_JA`
+
 ## [0.3.0] - 2026-02-13
 
 ### Changed
@@ -53,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - systemd timer deployment files
 - PyPI release workflow (TestPyPI + PyPI)
 
+[0.4.0]: https://github.com/shigechika/speedtest-z/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/shigechika/speedtest-z/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/shigechika/speedtest-z/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/shigechika/speedtest-z/compare/v0.1.2...v0.1.3
