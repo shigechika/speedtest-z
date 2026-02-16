@@ -3,7 +3,8 @@ Description=speedtest-z service
 
 [Service]
 Type=simple
-ExecStart=%h/speedtest-z/.venv/bin/speedtest-z
+EnvironmentFile=-/etc/default/speedtest-z
+ExecStart=%h/speedtest-z/.venv/bin/speedtest-z $SPEEDTEST_Z_OPTS
 WorkingDirectory=%h/speedtest-z
 User=shige
 Group=shige

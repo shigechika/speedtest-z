@@ -1,0 +1,3 @@
+# /etc/default/speedtest-z
+# Extra options passed to speedtest-z via systemd service
+# SPEEDTEST_Z_OPTS=""
