@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.8] - 2026-02-16
+
+### Added
+- Persistent Chrome profile to retain cookies and settings across runs
+- Automatic consent dialog handling for headless environments
+- `/etc/default/speedtest-z` support for systemd option injection via `$SPEEDTEST_Z_OPTS`
+
 ## [0.4.7] - 2026-02-15
 
 ### Added
@@ -53,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - systemd timer deployment files
 - PyPI release workflow (TestPyPI + PyPI)
 
+[0.4.8]: https://github.com/shigechika/speedtest-z/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/shigechika/speedtest-z/compare/v0.4.4...v0.4.7
 [0.4.4]: https://github.com/shigechika/speedtest-z/compare/v0.3.0...v0.4.4
 [0.3.0]: https://github.com/shigechika/speedtest-z/compare/v0.1.3...v0.3.0
