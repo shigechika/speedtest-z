@@ -16,6 +16,7 @@ def mock_args():
         timeout=None,
         list_sites=False,
         debug=False,
+        yes=False,
         sites=[],
     )
 

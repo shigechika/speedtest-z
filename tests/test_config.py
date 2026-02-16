@@ -1,9 +1,9 @@
 """設定ファイル探索のテスト"""
 
 import os
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
-from speedtest_z.main import _find_config, _setup_logging
+from speedtest_z.main import _find_config, _setup_logging, SpeedtestZ
 
 
 class TestFindConfig:
@@ -91,3 +91,45 @@ class TestSetupLogging:
             _setup_logging(debug=True)
             call_kwargs = mock_basic.call_args
             assert call_kwargs[1]["level"] == 10  # logging.DEBUG
+
+
+class TestChromeProfileDir:
+    """chrome_profile_dir 設定のテスト"""
+
+    def _make_app(self, mock_config):
+        """WebDriver を迂回して SpeedtestZ インスタンスを作成"""
+        with patch.object(SpeedtestZ, "__init__", lambda self, *a, **kw: None):
+            app = SpeedtestZ.__new__(SpeedtestZ)
+            app.config = mock_config
+        return app
+
+    def test_default_path(self, mock_config):
+        """デフォルトで ~/.config/speedtest-z/chrome-profile が設定される"""
+        app = self._make_app(mock_config)
+        app.chrome_profile_dir = os.path.expanduser(
+            app.config.get("general", "chrome_profile_dir",
+                           fallback="~/.config/speedtest-z/chrome-profile")
+        )
+        expected = os.path.expanduser("~/.config/speedtest-z/chrome-profile")
+        assert app.chrome_profile_dir == expected
+
+    def test_custom_path(self, mock_config):
+        """config でカスタムパスを指定"""
+        mock_config.set("general", "chrome_profile_dir", "/tmp/my-chrome-profile")
+        app = self._make_app(mock_config)
+        app.chrome_profile_dir = os.path.expanduser(
+            app.config.get("general", "chrome_profile_dir",
+                           fallback="~/.config/speedtest-z/chrome-profile")
+        )
+        assert app.chrome_profile_dir == "/tmp/my-chrome-profile"
+
+    def test_tilde_expansion(self, mock_config):
+        """~ がホームディレクトリに展開される"""
+        mock_config.set("general", "chrome_profile_dir", "~/my-profile")
+        app = self._make_app(mock_config)
+        app.chrome_profile_dir = os.path.expanduser(
+            app.config.get("general", "chrome_profile_dir",
+                           fallback="~/.config/speedtest-z/chrome-profile")
+        )
+        assert "~" not in app.chrome_profile_dir
+        assert app.chrome_profile_dir.endswith("my-profile")

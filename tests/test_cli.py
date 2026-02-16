@@ -273,21 +273,21 @@ class TestMainConfirmPrompt:
             main()
             mock_stz.assert_called_once()
 
-    def test_prompt_skipped_with_yes_flag(self):
-        """--yes フラグで確認プロンプトがスキップされること"""
+    def test_prompt_shown_with_yes_flag(self):
+        """--yes フラグでも TTY なら確認プロンプトが表示されること"""
         with patch("speedtest_z.main._build_parser") as mock_parser, \
              patch("speedtest_z.main._setup_logging"), \
              patch("speedtest_z.main._find_config", return_value="/tmp/config.ini"), \
              patch("speedtest_z.main.SpeedtestZ") as mock_stz, \
              patch("sys.stdin") as mock_stdin, \
-             patch("builtins.input") as mock_input:
+             patch("builtins.input", return_value="y") as mock_input:
             mock_args = self._make_args(yes=True)
             mock_parser.return_value.parse_args.return_value = mock_args
             mock_stdin.isatty.return_value = True
             mock_app = MagicMock()
             mock_stz.return_value = mock_app
             main()
-            mock_input.assert_not_called()
+            mock_input.assert_called_once()
             mock_stz.assert_called_once()
 
     def test_prompt_skipped_on_non_tty(self):

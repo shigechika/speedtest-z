@@ -187,9 +187,14 @@ class SpeedtestZ:
         self.headless = self.config.getboolean("general", "headless", fallback=True)
         self.timeout = self.config.getint("general", "timeout", fallback=30)
         self.ookla_server = self.config.get("general", "ookla_server", fallback=None)
+        self.chrome_profile_dir = os.path.expanduser(
+            self.config.get("general", "chrome_profile_dir",
+                            fallback="~/.config/speedtest-z/chrome-profile")
+        )
 
         # CLI 引数でオーバーライド
         self.explicit_sites = False
+        self.auto_consent = False
         if args:
             if args.dry_run:
                 self.dryrun = True
@@ -199,6 +204,8 @@ class SpeedtestZ:
                 self.timeout = args.timeout
             if args.sites:
                 self.explicit_sites = True
+            if getattr(args, "yes", False):
+                self.auto_consent = True
 
         # [zabbix]
         self.zabbix_server = self.config.get("zabbix", "server", fallback="127.0.0.1")
@@ -245,6 +252,10 @@ class SpeedtestZ:
             f"--window-size={self.WINDOW_WIDTH},{self.WINDOW_HEIGHT}"
         )
         options.add_argument("--log-level=3")
+
+        os.makedirs(self.chrome_profile_dir, exist_ok=True)
+        options.add_argument(f"--user-data-dir={self.chrome_profile_dir}")
+        logger.info(f"Chrome profile: {self.chrome_profile_dir}")
 
         try:
             self.driver = webdriver.Chrome(options=options)
@@ -741,15 +752,32 @@ class SpeedtestZ:
                     if not self._load_with_retry("https://www.speedtest.net/"):
                         return
 
-                try:
-                    consent = self.wait.until(
-                        EC.element_to_be_clickable(
-                            (By.ID, "onetrust-accept-btn-handler")
+                if self.auto_consent:
+                    try:
+                        consent = WebDriverWait(self.driver, 5).until(
+                            EC.element_to_be_clickable(
+                                (By.ID, "onetrust-accept-btn-handler")
+                            )
                         )
-                    )
-                    self.driver.execute_script("arguments[0].click();", consent)
-                except TimeoutException:
-                    pass
+                        self.driver.execute_script("arguments[0].click();", consent)
+                        logger.info("ookla: Consent accepted (auto)")
+                    except TimeoutException:
+                        pass
+                else:
+                    # バナーが出ていたらユーザが「Continue」をクリックするまで待つ
+                    try:
+                        banner = WebDriverWait(self.driver, 5).until(
+                            EC.visibility_of_element_located(
+                                (By.ID, "onetrust-banner-sdk")
+                            )
+                        )
+                        logger.info("ookla: Waiting for user to accept privacy banner...")
+                        WebDriverWait(self.driver, 120).until(
+                            EC.invisibility_of_element(banner)
+                        )
+                        logger.info("ookla: Privacy banner dismissed by user")
+                    except TimeoutException:
+                        pass
 
                 # Server Selection
                 if self.ookla_server is not None:
@@ -1108,14 +1136,29 @@ class SpeedtestZ:
             if not self._load_with_retry("https://speed.measurementlab.net/"):
                 return
 
-            try:
-                chk_box = self.wait.until(
-                    EC.presence_of_element_located((By.ID, "demo-human"))
-                )
-                self.driver.execute_script("arguments[0].click();", chk_box)
-                logger.info("mlab: Consent Checked")
-            except TimeoutException:
-                pass
+            if self.auto_consent:
+                try:
+                    chk_box = self.wait.until(
+                        EC.presence_of_element_located((By.ID, "demo-human"))
+                    )
+                    self.driver.execute_script("arguments[0].click();", chk_box)
+                    logger.info("mlab: Consent checked (auto)")
+                except TimeoutException:
+                    pass
+            else:
+                # ユーザがチェックボックスをクリックするまで待つ
+                try:
+                    chk_box = WebDriverWait(self.driver, 5).until(
+                        EC.presence_of_element_located((By.ID, "demo-human"))
+                    )
+                    if not chk_box.is_selected():
+                        logger.info("mlab: Waiting for user to check consent checkbox...")
+                        WebDriverWait(self.driver, 120).until(
+                            lambda d: d.find_element(By.ID, "demo-human").is_selected()
+                        )
+                        logger.info("mlab: Consent checked by user")
+                except TimeoutException:
+                    pass
 
             try:
                 start_btn = self.wait.until(
@@ -1294,6 +1337,30 @@ class SpeedtestZ:
         finally:
             self.take_snapshot("usen")
 
+    def _inonius_fallback_start(self):
+        """Attempt to start iNonius test when consent dialog was skipped.
+
+        When cookies remember consent, the dialog may not appear and the test
+        may start automatically or require a manual start button click.
+        Returns True if the test appears to be running, False otherwise.
+        """
+        try:
+            # dialog なしでテストが自動開始されたか確認
+            # Download/Upload の数値やアニメーションが表示されていれば進行中
+            WebDriverWait(self.driver, 10).until(
+                lambda d: d.find_elements(
+                    By.CSS_SELECTOR, "astro-island > div"
+                ) and not d.find_elements(
+                    By.CSS_SELECTOR, "dialog[open]"
+                )
+            )
+            logger.info("inonius: Test already running (cookie consent)")
+            return True
+        except TimeoutException:
+            logger.error("inonius: Could not start test (no dialog, no auto-start)")
+            self.take_snapshot("inonius_error_fallback")
+            return False
+
     def run_inonius(self):
         """Run iNonius speed test (inonius.net)."""
         if not self._should_run("inonius"):
@@ -1307,16 +1374,36 @@ class SpeedtestZ:
             start_xpath = (
                 "/html/body/div/astro-island/dialog/div/div/form/button[2]"
             )
-            try:
-                start_btn = self.wait.until(
-                    EC.element_to_be_clickable((By.XPATH, start_xpath))
-                )
-                start_btn.click()
-                logger.info("inonius: START")
-            except TimeoutException:
-                logger.error("inonius: Start button not found.")
-                self.take_snapshot("inonius_error_start")
-                return
+            if self.auto_consent:
+                # --yes: 同意ダイアログを自動クリック（同意兼スタート）
+                try:
+                    start_btn = WebDriverWait(self.driver, 5).until(
+                        EC.element_to_be_clickable((By.XPATH, start_xpath))
+                    )
+                    start_btn.click()
+                    logger.info("inonius: Consent accepted and started (auto)")
+                except TimeoutException:
+                    # Cookie で dialog が出ない → フォールバック
+                    if not self._inonius_fallback_start():
+                        return
+            else:
+                # --yes なし: ユーザ操作を待つか、Cookie で dialog が出ない場合のフォールバック
+                try:
+                    dialog = WebDriverWait(self.driver, 5).until(
+                        EC.presence_of_element_located(
+                            (By.CSS_SELECTOR, "dialog")
+                        )
+                    )
+                    # dialog が表示されたらユーザがクリックして閉じるのを待つ
+                    logger.info("inonius: Waiting for user to accept consent dialog...")
+                    WebDriverWait(self.driver, 120).until(
+                        lambda d: not dialog.is_displayed()
+                    )
+                    logger.info("inonius: Dialog closed by user")
+                except TimeoutException:
+                    # dialog が出ない（Cookie で記憶済み）→ フォールバック
+                    if not self._inonius_fallback_start():
+                        return
 
             try:
                 WebDriverWait(self.driver, 90).until(
@@ -1517,8 +1604,8 @@ def main():
         sys.exit(1)
     args.config = config_path  # 見つかったパスで上書き
 
-    # TTY 実行時の確認プロンプト
-    if not args.yes and sys.stdin.isatty():
+    # TTY 実行時の確認プロンプト（--yes とは無関係に常に確認）
+    if sys.stdin.isatty():
         sites = args.sites if args.sites else AVAILABLE_SITES
         site_list = ", ".join(sites)
         print(_msg("confirm_prompt", count=len(sites), sites=site_list))

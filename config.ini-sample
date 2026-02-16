@@ -6,6 +6,8 @@ headless = false
 timeout = 30
 # Ookla test server (omit for auto-select)
 # ookla_server = IPA CyberLab 400G
+# Chrome profile directory (for persisting cookies and consent)
+# chrome_profile_dir = ~/.config/speedtest-z/chrome-profile
 
 [zabbix]
 # Zabbix Server destination
