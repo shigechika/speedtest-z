@@ -27,7 +27,7 @@ class TestSendToZabbix:
             mock_sender.assert_not_called()
 
     def test_dryrun_no_send(self):
-        """dryrun=True では Sender.send() が呼ばれない"""
+        """dryrun=True では Sender.send_bulk() が呼ばれない"""
         app = _make_app(dryrun=True)
         data = [{"key": "speedtest.dl", "value": "100.5"}]
         with patch("speedtest_z.main.Sender") as mock_sender:
@@ -35,7 +35,7 @@ class TestSendToZabbix:
             mock_sender.assert_not_called()
 
     def test_send_called(self):
-        """dryrun=False では Sender が生成され send() が呼ばれる"""
+        """dryrun=False では Sender が生成され send_bulk() が呼ばれる"""
         app = _make_app(dryrun=False)
         data = [{"key": "speedtest.dl", "value": "100.5"}]
         with patch("speedtest_z.main.Sender") as mock_sender_cls:
@@ -44,7 +44,7 @@ class TestSendToZabbix:
             app.send_to_zabbix(data)
 
             mock_sender_cls.assert_called_once_with("127.0.0.1", 10051)
-            mock_instance.send.assert_called_once()
+            mock_instance.send_bulk.assert_called_once()
 
     def test_sender_data_construction(self):
         """SenderData が正しく構築される"""
@@ -81,7 +81,7 @@ class TestSendToZabbix:
         data = [{"key": "speedtest.dl", "value": "100"}]
         with patch("speedtest_z.main.Sender") as mock_sender_cls:
             mock_instance = MagicMock()
-            mock_instance.send.side_effect = Exception("Connection refused")
+            mock_instance.send_bulk.side_effect = Exception("Connection refused")
             mock_sender_cls.return_value = mock_instance
 
             # 例外が伝播しないことを確認

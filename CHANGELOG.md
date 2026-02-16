@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.9] - 2026-02-16
+
+### Fixed
+- Zabbix send failure: use `Sender.send_bulk()` instead of removed `Sender.send()` (zappix v1.x API)
+
 ## [0.4.8] - 2026-02-16
 
 ### Added
@@ -60,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - systemd timer deployment files
 - PyPI release workflow (TestPyPI + PyPI)
 
+[0.4.9]: https://github.com/shigechika/speedtest-z/compare/v0.4.8...v0.4.9
 [0.4.8]: https://github.com/shigechika/speedtest-z/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/shigechika/speedtest-z/compare/v0.4.4...v0.4.7
 [0.4.4]: https://github.com/shigechika/speedtest-z/compare/v0.3.0...v0.4.4

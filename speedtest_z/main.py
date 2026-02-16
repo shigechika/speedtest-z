@@ -336,7 +336,7 @@ class SpeedtestZ:
 
         try:
             sender = Sender(self.zabbix_server, self.zabbix_port)
-            res = sender.send(packet)
+            res = sender.send_bulk(packet)
             logger.info(f"Zabbix Response: {res}")
         except Exception as e:
             logger.error(f"Failed to send to Zabbix: {e}")
