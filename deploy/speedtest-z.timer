@@ -2,7 +2,7 @@
 Description=speedtest-z timer
 
 [Timer]
-OnCalendar=*-*-* *:00/6:00
+OnCalendar=*-*-* *:00/10:00
 
 [Install]
 WantedBy=timers.target
