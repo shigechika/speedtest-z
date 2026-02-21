@@ -31,6 +31,14 @@ speedtest-z は Web ブラウザで主要な速度テストサイトを自動巡
 
 ## インストール
 
+### Homebrew (macOS)
+
+```bash
+brew install shigechika/tap/speedtest-z
+```
+
+### pip
+
 ```bash
 pip install speedtest-z
 ```

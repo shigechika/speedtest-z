@@ -42,6 +42,14 @@ speedtest-z automates major speed test sites with a web browser, capturing real 
 
 ## Installation
 
+### Homebrew (macOS)
+
+```bash
+brew install shigechika/tap/speedtest-z
+```
+
+### pip
+
 ```bash
 pip install speedtest-z
 ```
