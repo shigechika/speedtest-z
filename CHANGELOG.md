@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-02-22
+
+### Added
+- Grafana Cloud integration via Prometheus Remote Write (`speedtest_z/grafana.py`)
+- `[grafana]` config section with `enable`, `remote_write_url`, `username`, `token`
+- `[zabbix] enable` flag to control Zabbix sending (default `false`)
+- `cramjam` optional dependency: `pip install speedtest-z[grafana]`
+- Comprehensive tests for Protobuf encoder, GrafanaSender, and config compatibility (20 new tests, 166 total)
+
+### Changed
+- `dryrun` config key renamed to `dry_run` (old name still supported as fallback)
+- `send_to_zabbix()` renamed to `send_results()` across all site runners and CLI
+- `--dry-run` now suppresses both Zabbix and Grafana sending consistently
+- `--output json/csv` outputs to stdout only (no backend sending)
+- README.md / README.ja.md updated with Grafana Cloud setup instructions
+
+### Removed
+- `grafana_push.py` standalone script (functionality moved into `speedtest_z/grafana.py`)
+
 ## [0.5.1] - 2026-02-22
 
 ### Fixed
@@ -92,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - systemd timer deployment files
 - PyPI release workflow (TestPyPI + PyPI)
 
+[0.6.0]: https://github.com/shigechika/speedtest-z/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/shigechika/speedtest-z/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/shigechika/speedtest-z/compare/v0.4.9...v0.5.0
 [0.4.9]: https://github.com/shigechika/speedtest-z/compare/v0.4.8...v0.4.9
