@@ -12,7 +12,14 @@ Selenium を使って複数の速度テストサイト（Cloudflare, Netflix/fas
 
 ## アーキテクチャ
 
-- `speedtest_z/main.py` — メインスクリプト（SpeedtestZ クラス + CLI エントリポイント）
+- `speedtest_z/cli.py` — CLI エントリポイント（`main()`）
+- `speedtest_z/runner.py` — SpeedtestZ コアクラス（WebDriver 管理・Zabbix 送信）
+- `speedtest_z/config.py` — 設定ファイル探索・ログ設定
+- `speedtest_z/i18n.py` — ロケール判定・メッセージ辞書
+- `speedtest_z/output.py` — JSON/CSV 出力（OutputCollector）
+- `speedtest_z/healthcheck.py` — `--check` URL 疎通確認
+- `speedtest_z/types.py` — ZabbixItem TypedDict
+- `speedtest_z/sites/` — サイトごとのランナー（`run_xxx(app)` 関数）
 - `speedtest_z/__init__.py` — バージョン情報（setuptools-scm で自動採番）
 - `config.ini` — 実行設定（探索順: CWD → ~/.config/speedtest-z/）
 - `logging.ini` — ログ設定（同上）
@@ -27,14 +34,20 @@ python3 -m venv .venv
 . .venv/bin/activate
 pip install -e .
 
-# 構文チェック
-python3 -m py_compile speedtest_z/main.py
+# lint / format
+ruff check speedtest_z/ tests/
+ruff format --check speedtest_z/ tests/
+
+# テスト
+pytest tests/ -v
 
 # CLI
 speedtest-z --version
 speedtest-z --list-sites
+speedtest-z --check
 speedtest-z --dry-run
 speedtest-z --dry-run cloudflare netflix
+speedtest-z --dry-run --output json cloudflare
 
 # パッケージビルド
 pip install build
@@ -45,6 +58,14 @@ python -m build
 
 - `.github/workflows/ci.yml` — push/PR 時に構文チェック + ビルドテスト（Python 3.10〜3.14）
 - `.github/workflows/release.yml` — `v*` タグ push 時に PyPI へ自動公開（Trusted Publishers）
+
+## リリース手順
+
+タグを打つ前に以下のドキュメントが最新か確認し、必要なら更新してから commit & push すること:
+
+1. **README.md / README.ja.md** — 新しい CLI オプション・機能・対応サイトの追記
+2. **CHANGELOG.md** — リリースエントリの追加
+3. 上記を commit & push してからタグを作成する
 
 ## 注意事項
 
