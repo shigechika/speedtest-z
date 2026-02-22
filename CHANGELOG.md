@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-02-22
+
+### Added
+- `--check` flag: verify site URL reachability via HTTP HEAD without launching Chrome
+- `--output json` / `--output csv`: structured output to stdout (Zabbix send is skipped)
+- `ruff` linter and formatter with CI integration
+- Type hints throughout with `ZabbixItem` TypedDict (`speedtest_z/types.py`)
+- Per-site unit tests under `tests/test_sites/` (137 tests total, up from 76)
+- `tests/test_snapshot.py`, `tests/test_healthcheck.py`, `tests/test_output.py`
+- `mock_driver` and `mock_app` shared fixtures in `conftest.py`
+
+### Changed
+- **Breaking:** split monolithic `main.py` (1650 lines) into modular package structure:
+  - `cli.py` (CLI entry point), `runner.py` (SpeedtestZ core), `config.py`, `i18n.py`
+  - `sites/` package with one module per site (cloudflare, netflix, google, ookla, boxtest, mlab, usen, inonius)
+- Entry point changed from `speedtest_z.main:main` to `speedtest_z.cli:main`
+- Site runners are now standalone functions (`run_xxx(app)`) instead of class methods
+- CI installs `dev` extras and runs `ruff check` / `ruff format --check`
+
+### Removed
+- `speedtest_z/main.py` (replaced by modular structure)
+
 ## [0.4.9] - 2026-02-16
 
 ### Fixed
@@ -65,6 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - systemd timer deployment files
 - PyPI release workflow (TestPyPI + PyPI)
 
+[0.5.0]: https://github.com/shigechika/speedtest-z/compare/v0.4.9...v0.5.0
 [0.4.9]: https://github.com/shigechika/speedtest-z/compare/v0.4.8...v0.4.9
 [0.4.8]: https://github.com/shigechika/speedtest-z/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/shigechika/speedtest-z/compare/v0.4.4...v0.4.7
