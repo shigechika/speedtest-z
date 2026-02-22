@@ -8,12 +8,13 @@
 
 ## プロジェクト概要
 
-Selenium を使って複数の速度テストサイト（Cloudflare, Netflix/fast.com, Google Fiber, Ookla, Box-test, M-Lab, USEN, iNonius）を自動実行し、結果を Zabbix へトラッパーアイテムとして送信するツール。
+Selenium を使って複数の速度テストサイト（Cloudflare, Netflix/fast.com, Google Fiber, Ookla, Box-test, M-Lab, USEN, iNonius）を自動実行し、結果を Zabbix や Grafana Cloud へ送信するツール。
 
 ## アーキテクチャ
 
 - `speedtest_z/cli.py` — CLI エントリポイント（`main()`）
-- `speedtest_z/runner.py` — SpeedtestZ コアクラス（WebDriver 管理・Zabbix 送信）
+- `speedtest_z/runner.py` — SpeedtestZ コアクラス（WebDriver 管理・結果送信）
+- `speedtest_z/grafana.py` — Grafana Cloud Prometheus Remote Write 送信（Protobuf エンコーダー + GrafanaSender）
 - `speedtest_z/config.py` — 設定ファイル探索・ログ設定
 - `speedtest_z/i18n.py` — ロケール判定・メッセージ辞書
 - `speedtest_z/output.py` — JSON/CSV 出力（OutputCollector）
@@ -33,6 +34,8 @@ Selenium を使って複数の速度テストサイト（Cloudflare, Netflix/fas
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -e .
+# Grafana Cloud 連携を使う場合
+pip install -e ".[grafana]"
 
 # lint / format
 ruff check speedtest_z/ tests/
@@ -69,12 +72,23 @@ python -m build
 
 **重要: PyPI はバージョンの上書きを許可しない。** 一度タグを push して PyPI に公開されたバージョンは、タグを削除・再作成しても同じバージョン番号では再公開できない。ドキュメント修正のみでもパッチバージョンを上げること（例: v0.5.0 → v0.5.1）。
 
+## config.ini の設計
+
+- `[general]` の `dry_run`（旧名 `dryrun` もフォールバックでサポート）
+- `[zabbix]` に `enable` フラグ（デフォルト `false`）。`enable = true` で Zabbix 送信が有効
+- `[grafana]` セクション（オプション）。`enable = true` + `remote_write_url` / `username` / `token` で Grafana Cloud 送信
+- `--dry-run` 時は Zabbix も Grafana も送信しない（外部送信を全て止める一貫したルール）
+- `--output json/csv` 時は stdout 出力のみ（バックエンド送信なし）
+- `cramjam` は optional dependency: `pip install speedtest-z[grafana]`
+- `send_results()` が全バックエンド（Zabbix + Grafana）への送信を一括管理
+
 ## 注意事項
 
 - `config.ini` は `.gitignore` で除外（`config.ini-sample` をコピーして使用）
 - Chrome ブラウザが実行環境に必要（pip では入らない）
 - テストサイトの DOM 構造変更によりセレクタが壊れる可能性がある（定期的な確認が必要）
 - `-y` / `--yes` は隠しオプション（`argparse.SUPPRESS`）。README や CHANGELOG に記載しないこと
+- `grafana-dashboard.json` は開発中のため未コミット。実機で熟成してからレポジトリに追加する
 
 ## README スクリーンショットの差し替え手順
 
