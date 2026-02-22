@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.1] - 2026-02-22
+
+### Fixed
+- `_setup_logging()` missing `stream` parameter causing TypeError on startup
+
 ## [0.6.0] - 2026-02-22
 
 ### Added
@@ -111,6 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - systemd timer deployment files
 - PyPI release workflow (TestPyPI + PyPI)
 
+[0.6.1]: https://github.com/shigechika/speedtest-z/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/shigechika/speedtest-z/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/shigechika/speedtest-z/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/shigechika/speedtest-z/compare/v0.4.9...v0.5.0
