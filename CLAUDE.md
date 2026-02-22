@@ -23,7 +23,7 @@ Selenium を使って複数の速度テストサイト（Cloudflare, Netflix/fas
 - `speedtest_z/sites/` — サイトごとのランナー（`run_xxx(app)` 関数）
 - `speedtest_z/__init__.py` — バージョン情報（setuptools-scm で自動採番）
 - `config.ini` — 実行設定（探索順: CWD → ~/.config/speedtest-z/）
-- `logging.ini` — ログ設定（同上）
+- `logging.ini` — ログ設定（同上、コンソールは stderr 出力）
 - `deploy/` — systemd service/timer, cron（デプロイ参考用）
 - `speedtest-z_templates.yaml` — Zabbix テンプレート
 
@@ -78,7 +78,7 @@ python -m build
 - `[zabbix]` に `enable` フラグ（デフォルト `false`）。`enable = true` で Zabbix 送信が有効
 - `[grafana]` セクション（オプション）。`enable = true` + `remote_write_url` / `username` / `token` で Grafana Cloud 送信
 - `--dry-run` 時は Zabbix も Grafana も送信しない（外部送信を全て止める一貫したルール）
-- `--output json/csv` 時は stdout 出力のみ（バックエンド送信なし）
+- `--output json/csv` 時は stdout 出力のみ（バックエンド送信なし）。ログは stderr に出力されるため `2>/dev/null` で抑制可能
 - `cramjam` は optional dependency: `pip install speedtest-z[grafana]`
 - `send_results()` が全バックエンド（Zabbix + Grafana）への送信を一括管理
 
@@ -88,7 +88,7 @@ python -m build
 - Chrome ブラウザが実行環境に必要（pip では入らない）
 - テストサイトの DOM 構造変更によりセレクタが壊れる可能性がある（定期的な確認が必要）
 - `-y` / `--yes` は隠しオプション（`argparse.SUPPRESS`）。README や CHANGELOG に記載しないこと
-- `grafana-dashboard.json` は開発中のため未コミット。実機で熟成してからレポジトリに追加する
+- Linux 環境で日本語サイト（USEN, iNonius）のスナップショットがお豆腐になる場合は `apt install fonts-noto-cjk`
 
 ## README スクリーンショットの差し替え手順
 
