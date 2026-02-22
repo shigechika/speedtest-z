@@ -47,8 +47,10 @@ class SpeedtestZ:
         else:
             logger.warning(_msg("config_not_found_fallback"))
 
-        # [general]
-        self.dryrun = self.config.getboolean("general", "dryrun", fallback=True)
+        # [general] — dry_run を優先、なければ旧名 dryrun にフォールバック
+        self.dryrun = self.config.getboolean("general", "dry_run", fallback=None)
+        if self.dryrun is None:
+            self.dryrun = self.config.getboolean("general", "dryrun", fallback=True)
         self.headless = self.config.getboolean("general", "headless", fallback=True)
         self.timeout = self.config.getint("general", "timeout", fallback=30)
         self.ookla_server = self.config.get("general", "ookla_server", fallback=None)
@@ -74,9 +76,27 @@ class SpeedtestZ:
                 self.auto_consent = True
 
         # [zabbix]
+        self.zabbix_enable = self.config.getboolean("zabbix", "enable", fallback=False)
         self.zabbix_server = self.config.get("zabbix", "server", fallback="127.0.0.1")
         self.zabbix_port = self.config.getint("zabbix", "port", fallback=10051)
         self.zabbix_host = self.config.get("zabbix", "host", fallback="speedtest-agent")
+
+        # [grafana]
+        self.grafana_sender = None
+        if self.config.has_section("grafana"):
+            grafana_enable = self.config.getboolean("grafana", "enable", fallback=False)
+            if grafana_enable:
+                try:
+                    from speedtest_z.grafana import GrafanaSender
+
+                    url = self.config.get("grafana", "remote_write_url")
+                    username = self.config.get("grafana", "username")
+                    token = self.config.get("grafana", "token")
+                    self.grafana_sender = GrafanaSender(url, username, token)
+                except ImportError:
+                    logger.warning(
+                        "cramjam not installed. Run: pip install speedtest-z[grafana]"
+                    )
 
         # [snapshot]
         self.snapshot_enable = self.config.getboolean("snapshot", "enable", fallback=False)
@@ -173,8 +193,8 @@ class SpeedtestZ:
         except Exception as e:
             logger.warning(f"Failed to take snapshot: {e}")
 
-    def send_to_zabbix(self, data_list: list[dict[str, str]]) -> None:
-        """Send measurement results to Zabbix via trapper protocol."""
+    def send_results(self, data_list: list[dict[str, str]]) -> None:
+        """Send measurement results to enabled backends (Zabbix, Grafana)."""
         if not data_list:
             return
 
@@ -190,12 +210,21 @@ class SpeedtestZ:
             logger.info("Dryrun: True - Data not sent.")
             return
 
-        try:
-            sender = Sender(self.zabbix_server, self.zabbix_port)
-            res = sender.send_bulk(packet)
-            logger.info(f"Zabbix Response: {res}")
-        except Exception as e:
-            logger.error(f"Failed to send to Zabbix: {e}")
+        # Zabbix 送信
+        if self.zabbix_enable:
+            try:
+                sender = Sender(self.zabbix_server, self.zabbix_port)
+                res = sender.send_bulk(packet)
+                logger.info(f"Zabbix Response: {res}")
+            except Exception as e:
+                logger.error(f"Failed to send to Zabbix: {e}")
+
+        # Grafana 送信
+        if self.grafana_sender:
+            try:
+                self.grafana_sender.send(data_list)
+            except Exception as e:
+                logger.error(f"Failed to send to Grafana: {e}")
 
     def _get_window_position(self) -> tuple[int, int]:
         """Calculate top-right window position based on OS."""

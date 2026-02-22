@@ -95,7 +95,7 @@ def run_usen(app: SpeedtestZ) -> None:
                     "value": jitter,
                 },
             ]
-            app.send_to_zabbix(data)
+            app.send_results(data)
 
         except NoSuchElementException as e:
             logger.error(f"usen: Result elements not found. {e}")

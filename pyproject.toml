@@ -35,6 +35,7 @@ dependencies = [
 dev = ["ruff"]
 test = ["pytest"]
 completion = ["argcomplete"]
+grafana = ["cramjam"]
 
 [project.urls]
 Homepage = "https://github.com/shigechika/speedtest-z"

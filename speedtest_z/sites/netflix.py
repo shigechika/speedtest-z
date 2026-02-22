@@ -83,7 +83,7 @@ def run_netflix(app: SpeedtestZ) -> None:
                     "value": server_locations,
                 },
             ]
-            app.send_to_zabbix(data)
+            app.send_results(data)
 
         except NoSuchElementException as e:
             logger.error(f"netflix: Result elements not found. {e}")

@@ -18,6 +18,7 @@ speedtest-z は Web ブラウザで主要な速度テストサイトを自動巡
 
 - 8つの速度テストサイトを自動実行（Cloudflare, Netflix/fast.com, Google Fiber, Ookla, Box-test, M-Lab, USEN, iNonius）
 - Zabbixへトラッパーアイテムとして結果送信（[zappix](https://pypi.org/project/zappix/) 使用）
+- Grafana Cloud 連携（Prometheus Remote Write、オプション）
 - サイトごとの実行頻度設定（確率ベースのスロットリング）
 - デバッグ用スクリーンショット保存
 - ヘッドレス/GUI Chromeモード切替
@@ -58,6 +59,14 @@ pip install -e .
 - [selenium](https://pypi.org/project/selenium/) — ブラウザ自動操作
 - [zappix](https://pypi.org/project/zappix/) — Zabbix トラッパー送信
 
+### Grafana Cloud 対応（オプション）
+
+```bash
+pip install speedtest-z[grafana]
+```
+
+Prometheus Remote Write に必要な Snappy 圧縮ライブラリ `cramjam` がインストールされます。
+
 ### タブ補完（任意）
 
 ```bash
@@ -84,7 +93,7 @@ eval "$(register-python-argcomplete speedtest-z)"
 ```ini
 [general]
 # 実行モード設定
-dryrun = true           # true にすると Zabbix へ送信しない
+dry_run = true          # true にすると外部送信しない（旧名 dryrun も互換サポート）
 headless = false        # ヘッドレスモード（GUI なし）
 timeout = 30            # 各テストのタイムアウト（秒）
 # ookla_server = IPA CyberLab 400G   # Ookla テストサーバ（省略時: 自動選択）
@@ -94,9 +103,20 @@ timeout = 30            # 各テストのタイムアウト（秒）
 
 ```ini
 [zabbix]
-server = 127.0.0.1      # 送信先 Zabbix Server
+enable = false           # true にすると Zabbix へ送信する
+server = 127.0.0.1       # 送信先 Zabbix Server
 port = 10051             # Zabbix トラッパーポート
 host = speedtest-agent   # Zabbix ホスト名
+```
+
+#### `[grafana]` セクション（オプション）
+
+```ini
+[grafana]
+enable = false
+remote_write_url = https://prometheus-prod-XX-prod-XX.grafana.net/api/prom/push
+username = <Prometheus ユーザ名>
+token = <Grafana Cloud API トークン>
 ```
 
 #### `[snapshot]` セクション
@@ -247,7 +267,25 @@ $ speedtest-z --dry-run
 
 - 全アイテムはトラッパータイプ（`type: TRAP`）
 - 速度系アイテムは Mbps → bps への前処理（MULTIPLIER x1000000）付き
-- `config.ini` の `[zabbix]` セクションで送信先を設定
+- `config.ini` の `[zabbix]` セクションで `enable = true` に設定
+
+## Grafana Cloud 連携
+
+Prometheus Remote Write 経由で Grafana Cloud にメトリクスを送信できます。
+
+1. Grafana 対応をインストール: `pip install speedtest-z[grafana]`
+2. `config.ini` に `[grafana]` セクションを追加:
+
+```ini
+[grafana]
+enable = true
+remote_write_url = https://prometheus-prod-XX-prod-XX.grafana.net/api/prom/push
+username = <Prometheus ユーザ名>
+token = <Grafana Cloud API トークン>
+```
+
+3. メトリクスは `speedtest_<metric>{site="<site>"}` の形式で送信されます（例: `speedtest_download{site="cloudflare"}`）
+4. Zabbix と Grafana は同時に有効化でき、計測結果は全ての有効なバックエンドに送信されます
 
 ```bash
 # Zabbix Web UI → 設定 → テンプレート → インポート

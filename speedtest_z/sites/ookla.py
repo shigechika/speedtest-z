@@ -208,7 +208,7 @@ def run_ookla(app: SpeedtestZ) -> None:
                     "value": ping,
                 },
             ]
-            app.send_to_zabbix(data)
+            app.send_results(data)
             app.take_snapshot("ookla")
             return
 

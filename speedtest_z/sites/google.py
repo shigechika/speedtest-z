@@ -102,7 +102,7 @@ def run_google(app: SpeedtestZ) -> None:
                     "value": ping,
                 },
             ]
-            app.send_to_zabbix(data)
+            app.send_results(data)
 
         except Exception as e:
             logger.error(f"google: Error reading results: {e}")

@@ -1,6 +1,6 @@
 [general]
 # Run mode
-dryrun = true
+dry_run = true
 headless = false
 # Timeout in seconds
 timeout = 30
@@ -11,6 +11,7 @@ timeout = 30
 
 [zabbix]
 # Zabbix Server destination
+enable = false
 server = 127.0.0.1
 port = 10051
 host = speedtest-agent
@@ -33,3 +34,10 @@ boxtest = 50
 mlab = 10
 usen = 50
 inonius = 50
+
+# [grafana]
+# # Grafana Cloud Prometheus Remote Write
+# enable = false
+# remote_write_url = https://prometheus-prod-XX-prod-XX.grafana.net/api/prom/push
+# username =
+# token =

@@ -97,23 +97,23 @@ class TestRunCloudflare:
     def test_skip_when_should_run_false(self, mock_app):
         """_should_run が False の場合スキップ"""
         mock_app._should_run = MagicMock(return_value=False)
-        mock_app.send_to_zabbix = MagicMock()
+        mock_app.send_results = MagicMock()
         run_cloudflare(mock_app)
-        mock_app.send_to_zabbix.assert_not_called()
+        mock_app.send_results.assert_not_called()
 
     def test_skip_when_load_fails(self, mock_app):
         """ページ読み込み失敗時にスキップ"""
         mock_app._should_run = MagicMock(return_value=True)
         mock_app._load_with_retry = MagicMock(return_value=False)
-        mock_app.send_to_zabbix = MagicMock()
+        mock_app.send_results = MagicMock()
         run_cloudflare(mock_app)
-        mock_app.send_to_zabbix.assert_not_called()
+        mock_app.send_results.assert_not_called()
 
     def test_sends_data_on_success(self, mock_app):
         """正常にデータ抽出・送信される"""
         mock_app._should_run = MagicMock(return_value=True)
         mock_app._load_with_retry = MagicMock(return_value=True)
-        mock_app.send_to_zabbix = MagicMock()
+        mock_app.send_results = MagicMock()
         mock_app.take_snapshot = MagicMock()
 
         with (
@@ -126,8 +126,8 @@ class TestRunCloudflare:
         ):
             run_cloudflare(mock_app)
 
-        mock_app.send_to_zabbix.assert_called_once()
-        data = mock_app.send_to_zabbix.call_args[0][0]
+        mock_app.send_results.assert_called_once()
+        data = mock_app.send_results.call_args[0][0]
         assert len(data) == 4
         assert data[0]["key"] == "cloudflare.download"
         assert data[0]["value"] == "100.5"

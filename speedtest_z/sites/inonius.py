@@ -130,7 +130,7 @@ def run_inonius(app: SpeedtestZ) -> None:
                 logger.warning(f"inonius: Error processing {key_suffix}: {e}")
 
         logger.debug(f"inonius Result: {data}")
-        app.send_to_zabbix(data)
+        app.send_results(data)
 
     except Exception as e:
         logger.error(f"inonius Error: {e}")

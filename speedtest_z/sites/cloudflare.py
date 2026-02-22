@@ -150,7 +150,7 @@ def run_cloudflare(app: SpeedtestZ) -> None:
                     "value": jitter,
                 },
             ]
-            app.send_to_zabbix(data)
+            app.send_results(data)
 
         except Exception as e:
             logger.error(f"cloudflare: Error extracting results: {e}")

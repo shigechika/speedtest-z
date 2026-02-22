@@ -108,7 +108,7 @@ def run_mlab(app: SpeedtestZ) -> None:
                     "value": retrans,
                 },
             ]
-            app.send_to_zabbix(data)
+            app.send_results(data)
 
         except Exception as e:
             logger.error(f"mlab: Error extracting results: {e}")

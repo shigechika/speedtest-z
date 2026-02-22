@@ -159,7 +159,7 @@ def run_boxtest(app: SpeedtestZ) -> None:
                 logger.warning(f"boxtest: Error processing {key_suffix}: {e}")
 
         logger.debug(f"boxtest Result: {data}")
-        app.send_to_zabbix(data)
+        app.send_results(data)
         app.take_snapshot("boxtest")
 
     except Exception as e:

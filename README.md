@@ -18,6 +18,7 @@ speedtest-z automates major speed test sites with a web browser, capturing real 
 
 - Runs speed tests on 8 different sites automatically (Cloudflare, Netflix/fast.com, Google Fiber, Ookla, Box-test, M-Lab, USEN, iNonius)
 - Sends results to Zabbix via trapper items (using [zappix](https://pypi.org/project/zappix/))
+- Optional Grafana Cloud integration via Prometheus Remote Write
 - Configurable test frequency per site (probability-based throttling)
 - Screenshot capture for debugging
 - Headless or GUI Chrome mode
@@ -32,6 +33,7 @@ speedtest-z automates major speed test sites with a web browser, capturing real 
 - [Usage](#usage)
 - [Supported Test Sites](#supported-test-sites)
 - [Zabbix Integration](#zabbix-integration)
+- [Grafana Cloud Integration](#grafana-cloud-integration)
 - [Deployment (systemd)](#deployment-systemd)
 - [License](#license)
 
@@ -69,6 +71,14 @@ pip install -e .
 - [selenium](https://pypi.org/project/selenium/) -- Browser automation
 - [zappix](https://pypi.org/project/zappix/) -- Zabbix sender protocol
 
+### Grafana Cloud Support (optional)
+
+```bash
+pip install speedtest-z[grafana]
+```
+
+This installs `cramjam` for Snappy compression required by Prometheus Remote Write.
+
 ### Tab Completion (optional)
 
 ```bash
@@ -94,13 +104,14 @@ Copy `config.ini-sample` to one of these locations and edit as needed.
 ```ini
 [general]
 # Run mode
-dryrun = true          # true = do not send data to Zabbix
+dry_run = true         # true = do not send data to backends
 headless = false       # true = run Chrome in headless mode
 timeout = 30           # timeout in seconds for each test
 # ookla_server = IPA CyberLab 400G   # Ookla test server (omit for auto-select)
 
 [zabbix]
 # Zabbix server settings
+enable = false           # true = send results to Zabbix
 server = 127.0.0.1
 port = 10051
 host = speedtest-agent   # Zabbix host name for trapper items
@@ -121,7 +132,16 @@ boxtest = 50
 mlab = 10
 usen = 50
 inonius = 50
+
+# [grafana]
+# # Grafana Cloud Prometheus Remote Write
+# enable = false
+# remote_write_url = https://prometheus-prod-XX-prod-XX.grafana.net/api/prom/push
+# username =
+# token =
 ```
+
+> **Note:** The `dryrun` key (without underscore) is still supported for backward compatibility but `dry_run` is preferred.
 
 ### logging.ini
 
@@ -247,8 +267,26 @@ All Zabbix item keys are prefixed with the site name (e.g., `cloudflare.download
 
 1. Import the `speedtest-z_templates.yaml` template into Zabbix.
 2. All items are **trapper** type -- the agent pushes data to Zabbix using the zappix sender protocol.
-3. Set the `[zabbix]` section in `config.ini` to match your Zabbix server settings.
+3. Set `enable = true` in the `[zabbix]` section of `config.ini`.
 4. The `host` value in `config.ini` must match the host name registered in Zabbix.
+
+## Grafana Cloud Integration
+
+speedtest-z can push metrics to Grafana Cloud via Prometheus Remote Write.
+
+1. Install with Grafana support: `pip install speedtest-z[grafana]`
+2. Add the `[grafana]` section to `config.ini`:
+
+```ini
+[grafana]
+enable = true
+remote_write_url = https://prometheus-prod-XX-prod-XX.grafana.net/api/prom/push
+username = <your-prometheus-username>
+token = <your-grafana-cloud-api-token>
+```
+
+3. Metrics are sent as `speedtest_<metric>` with a `site` label (e.g., `speedtest_download{site="cloudflare"}`).
+4. Both Zabbix and Grafana can be enabled simultaneously -- results are sent to all enabled backends.
 
 ## Deployment (systemd)
 

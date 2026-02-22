@@ -13,9 +13,9 @@ class OutputCollector:
     """Collect measurement results and flush them in the requested format.
 
     Used when ``--output json`` or ``--output csv`` is specified.  Each
-    site runner calls ``app.send_to_zabbix(data)`` as before; the runner
+    site runner calls ``app.send_results(data)`` as before; the CLI
     layer intercepts this and calls :meth:`add` instead of actually
-    sending to Zabbix.
+    sending to backends.
 
     Args:
         fmt: Output format (``"json"`` or ``"csv"``).

@@ -158,7 +158,10 @@ def main() -> None:
         sys.exit(check_sites(args.sites or None))
 
     # logging 設定（--debug 対応）
-    _setup_logging(debug=args.debug)
+    # json/csv 出力時は stdout を占有するため、ログを stderr に出す
+    output_fmt = getattr(args, "output", "zabbix")
+    log_stream = "stderr" if output_fmt in ("json", "csv") else "stdout"
+    _setup_logging(debug=args.debug, stream=log_stream)
 
     # config.ini の存在チェック（必須）
     config_path = _find_config("config.ini", args.config)
@@ -183,15 +186,15 @@ def main() -> None:
 
     app = SpeedtestZ(args)
 
-    # json/csv モードでは send_to_zabbix を OutputCollector に差し替え
+    # json/csv モードでは send_results を OutputCollector に差し替え
     collector = None
     output_fmt = getattr(args, "output", "zabbix")
     if output_fmt in ("json", "csv"):
         from speedtest_z.output import OutputCollector
 
         collector = OutputCollector(output_fmt)
-        app._original_send_to_zabbix = app.send_to_zabbix
-        app.send_to_zabbix = collector.add
+        app._original_send_results = app.send_results
+        app.send_results = collector.add
 
     try:
         sites = args.sites if args.sites else AVAILABLE_SITES
