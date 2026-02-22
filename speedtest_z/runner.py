@@ -94,9 +94,7 @@ class SpeedtestZ:
                     token = self.config.get("grafana", "token")
                     self.grafana_sender = GrafanaSender(url, username, token)
                 except ImportError:
-                    logger.warning(
-                        "cramjam not installed. Run: pip install speedtest-z[grafana]"
-                    )
+                    logger.warning("cramjam not installed. Run: pip install speedtest-z[grafana]")
 
         # [snapshot]
         self.snapshot_enable = self.config.getboolean("snapshot", "enable", fallback=False)

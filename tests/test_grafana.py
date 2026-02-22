@@ -102,20 +102,14 @@ class TestEncodeWriteRequest:
 
     def test_single(self):
         """単一 TimeSeries の WriteRequest"""
-        ts = encode_timeseries(
-            [("__name__", "speedtest_download")], 100.5, 1700000000000
-        )
+        ts = encode_timeseries([("__name__", "speedtest_download")], 100.5, 1700000000000)
         result = encode_write_request([ts])
         assert len(result) > 0
 
     def test_multiple(self):
         """複数 TimeSeries の WriteRequest"""
-        ts1 = encode_timeseries(
-            [("__name__", "speedtest_download")], 100.5, 1700000000000
-        )
-        ts2 = encode_timeseries(
-            [("__name__", "speedtest_upload")], 50.2, 1700000000000
-        )
+        ts1 = encode_timeseries([("__name__", "speedtest_download")], 100.5, 1700000000000)
+        ts2 = encode_timeseries([("__name__", "speedtest_upload")], 50.2, 1700000000000)
         result = encode_write_request([ts1, ts2])
         assert b"speedtest_download" in result
         assert b"speedtest_upload" in result
@@ -384,9 +378,7 @@ class TestDryRunCompat:
 
     def test_dry_run_takes_priority(self):
         """dry_run と dryrun 両方ある場合、dry_run が優先されること"""
-        app = self._make_app_with_config(
-            {"general": {"dry_run": "false", "dryrun": "true"}}
-        )
+        app = self._make_app_with_config({"general": {"dry_run": "false", "dryrun": "true"}})
         assert app.dryrun is False
 
     def test_neither_key_defaults_true(self):
