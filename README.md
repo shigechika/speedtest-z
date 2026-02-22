@@ -149,6 +149,8 @@ speedtest-z [options] [site ...]
 | `--no-headless`, `--headed` | Run Chrome with GUI (non-headless) |
 | `--timeout SECONDS` | Timeout in seconds for each test |
 | `--list-sites` | List available test sites and exit |
+| `--check` | Check site URL reachability and exit (no Chrome needed) |
+| `-o`, `--output FORMAT` | Output format: `zabbix` (default), `json`, `csv` |
 | `-d`, `--debug` | Enable debug output |
 | `site` | Positional argument(s): test site(s) to run (default: all) |
 
@@ -176,6 +178,18 @@ speedtest-z --no-headless -d cloudflare
 
 # List available sites
 speedtest-z --list-sites
+
+# Check if all test site URLs are reachable (no Chrome needed)
+speedtest-z --check
+
+# Check specific sites only
+speedtest-z --check cloudflare netflix
+
+# Output results as JSON (Zabbix send is skipped)
+speedtest-z --dry-run --output json cloudflare 2>/dev/null
+
+# Output results as CSV
+speedtest-z --dry-run -o csv cloudflare netflix 2>/dev/null
 ```
 
 ## Example Output

@@ -149,6 +149,8 @@ speedtest-z [options] [site ...]
 | `--no-headless`, `--headed` | GUI モードで実行 |
 | `--timeout SECONDS` | 各テストのタイムアウト（秒） |
 | `--list-sites` | 利用可能なテストサイト一覧を表示して終了 |
+| `--check` | テストサイト URL の疎通確認を行い終了（Chrome 不要） |
+| `-o`, `--output FORMAT` | 出力形式: `zabbix`（デフォルト）、`json`、`csv` |
 | `-d`, `--debug` | デバッグ出力を有効化 |
 | `site` | 実行するテストサイト（位置引数、省略時は全サイト） |
 
@@ -176,6 +178,18 @@ speedtest-z --no-headless -d google
 
 # 利用可能なサイト一覧を表示
 speedtest-z --list-sites
+
+# テストサイト URL の疎通確認（Chrome 不要）
+speedtest-z --check
+
+# 特定サイトのみ疎通確認
+speedtest-z --check cloudflare netflix
+
+# 結果を JSON で出力（Zabbix 送信はスキップ）
+speedtest-z --dry-run --output json cloudflare 2>/dev/null
+
+# 結果を CSV で出力
+speedtest-z --dry-run -o csv cloudflare netflix 2>/dev/null
 ```
 
 ## 実行例
