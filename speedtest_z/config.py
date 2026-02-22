@@ -37,7 +37,7 @@ def _find_config(name: str, cli_path: str | None = None) -> str | None:
     return None
 
 
-def _setup_logging(debug: bool = False) -> None:
+def _setup_logging(debug: bool = False, stream: str = "stdout") -> None:
     """Initialize logging configuration."""
     logging_ini = _find_config("logging.ini")
     if logging_ini:
@@ -45,8 +45,10 @@ def _setup_logging(debug: bool = False) -> None:
         if debug:
             logging.getLogger().setLevel(logging.DEBUG)
     else:
+        out = sys.stderr if stream == "stderr" else sys.stdout
         logging.basicConfig(
             level=logging.DEBUG if debug else logging.INFO,
             format="%(asctime)s [%(levelname)s] %(message)s",
-            handlers=[logging.StreamHandler(sys.stdout)],
+            handlers=[logging.StreamHandler(out)],
+            force=True,
         )
