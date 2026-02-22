@@ -1,8 +1,8 @@
 """Zabbix 送信ロジックのテスト"""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from speedtest_z.main import SpeedtestZ
+from speedtest_z.runner import SpeedtestZ
 
 
 def _make_app(dryrun=True):
@@ -22,7 +22,7 @@ class TestSendToZabbix:
     def test_empty_list(self):
         """空リストでは何もしない"""
         app = _make_app()
-        with patch("speedtest_z.main.Sender") as mock_sender:
+        with patch("speedtest_z.runner.Sender") as mock_sender:
             app.send_to_zabbix([])
             mock_sender.assert_not_called()
 
@@ -30,7 +30,7 @@ class TestSendToZabbix:
         """dryrun=True では Sender.send_bulk() が呼ばれない"""
         app = _make_app(dryrun=True)
         data = [{"key": "speedtest.dl", "value": "100.5"}]
-        with patch("speedtest_z.main.Sender") as mock_sender:
+        with patch("speedtest_z.runner.Sender") as mock_sender:
             app.send_to_zabbix(data)
             mock_sender.assert_not_called()
 
@@ -38,7 +38,7 @@ class TestSendToZabbix:
         """dryrun=False では Sender が生成され send_bulk() が呼ばれる"""
         app = _make_app(dryrun=False)
         data = [{"key": "speedtest.dl", "value": "100.5"}]
-        with patch("speedtest_z.main.Sender") as mock_sender_cls:
+        with patch("speedtest_z.runner.Sender") as mock_sender_cls:
             mock_instance = MagicMock()
             mock_sender_cls.return_value = mock_instance
             app.send_to_zabbix(data)
@@ -53,8 +53,10 @@ class TestSendToZabbix:
             {"key": "speedtest.dl", "value": "100.5"},
             {"key": "speedtest.ul", "value": "50.2"},
         ]
-        with patch("speedtest_z.main.Sender") as mock_sender_cls, \
-             patch("speedtest_z.main.SenderData") as mock_sd:
+        with (
+            patch("speedtest_z.runner.Sender") as mock_sender_cls,
+            patch("speedtest_z.runner.SenderData") as mock_sd,
+        ):
             mock_instance = MagicMock()
             mock_sender_cls.return_value = mock_instance
             app.send_to_zabbix(data)
@@ -68,8 +70,10 @@ class TestSendToZabbix:
         """データに host を含む場合はそちらを使う"""
         app = _make_app(dryrun=False)
         data = [{"host": "custom-host", "key": "speedtest.dl", "value": "99"}]
-        with patch("speedtest_z.main.Sender") as mock_sender_cls, \
-             patch("speedtest_z.main.SenderData") as mock_sd:
+        with (
+            patch("speedtest_z.runner.Sender") as mock_sender_cls,
+            patch("speedtest_z.runner.SenderData") as mock_sd,
+        ):
             mock_sender_cls.return_value = MagicMock()
             app.send_to_zabbix(data)
 
@@ -79,7 +83,7 @@ class TestSendToZabbix:
         """送信エラーでもクラッシュしない"""
         app = _make_app(dryrun=False)
         data = [{"key": "speedtest.dl", "value": "100"}]
-        with patch("speedtest_z.main.Sender") as mock_sender_cls:
+        with patch("speedtest_z.runner.Sender") as mock_sender_cls:
             mock_instance = MagicMock()
             mock_instance.send_bulk.side_effect = Exception("Connection refused")
             mock_sender_cls.return_value = mock_instance

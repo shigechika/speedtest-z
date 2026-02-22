@@ -1,8 +1,8 @@
 """スロットリング（_should_run）のテスト"""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-from speedtest_z.main import SpeedtestZ
+from speedtest_z.runner import SpeedtestZ
 
 
 def _make_app(mock_config, explicit_sites=False):
@@ -39,25 +39,25 @@ class TestShouldRun:
         """frequency=50 で乱数が範囲内なら実行"""
         app = _make_app(mock_config)
         # ookla は config で 50
-        with patch("speedtest_z.main.random.randint", return_value=30):
+        with patch("speedtest_z.runner.random.randint", return_value=30):
             assert app._should_run("ookla") is True
 
     def test_frequency_50_skip(self, mock_config):
         """frequency=50 で乱数が範囲外ならスキップ"""
         app = _make_app(mock_config)
-        with patch("speedtest_z.main.random.randint", return_value=80):
+        with patch("speedtest_z.runner.random.randint", return_value=80):
             assert app._should_run("ookla") is False
 
     def test_frequency_boundary_run(self, mock_config):
         """frequency=50 で乱数がちょうど50なら実行"""
         app = _make_app(mock_config)
-        with patch("speedtest_z.main.random.randint", return_value=50):
+        with patch("speedtest_z.runner.random.randint", return_value=50):
             assert app._should_run("ookla") is True
 
     def test_frequency_boundary_skip(self, mock_config):
         """frequency=50 で乱数が51ならスキップ"""
         app = _make_app(mock_config)
-        with patch("speedtest_z.main.random.randint", return_value=51):
+        with patch("speedtest_z.runner.random.randint", return_value=51):
             assert app._should_run("ookla") is False
 
     def test_frequency_fallback_default(self, mock_config):

@@ -2,8 +2,11 @@
 
 import argparse
 import configparser
+from unittest.mock import MagicMock, patch
 
 import pytest
+
+from speedtest_z.runner import SpeedtestZ
 
 
 @pytest.fixture
@@ -76,3 +79,35 @@ def sample_config_ini(tmp_path):
         "ookla = 50\n"
     )
     return ini
+
+
+@pytest.fixture
+def mock_driver():
+    """Selenium WebDriver のモック"""
+    driver = MagicMock()
+    driver.page_source = "<html></html>"
+    return driver
+
+
+@pytest.fixture
+def mock_app(mock_config, mock_driver):
+    """SpeedtestZ インスタンスのモック（WebDriver 迂回）"""
+    with patch.object(SpeedtestZ, "__init__", lambda self, *a, **kw: None):
+        app = SpeedtestZ.__new__(SpeedtestZ)
+        app.config = mock_config
+        app.driver = mock_driver
+        app.wait = MagicMock()
+        app.action_chains = MagicMock()
+        app.dryrun = True
+        app.headless = True
+        app.timeout = 30
+        app.zabbix_host = "speedtest-agent"
+        app.zabbix_server = "127.0.0.1"
+        app.zabbix_port = 10051
+        app.snapshot_enable = False
+        app.snapshot_dir = "./snapshots"
+        app.explicit_sites = False
+        app.auto_consent = False
+        app.ookla_server = None
+        app.chrome_profile_dir = "/tmp/chrome-profile"
+    return app

@@ -1,11 +1,16 @@
 """CLI パーサーのテスト"""
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from speedtest_z.main import (
-    _build_parser, _show_manual, _msg, main, AVAILABLE_SITES,
+import pytest
+
+from speedtest_z.cli import (
+    _build_parser,
+    _show_manual,
+    main,
 )
+from speedtest_z.i18n import _msg
+from speedtest_z.sites import AVAILABLE_SITES
 
 
 class TestBuildParser:
@@ -138,16 +143,14 @@ class TestShowManual:
 
     def test_manual_japanese_locale(self):
         """日本語ロケールで README.ja.md が表示されること"""
-        with patch("pydoc.pager") as mock_pager, \
-             patch("speedtest_z.main._LANG_JA", True):
+        with patch("pydoc.pager") as mock_pager, patch("speedtest_z.cli._LANG_JA", True):
             _show_manual()
             text = mock_pager.call_args[0][0]
             assert "特徴" in text
 
     def test_manual_english_locale(self):
         """英語ロケールで README.md が表示されること"""
-        with patch("pydoc.pager") as mock_pager, \
-             patch("speedtest_z.main._LANG_JA", False):
+        with patch("pydoc.pager") as mock_pager, patch("speedtest_z.cli._LANG_JA", False):
             _show_manual()
             text = mock_pager.call_args[0][0]
             assert "Features" in text
@@ -158,8 +161,10 @@ class TestMainMan:
 
     def test_man_calls_show_manual(self):
         """--man で _show_manual() が呼ばれること"""
-        with patch("speedtest_z.main._build_parser") as mock_parser, \
-             patch("speedtest_z.main._show_manual") as mock_show:
+        with (
+            patch("speedtest_z.cli._build_parser") as mock_parser,
+            patch("speedtest_z.cli._show_manual") as mock_show,
+        ):
             mock_args = MagicMock()
             mock_args.man = True
             mock_args.list_sites = False
@@ -173,7 +178,7 @@ class TestMainListSites:
 
     def test_list_sites_output(self, capsys):
         """--list-sites でサイト一覧を出力して終了"""
-        with patch("speedtest_z.main._build_parser") as mock_parser:
+        with patch("speedtest_z.cli._build_parser") as mock_parser:
             mock_args = MagicMock()
             mock_args.man = False
             mock_args.list_sites = True
@@ -191,12 +196,15 @@ class TestMainConfigRequired:
 
     def test_exit_when_config_not_found(self):
         """config.ini が見つからない場合 sys.exit(1)"""
-        with patch("speedtest_z.main._build_parser") as mock_parser, \
-             patch("speedtest_z.main._setup_logging"), \
-             patch("speedtest_z.main._find_config", return_value=None):
+        with (
+            patch("speedtest_z.cli._build_parser") as mock_parser,
+            patch("speedtest_z.cli._setup_logging"),
+            patch("speedtest_z.cli._find_config", return_value=None),
+        ):
             mock_args = MagicMock()
             mock_args.man = False
             mock_args.list_sites = False
+            mock_args.check = False
             mock_args.debug = False
             mock_args.config = None
             mock_parser.return_value.parse_args.return_value = mock_args
@@ -206,14 +214,18 @@ class TestMainConfigRequired:
 
     def test_config_path_passed_to_speedtestz(self):
         """見つかった config パスが args.config に設定されること"""
-        with patch("speedtest_z.main._build_parser") as mock_parser, \
-             patch("speedtest_z.main._setup_logging"), \
-             patch("speedtest_z.main._find_config", return_value="/found/config.ini"), \
-             patch("speedtest_z.main.SpeedtestZ") as mock_stz, \
-             patch("sys.stdin") as mock_stdin:
+        with (
+            patch("speedtest_z.cli._build_parser") as mock_parser,
+            patch("speedtest_z.cli._setup_logging"),
+            patch("speedtest_z.cli._find_config", return_value="/found/config.ini"),
+            patch("speedtest_z.runner.SpeedtestZ") as mock_stz,
+            patch("speedtest_z.cli.get_site_runners", return_value={}),
+            patch("sys.stdin") as mock_stdin,
+        ):
             mock_args = MagicMock()
             mock_args.man = False
             mock_args.list_sites = False
+            mock_args.check = False
             mock_args.debug = False
             mock_args.config = None
             mock_args.yes = True
@@ -236,6 +248,7 @@ class TestMainConfirmPrompt:
         mock_args = MagicMock()
         mock_args.man = False
         mock_args.list_sites = False
+        mock_args.check = False
         mock_args.debug = False
         mock_args.config = None
         mock_args.yes = yes
@@ -244,11 +257,13 @@ class TestMainConfirmPrompt:
 
     def test_prompt_shown_on_tty(self, capsys):
         """TTY で --yes なしの場合、確認プロンプトが表示されること"""
-        with patch("speedtest_z.main._build_parser") as mock_parser, \
-             patch("speedtest_z.main._setup_logging"), \
-             patch("speedtest_z.main._find_config", return_value="/tmp/config.ini"), \
-             patch("sys.stdin") as mock_stdin, \
-             patch("builtins.input", return_value="n"):
+        with (
+            patch("speedtest_z.cli._build_parser") as mock_parser,
+            patch("speedtest_z.cli._setup_logging"),
+            patch("speedtest_z.cli._find_config", return_value="/tmp/config.ini"),
+            patch("sys.stdin") as mock_stdin,
+            patch("builtins.input", return_value="n"),
+        ):
             mock_args = self._make_args()
             mock_parser.return_value.parse_args.return_value = mock_args
             mock_stdin.isatty.return_value = True
@@ -259,12 +274,15 @@ class TestMainConfirmPrompt:
 
     def test_prompt_yes_continues(self):
         """確認プロンプトで y を入力すると続行されること"""
-        with patch("speedtest_z.main._build_parser") as mock_parser, \
-             patch("speedtest_z.main._setup_logging"), \
-             patch("speedtest_z.main._find_config", return_value="/tmp/config.ini"), \
-             patch("speedtest_z.main.SpeedtestZ") as mock_stz, \
-             patch("sys.stdin") as mock_stdin, \
-             patch("builtins.input", return_value="y"):
+        with (
+            patch("speedtest_z.cli._build_parser") as mock_parser,
+            patch("speedtest_z.cli._setup_logging"),
+            patch("speedtest_z.cli._find_config", return_value="/tmp/config.ini"),
+            patch("speedtest_z.runner.SpeedtestZ") as mock_stz,
+            patch("speedtest_z.cli.get_site_runners", return_value={}),
+            patch("sys.stdin") as mock_stdin,
+            patch("builtins.input", return_value="y"),
+        ):
             mock_args = self._make_args()
             mock_parser.return_value.parse_args.return_value = mock_args
             mock_stdin.isatty.return_value = True
@@ -275,12 +293,15 @@ class TestMainConfirmPrompt:
 
     def test_prompt_shown_with_yes_flag(self):
         """--yes フラグでも TTY なら確認プロンプトが表示されること"""
-        with patch("speedtest_z.main._build_parser") as mock_parser, \
-             patch("speedtest_z.main._setup_logging"), \
-             patch("speedtest_z.main._find_config", return_value="/tmp/config.ini"), \
-             patch("speedtest_z.main.SpeedtestZ") as mock_stz, \
-             patch("sys.stdin") as mock_stdin, \
-             patch("builtins.input", return_value="y") as mock_input:
+        with (
+            patch("speedtest_z.cli._build_parser") as mock_parser,
+            patch("speedtest_z.cli._setup_logging"),
+            patch("speedtest_z.cli._find_config", return_value="/tmp/config.ini"),
+            patch("speedtest_z.runner.SpeedtestZ") as mock_stz,
+            patch("speedtest_z.cli.get_site_runners", return_value={}),
+            patch("sys.stdin") as mock_stdin,
+            patch("builtins.input", return_value="y") as mock_input,
+        ):
             mock_args = self._make_args(yes=True)
             mock_parser.return_value.parse_args.return_value = mock_args
             mock_stdin.isatty.return_value = True
@@ -292,12 +313,15 @@ class TestMainConfirmPrompt:
 
     def test_prompt_skipped_on_non_tty(self):
         """非 TTY（パイプ/cron）ではプロンプトが表示されないこと"""
-        with patch("speedtest_z.main._build_parser") as mock_parser, \
-             patch("speedtest_z.main._setup_logging"), \
-             patch("speedtest_z.main._find_config", return_value="/tmp/config.ini"), \
-             patch("speedtest_z.main.SpeedtestZ") as mock_stz, \
-             patch("sys.stdin") as mock_stdin, \
-             patch("builtins.input") as mock_input:
+        with (
+            patch("speedtest_z.cli._build_parser") as mock_parser,
+            patch("speedtest_z.cli._setup_logging"),
+            patch("speedtest_z.cli._find_config", return_value="/tmp/config.ini"),
+            patch("speedtest_z.runner.SpeedtestZ") as mock_stz,
+            patch("speedtest_z.cli.get_site_runners", return_value={}),
+            patch("sys.stdin") as mock_stdin,
+            patch("builtins.input") as mock_input,
+        ):
             mock_args = self._make_args()
             mock_parser.return_value.parse_args.return_value = mock_args
             mock_stdin.isatty.return_value = False
@@ -309,11 +333,13 @@ class TestMainConfirmPrompt:
 
     def test_prompt_shows_specified_sites(self, capsys):
         """サイト指定時、指定サイトがプロンプトに表示されること"""
-        with patch("speedtest_z.main._build_parser") as mock_parser, \
-             patch("speedtest_z.main._setup_logging"), \
-             patch("speedtest_z.main._find_config", return_value="/tmp/config.ini"), \
-             patch("sys.stdin") as mock_stdin, \
-             patch("builtins.input", return_value="n"):
+        with (
+            patch("speedtest_z.cli._build_parser") as mock_parser,
+            patch("speedtest_z.cli._setup_logging"),
+            patch("speedtest_z.cli._find_config", return_value="/tmp/config.ini"),
+            patch("sys.stdin") as mock_stdin,
+            patch("builtins.input", return_value="n"),
+        ):
             mock_args = self._make_args(sites=["cloudflare", "netflix"])
             mock_parser.return_value.parse_args.return_value = mock_args
             mock_stdin.isatty.return_value = True
@@ -323,12 +349,15 @@ class TestMainConfirmPrompt:
 
     def test_prompt_abort_with_empty_input(self, capsys):
         """空入力（Enter のみ）で中止されること"""
-        with patch("speedtest_z.main._build_parser") as mock_parser, \
-             patch("speedtest_z.main._setup_logging"), \
-             patch("speedtest_z.main._find_config", return_value="/tmp/config.ini"), \
-             patch("speedtest_z.main.SpeedtestZ") as mock_stz, \
-             patch("sys.stdin") as mock_stdin, \
-             patch("builtins.input", return_value=""):
+        with (
+            patch("speedtest_z.cli._build_parser") as mock_parser,
+            patch("speedtest_z.cli._setup_logging"),
+            patch("speedtest_z.cli._find_config", return_value="/tmp/config.ini"),
+            patch("speedtest_z.runner.SpeedtestZ") as mock_stz,
+            patch("speedtest_z.cli.get_site_runners", return_value={}),
+            patch("sys.stdin") as mock_stdin,
+            patch("builtins.input", return_value=""),
+        ):
             mock_args = self._make_args()
             mock_parser.return_value.parse_args.return_value = mock_args
             mock_stdin.isatty.return_value = True
@@ -343,53 +372,56 @@ class TestI18nMessages:
 
     def test_msg_japanese(self):
         """_LANG_JA=True で日本語メッセージが返ること"""
-        with patch("speedtest_z.main._LANG_JA", True):
+        with patch("speedtest_z.i18n._LANG_JA", True):
             assert _msg("confirm_abort") == "中止しました。"
             assert _msg("manual_not_found") == "マニュアルが見つかりません。"
 
     def test_msg_english(self):
         """_LANG_JA=False で英語メッセージが返ること"""
-        with patch("speedtest_z.main._LANG_JA", False):
+        with patch("speedtest_z.i18n._LANG_JA", False):
             assert _msg("confirm_abort") == "Aborted."
             assert _msg("manual_not_found") == "Manual not found."
 
     def test_msg_with_kwargs_japanese(self):
         """日本語メッセージのフォーマット引数が展開されること"""
-        with patch("speedtest_z.main._LANG_JA", True):
+        with patch("speedtest_z.i18n._LANG_JA", True):
             result = _msg("config_not_found_cli", path="/tmp/test.ini")
-            assert "/tmp/test.ini が見つかりません" == result
+            assert result == "/tmp/test.ini が見つかりません"
 
     def test_msg_with_kwargs_english(self):
         """英語メッセージのフォーマット引数が展開されること"""
-        with patch("speedtest_z.main._LANG_JA", False):
+        with patch("speedtest_z.i18n._LANG_JA", False):
             result = _msg("config_not_found_cli", path="/tmp/test.ini")
-            assert "/tmp/test.ini not found" == result
+            assert result == "/tmp/test.ini not found"
 
     def test_confirm_prompt_japanese(self):
         """日本語の確認プロンプトメッセージ"""
-        with patch("speedtest_z.main._LANG_JA", True):
+        with patch("speedtest_z.i18n._LANG_JA", True):
             result = _msg("confirm_prompt", count=2, sites="cloudflare, netflix")
             assert "2 サイトに接続します" in result
             assert "cloudflare, netflix" in result
 
     def test_confirm_prompt_english(self):
         """英語の確認プロンプトメッセージ"""
-        with patch("speedtest_z.main._LANG_JA", False):
+        with patch("speedtest_z.i18n._LANG_JA", False):
             result = _msg("confirm_prompt", count=2, sites="cloudflare, netflix")
             assert "connecting to 2 site(s)" in result
             assert "cloudflare, netflix" in result
 
     def test_prompt_shown_japanese(self, capsys):
         """日本語ロケールで日本語プロンプトが表示されること"""
-        with patch("speedtest_z.main._build_parser") as mock_parser, \
-             patch("speedtest_z.main._setup_logging"), \
-             patch("speedtest_z.main._find_config", return_value="/tmp/config.ini"), \
-             patch("sys.stdin") as mock_stdin, \
-             patch("builtins.input", return_value="n"), \
-             patch("speedtest_z.main._LANG_JA", True):
+        with (
+            patch("speedtest_z.cli._build_parser") as mock_parser,
+            patch("speedtest_z.cli._setup_logging"),
+            patch("speedtest_z.cli._find_config", return_value="/tmp/config.ini"),
+            patch("sys.stdin") as mock_stdin,
+            patch("builtins.input", return_value="n"),
+            patch("speedtest_z.i18n._LANG_JA", True),
+        ):
             mock_args = MagicMock()
             mock_args.man = False
             mock_args.list_sites = False
+            mock_args.check = False
             mock_args.debug = False
             mock_args.config = None
             mock_args.yes = False
@@ -403,15 +435,18 @@ class TestI18nMessages:
 
     def test_prompt_shown_english(self, capsys):
         """英語ロケールで英語プロンプトが表示されること"""
-        with patch("speedtest_z.main._build_parser") as mock_parser, \
-             patch("speedtest_z.main._setup_logging"), \
-             patch("speedtest_z.main._find_config", return_value="/tmp/config.ini"), \
-             patch("sys.stdin") as mock_stdin, \
-             patch("builtins.input", return_value="n"), \
-             patch("speedtest_z.main._LANG_JA", False):
+        with (
+            patch("speedtest_z.cli._build_parser") as mock_parser,
+            patch("speedtest_z.cli._setup_logging"),
+            patch("speedtest_z.cli._find_config", return_value="/tmp/config.ini"),
+            patch("sys.stdin") as mock_stdin,
+            patch("builtins.input", return_value="n"),
+            patch("speedtest_z.i18n._LANG_JA", False),
+        ):
             mock_args = MagicMock()
             mock_args.man = False
             mock_args.list_sites = False
+            mock_args.check = False
             mock_args.debug = False
             mock_args.config = None
             mock_args.yes = False

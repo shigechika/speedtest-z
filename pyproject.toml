@@ -32,6 +32,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+dev = ["ruff"]
 test = ["pytest"]
 completion = ["argcomplete"]
 
@@ -42,12 +43,23 @@ Issues = "https://github.com/shigechika/speedtest-z/issues"
 Changelog = "https://github.com/shigechika/speedtest-z/blob/main/CHANGELOG.md"
 
 [project.scripts]
-speedtest-z = "speedtest_z.main:main"
+speedtest-z = "speedtest_z.cli:main"
 
 [tool.setuptools]
-packages = ["speedtest_z"]
+packages = ["speedtest_z", "speedtest_z.sites"]
 
 [tool.setuptools.package-data]
 speedtest_z = ["README.md", "README.ja.md"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 99
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
 
 [tool.setuptools_scm]

@@ -22,11 +22,10 @@ class TestVersion:
         """PackageNotFoundError 時のフォールバック"""
         from importlib.metadata import PackageNotFoundError
 
-        with patch(
-            "importlib.metadata.version", side_effect=PackageNotFoundError()
-        ):
+        with patch("importlib.metadata.version", side_effect=PackageNotFoundError()):
             # モジュールを再ロード
             import importlib
+
             import speedtest_z
 
             importlib.reload(speedtest_z)

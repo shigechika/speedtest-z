@@ -1,9 +1,10 @@
 """設定ファイル探索のテスト"""
 
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-from speedtest_z.main import _find_config, _setup_logging, SpeedtestZ
+from speedtest_z.config import _find_config, _setup_logging
+from speedtest_z.runner import SpeedtestZ
 
 
 class TestFindConfig:
@@ -79,7 +80,7 @@ class TestSetupLogging:
         """logging.ini がなければ basicConfig で初期化"""
         monkeypatch.chdir(tmp_path)
         monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty"))
-        with patch("speedtest_z.main.logging.basicConfig") as mock_basic:
+        with patch("speedtest_z.config.logging.basicConfig") as mock_basic:
             _setup_logging(debug=False)
             mock_basic.assert_called_once()
 
@@ -87,7 +88,7 @@ class TestSetupLogging:
         """debug=True で DEBUG レベルに設定"""
         monkeypatch.chdir(tmp_path)
         monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty"))
-        with patch("speedtest_z.main.logging.basicConfig") as mock_basic:
+        with patch("speedtest_z.config.logging.basicConfig") as mock_basic:
             _setup_logging(debug=True)
             call_kwargs = mock_basic.call_args
             assert call_kwargs[1]["level"] == 10  # logging.DEBUG
@@ -107,8 +108,9 @@ class TestChromeProfileDir:
         """デフォルトで ~/.config/speedtest-z/chrome-profile が設定される"""
         app = self._make_app(mock_config)
         app.chrome_profile_dir = os.path.expanduser(
-            app.config.get("general", "chrome_profile_dir",
-                           fallback="~/.config/speedtest-z/chrome-profile")
+            app.config.get(
+                "general", "chrome_profile_dir", fallback="~/.config/speedtest-z/chrome-profile"
+            )
         )
         expected = os.path.expanduser("~/.config/speedtest-z/chrome-profile")
         assert app.chrome_profile_dir == expected
@@ -118,8 +120,9 @@ class TestChromeProfileDir:
         mock_config.set("general", "chrome_profile_dir", "/tmp/my-chrome-profile")
         app = self._make_app(mock_config)
         app.chrome_profile_dir = os.path.expanduser(
-            app.config.get("general", "chrome_profile_dir",
-                           fallback="~/.config/speedtest-z/chrome-profile")
+            app.config.get(
+                "general", "chrome_profile_dir", fallback="~/.config/speedtest-z/chrome-profile"
+            )
         )
         assert app.chrome_profile_dir == "/tmp/my-chrome-profile"
 
@@ -128,8 +131,9 @@ class TestChromeProfileDir:
         mock_config.set("general", "chrome_profile_dir", "~/my-profile")
         app = self._make_app(mock_config)
         app.chrome_profile_dir = os.path.expanduser(
-            app.config.get("general", "chrome_profile_dir",
-                           fallback="~/.config/speedtest-z/chrome-profile")
+            app.config.get(
+                "general", "chrome_profile_dir", fallback="~/.config/speedtest-z/chrome-profile"
+            )
         )
         assert "~" not in app.chrome_profile_dir
         assert app.chrome_profile_dir.endswith("my-profile")

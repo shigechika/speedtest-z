@@ -1,9 +1,9 @@
 """auto_consent（--yes による同意自動承諾）のテスト"""
 
 import argparse
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-from speedtest_z.main import SpeedtestZ
+from speedtest_z.runner import SpeedtestZ
 
 
 def _make_app(mock_config, yes=False):
@@ -40,9 +40,8 @@ class TestAutoConsent:
             yes=True,
             sites=[],
         )
-        with patch.object(SpeedtestZ, "_init_driver"):
-            with patch("speedtest_z.main.signal.signal"):
-                app = SpeedtestZ(args)
+        with patch.object(SpeedtestZ, "_init_driver"), patch("speedtest_z.runner.signal.signal"):
+            app = SpeedtestZ(args)
         assert app.auto_consent is True
 
     def test_init_without_yes_arg(self, mock_config, sample_config_ini):
@@ -57,9 +56,8 @@ class TestAutoConsent:
             yes=False,
             sites=[],
         )
-        with patch.object(SpeedtestZ, "_init_driver"):
-            with patch("speedtest_z.main.signal.signal"):
-                app = SpeedtestZ(args)
+        with patch.object(SpeedtestZ, "_init_driver"), patch("speedtest_z.runner.signal.signal"):
+            app = SpeedtestZ(args)
         assert app.auto_consent is False
 
     def test_init_without_yes_attr(self, mock_config, sample_config_ini):
@@ -73,7 +71,6 @@ class TestAutoConsent:
             debug=False,
             sites=[],
         )
-        with patch.object(SpeedtestZ, "_init_driver"):
-            with patch("speedtest_z.main.signal.signal"):
-                app = SpeedtestZ(args)
+        with patch.object(SpeedtestZ, "_init_driver"), patch("speedtest_z.runner.signal.signal"):
+            app = SpeedtestZ(args)
         assert app.auto_consent is False
