@@ -363,3 +363,140 @@ zabbix_export:
             - type: MULTIPLIER
               parameters:
                 - '1000000'
+  graphs:
+    - uuid: 327c6203a08046a69204bc620896479f
+      name: 'Download Speed'
+      graph_items:
+        - color: '66BB6A'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: cloudflare.download
+        - color: 'FFA726'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: google.download
+        - color: '42A5F5'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: mlab.download
+        - color: 'EF5350'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: netflix.download
+        - color: 'EC407A'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: ookla.download
+        - color: 'AB47BC'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: usen.download
+        - color: '26A69A'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: inonius.IPv4_DL
+        - color: 'FFEE58'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: inonius.IPv6_DL
+        - color: '8D6E63'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: boxtest.DownloadSpeed
+    - uuid: cfeffea2c4874cc88ee118c96fff6744
+      name: 'Upload Speed'
+      graph_items:
+        - color: '66BB6A'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: cloudflare.upload
+        - color: 'FFA726'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: google.upload
+        - color: '42A5F5'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: mlab.upload
+        - color: 'EF5350'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: netflix.upload
+        - color: 'EC407A'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: ookla.upload
+        - color: 'AB47BC'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: usen.upload
+        - color: '26A69A'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: inonius.IPv4_UL
+        - color: 'FFEE58'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: inonius.IPv6_UL
+        - color: '8D6E63'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: boxtest.UploadSpeed
+    - uuid: 8986df7bcd164f1b972e9d7d232ee59f
+      name: 'Latency'
+      graph_items:
+        - color: '66BB6A'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: cloudflare.latency
+        - color: 'FFA726'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: google.ping
+        - color: '42A5F5'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: mlab.latency
+        - color: 'EF5350'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: netflix.latency
+        - color: 'EC407A'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: ookla.ping
+        - color: 'AB47BC'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: usen.ping
+        - color: '26A69A'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: inonius.IPv4_RTT
+        - color: 'FFEE58'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: inonius.IPv6_RTT
+        - color: '8D6E63'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: boxtest.latency
+    - uuid: 09c90fc13edf415c932cbedd12703f20
+      name: 'Jitter'
+      graph_items:
+        - color: '66BB6A'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: cloudflare.jitter
+        - color: 'AB47BC'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: usen.jitter
+        - color: '26A69A'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: inonius.IPv4_JIT
+        - color: 'FFEE58'
+          item:
+            host: 'Template Speedtest Zabbix'
+            key: inonius.IPv6_JIT
