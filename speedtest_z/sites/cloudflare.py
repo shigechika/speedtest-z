@@ -65,7 +65,7 @@ def _extract_by_label(
             value_str = match.group(1)
             unit_str = match.group(2).lower()
             value = float(value_str)
-            if "\u03bc" in unit_str or "u" in unit_str:
+            if "\u03bc" in unit_str or unit_str == "us":
                 value = value / 1000.0
                 return f"{value:.3f}"
             return f"{value}"

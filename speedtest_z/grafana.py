@@ -141,5 +141,10 @@ class GrafanaSender:
         credentials = base64.b64encode(f"{self.username}:{self.token}".encode()).decode()
         req.add_header("Authorization", f"Basic {credentials}")
 
-        with urllib.request.urlopen(req) as resp:
-            logger.info(f"Grafana push OK: {resp.status} {resp.reason}")
+        try:
+            with urllib.request.urlopen(req) as resp:
+                logger.info(f"Grafana push OK: {resp.status} {resp.reason}")
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", errors="replace")
+            logger.error(f"Grafana push failed: {e.code} {e.reason} — {body}")
+            raise

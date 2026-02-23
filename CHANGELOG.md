@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Zabbix template graphs: Download Speed, Upload Speed, Latency, Jitter
 
+### Fixed
+- `grafana.py`: HTTP error response body lost on push failure (now logs status code and body)
+- `runner.py`: missing `[grafana]` config keys (`remote_write_url`, `username`, `token`) crashed startup with `NoOptionError`
+- `cloudflare.py`: microsecond unit check `"u" in unit_str` was too broad; tightened to exact `"us"` match
+
 ### Changed
 - `logging.ini` console handler switched from stdout to stderr
 
