@@ -289,6 +289,8 @@ All Zabbix item keys are prefixed with the site name (e.g., `cloudflare.download
 
 ## Grafana Cloud Integration
 
+![Grafana Dashboard](docs/grafana.png)
+
 speedtest-z can push metrics to Grafana Cloud via Prometheus Remote Write.
 
 1. Install with Grafana support: `pip install speedtest-z[grafana]`
@@ -322,7 +324,7 @@ headers = Authorization=Basic <base64-encoded-credentials>
 3. Metrics are sent as `speedtest_<metric>` with `site` and `host` labels.
 4. All three backends (Zabbix, Grafana, OTel) can be enabled simultaneously.
 
-> **Note:** As of Feb 2026, direct OTLP metrics ingestion (without a collector) is supported by few backends. Grafana Cloud is the most mature option. Mackerel, GCP Cloud Monitoring, and AWS CloudWatch currently support OTLP traces only; Datadog requires an allowlisted organization.
+> **Note:** As of Feb 2026, direct OTLP metrics ingestion (without a collector) on **free tier** accounts is supported by very few backends. Grafana Cloud is the most mature option. Mackerel, GCP Cloud Monitoring, and AWS CloudWatch currently support OTLP traces only; Datadog requires an allowlisted organization. Paid plans may offer broader OTLP metrics support.
 
 ## Deployment (systemd)
 

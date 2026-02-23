@@ -290,6 +290,8 @@ $ speedtest-z --dry-run
 
 ## Grafana Cloud 連携
 
+![Grafana ダッシュボード](docs/grafana.png)
+
 Prometheus Remote Write 経由で Grafana Cloud にメトリクスを送信できます。
 
 1. Grafana 対応をインストール: `pip install speedtest-z[grafana]`
@@ -328,7 +330,7 @@ headers = Authorization=Basic <base64エンコード済み認証情報>
 3. メトリクスは `speedtest_<metric>{site="<site>", host="<host>"}` の形式で送信されます
 4. Zabbix、Grafana、OTel の3バックエンドを同時に有効化できます
 
-> **注意:** 2026年2月時点で、Collector なしの OTLP メトリクス直接取り込みに対応しているバックエンドは限られています。Grafana Cloud が最も成熟した選択肢です。Mackerel・GCP Cloud Monitoring・AWS CloudWatch は現状 OTLP トレースのみ対応、Datadog は組織のホワイトリスト登録が必要です。
+> **注意:** 2026年2月時点で、**無料プラン**で Collector なしの OTLP メトリクス直接取り込みに対応しているバックエンドは限られています。Grafana Cloud が最も成熟した選択肢です。Mackerel・GCP Cloud Monitoring・AWS CloudWatch は現状 OTLP トレースのみ対応、Datadog は組織のホワイトリスト登録が必要です。有料プランではより広い OTLP メトリクス対応が期待できます。
 
 ## デプロイ（systemd）
 

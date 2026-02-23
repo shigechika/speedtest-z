@@ -1,0 +1,290 @@
+{
+  "title": "speedtest-z",
+  "description": "Multi-site speed test results from speedtest-z",
+  "tags": ["speedtest-z"],
+  "timezone": "browser",
+  "refresh": "",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "host",
+        "label": "Host",
+        "type": "query",
+        "query": "label_values(speedtest_download, host)",
+        "current": {},
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".+",
+        "refresh": 2
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 5,
+      "title": "Latest Download (Mbps)",
+      "type": "bargauge",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Mbps",
+          "min": 0,
+          "max": 2000,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 300 },
+              { "color": "yellow", "value": 600 },
+              { "color": "green", "value": 1000 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "minVizWidth": 8,
+        "minVizHeight": 16
+      },
+      "targets": [
+        {
+          "expr": "speedtest_download{host=~\"$host\"}",
+          "legendFormat": "{{site}}",
+          "refId": "A"
+        },
+        {
+          "expr": "speedtest_IPv4_DL{host=~\"$host\"}",
+          "legendFormat": "inonius (IPv4)",
+          "refId": "B"
+        },
+        {
+          "expr": "speedtest_IPv6_DL{host=~\"$host\"}",
+          "legendFormat": "inonius (IPv6)",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Latest Upload (Mbps)",
+      "type": "bargauge",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Mbps",
+          "min": 0,
+          "max": 1500,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 200 },
+              { "color": "yellow", "value": 400 },
+              { "color": "green", "value": 800 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "minVizWidth": 8,
+        "minVizHeight": 16
+      },
+      "targets": [
+        {
+          "expr": "speedtest_upload{host=~\"$host\"}",
+          "legendFormat": "{{site}}",
+          "refId": "A"
+        },
+        {
+          "expr": "speedtest_IPv4_UL{host=~\"$host\"}",
+          "legendFormat": "inonius (IPv4)",
+          "refId": "B"
+        },
+        {
+          "expr": "speedtest_IPv6_UL{host=~\"$host\"}",
+          "legendFormat": "inonius (IPv6)",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "title": "Download Speed (Mbps)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Mbps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "pointSize": 6,
+            "showPoints": "always",
+            "spanNulls": 14400000
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max", "min", "mean"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "speedtest_download{host=~\"$host\"}",
+          "legendFormat": "{{site}}",
+          "refId": "A"
+        },
+        {
+          "expr": "speedtest_IPv4_DL{host=~\"$host\"}",
+          "legendFormat": "inonius (IPv4)",
+          "refId": "B"
+        },
+        {
+          "expr": "speedtest_IPv6_DL{host=~\"$host\"}",
+          "legendFormat": "inonius (IPv6)",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Upload Speed (Mbps)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Mbps",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "pointSize": 6,
+            "showPoints": "always",
+            "spanNulls": 14400000
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max", "min", "mean"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "speedtest_upload{host=~\"$host\"}",
+          "legendFormat": "{{site}}",
+          "refId": "A"
+        },
+        {
+          "expr": "speedtest_IPv4_UL{host=~\"$host\"}",
+          "legendFormat": "inonius (IPv4)",
+          "refId": "B"
+        },
+        {
+          "expr": "speedtest_IPv6_UL{host=~\"$host\"}",
+          "legendFormat": "inonius (IPv6)",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Latency (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "pointSize": 6,
+            "showPoints": "always",
+            "spanNulls": 14400000
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max", "min", "mean"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "speedtest_latency{host=~\"$host\"}",
+          "legendFormat": "{{site}}",
+          "refId": "A"
+        },
+        {
+          "expr": "speedtest_ping{host=~\"$host\"}",
+          "legendFormat": "{{site}} (ping)",
+          "refId": "B"
+        },
+        {
+          "expr": "speedtest_IPv4_RTT{host=~\"$host\"}",
+          "legendFormat": "inonius (IPv4)",
+          "refId": "C"
+        },
+        {
+          "expr": "speedtest_IPv6_RTT{host=~\"$host\"}",
+          "legendFormat": "inonius (IPv6)",
+          "refId": "D"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Jitter (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "pointSize": 6,
+            "showPoints": "always",
+            "spanNulls": 14400000
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max", "min", "mean"] },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "speedtest_jitter{host=~\"$host\"}",
+          "legendFormat": "{{site}}",
+          "refId": "A"
+        },
+        {
+          "expr": "speedtest_IPv4_JIT{host=~\"$host\"}",
+          "legendFormat": "inonius (IPv4)",
+          "refId": "B"
+        },
+        {
+          "expr": "speedtest_IPv6_JIT{host=~\"$host\"}",
+          "legendFormat": "inonius (IPv6)",
+          "refId": "C"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39
+}
