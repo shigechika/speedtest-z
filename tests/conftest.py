@@ -106,6 +106,7 @@ def mock_app(mock_config, mock_driver):
         app.zabbix_server = "127.0.0.1"
         app.zabbix_port = 10051
         app.grafana_sender = None
+        app.otel_sender = None
         app.snapshot_enable = False
         app.snapshot_dir = "./snapshots"
         app.explicit_sites = False

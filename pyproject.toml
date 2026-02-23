@@ -36,6 +36,7 @@ dev = ["ruff"]
 test = ["pytest"]
 completion = ["argcomplete"]
 grafana = ["cramjam"]
+otel = ["opentelemetry-api", "opentelemetry-sdk", "opentelemetry-exporter-otlp-proto-http"]
 
 [project.urls]
 Homepage = "https://github.com/shigechika/speedtest-z"

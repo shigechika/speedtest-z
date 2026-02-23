@@ -19,6 +19,7 @@ speedtest-z は Web ブラウザで主要な速度テストサイトを自動巡
 - 8つの速度テストサイトを自動実行（Cloudflare, Netflix/fast.com, Google Fiber, Ookla, Box-test, M-Lab, USEN, iNonius）
 - Zabbixへトラッパーアイテムとして結果送信（[zappix](https://pypi.org/project/zappix/) 使用）
 - Grafana Cloud 連携（Prometheus Remote Write、オプション）
+- OpenTelemetry (OTLP) メトリクス送信（オプション）
 - サイトごとの実行頻度設定（確率ベースのスロットリング）
 - デバッグ用スクリーンショット保存
 - ヘッドレス/GUI Chromeモード切替
@@ -66,6 +67,14 @@ pip install speedtest-z[grafana]
 ```
 
 Prometheus Remote Write に必要な Snappy 圧縮ライブラリ `cramjam` がインストールされます。
+
+### OpenTelemetry 対応（オプション）
+
+```bash
+pip install speedtest-z[otel]
+```
+
+OpenTelemetry SDK と OTLP HTTP エクスポーターがインストールされます。
 
 ### タブ補完（任意）
 
@@ -117,6 +126,16 @@ enable = false
 remote_write_url = https://prometheus-prod-XX-prod-XX.grafana.net/api/prom/push
 username = <Prometheus ユーザ名>
 token = <Grafana Cloud API トークン>
+```
+
+#### `[otel]` セクション（オプション）
+
+```ini
+[otel]
+enable = false
+endpoint = https://otlp-gateway-prod-XX.grafana.net/otlp
+# カンマ区切りの Key=Value ペア（OTEL_EXPORTER_OTLP_HEADERS と同じ形式）
+headers = Authorization=Basic <base64エンコード済み認証情報>
 ```
 
 #### `[snapshot]` セクション
@@ -291,6 +310,25 @@ token = <Grafana Cloud API トークン>
 # Zabbix Web UI → 設定 → テンプレート → インポート
 # speedtest-z_templates.yaml を選択してインポート
 ```
+
+## OpenTelemetry (OTLP) 連携
+
+OpenTelemetry Protocol (OTLP) 経由で OTLP 対応バックエンドにメトリクスを送信できます。
+
+1. OTel 対応をインストール: `pip install speedtest-z[otel]`
+2. `config.ini` に `[otel]` セクションを追加:
+
+```ini
+[otel]
+enable = true
+endpoint = https://otlp-gateway-prod-XX.grafana.net/otlp
+headers = Authorization=Basic <base64エンコード済み認証情報>
+```
+
+3. メトリクスは `speedtest_<metric>{site="<site>", host="<host>"}` の形式で送信されます
+4. Zabbix、Grafana、OTel の3バックエンドを同時に有効化できます
+
+> **注意:** 2026年2月時点で、Collector なしの OTLP メトリクス直接取り込みに対応しているバックエンドは限られています。Grafana Cloud が最も成熟した選択肢です。Mackerel・GCP Cloud Monitoring・AWS CloudWatch は現状 OTLP トレースのみ対応、Datadog は組織のホワイトリスト登録が必要です。
 
 ## デプロイ（systemd）
 

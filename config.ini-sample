@@ -41,3 +41,10 @@ inonius = 50
 # remote_write_url = https://prometheus-prod-XX-prod-XX.grafana.net/api/prom/push
 # username =
 # token =
+
+# [otel]
+# # OpenTelemetry (OTLP) metrics export
+# enable = false
+# endpoint = https://otlp-vaxila.mackerelio.com
+# # Comma-separated Key=Value pairs (same format as OTEL_EXPORTER_OTLP_HEADERS)
+# headers = Mackerel-Api-Key=your-api-key-here

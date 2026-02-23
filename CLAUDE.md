@@ -15,6 +15,7 @@ Selenium を使って複数の速度テストサイト（Cloudflare, Netflix/fas
 - `speedtest_z/cli.py` — CLI エントリポイント（`main()`）
 - `speedtest_z/runner.py` — SpeedtestZ コアクラス（WebDriver 管理・結果送信）
 - `speedtest_z/grafana.py` — Grafana Cloud Prometheus Remote Write 送信（Protobuf エンコーダー + GrafanaSender）
+- `speedtest_z/otel.py` — OpenTelemetry OTLP 送信（OtelSender、要 `pip install speedtest-z[otel]`）
 - `speedtest_z/config.py` — 設定ファイル探索・ログ設定
 - `speedtest_z/i18n.py` — ロケール判定・メッセージ辞書
 - `speedtest_z/output.py` — JSON/CSV 出力（OutputCollector）
@@ -77,10 +78,12 @@ python -m build
 - `[general]` の `dry_run`（旧名 `dryrun` もフォールバックでサポート）
 - `[zabbix]` に `enable` フラグ（デフォルト `false`）。`enable = true` で Zabbix 送信が有効
 - `[grafana]` セクション（オプション）。`enable = true` + `remote_write_url` / `username` / `token` で Grafana Cloud 送信
-- `--dry-run` 時は Zabbix も Grafana も送信しない（外部送信を全て止める一貫したルール）
+- `[otel]` セクション（オプション）。`enable = true` + `endpoint` / `headers` で OTLP 送信
+- `--dry-run` 時は Zabbix も Grafana も OTel も送信しない（外部送信を全て止める一貫したルール）
 - `--output json/csv` 時は stdout 出力のみ（バックエンド送信なし）。ログは stderr に出力されるため `2>/dev/null` で抑制可能
 - `cramjam` は optional dependency: `pip install speedtest-z[grafana]`
-- `send_results()` が全バックエンド（Zabbix + Grafana）への送信を一括管理
+- `opentelemetry-*` は optional dependency: `pip install speedtest-z[otel]`
+- `send_results()` が全バックエンド（Zabbix + Grafana + OTel）への送信を一括管理
 
 ## 注意事項
 

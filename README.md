@@ -19,6 +19,7 @@ speedtest-z automates major speed test sites with a web browser, capturing real 
 - Runs speed tests on 8 different sites automatically (Cloudflare, Netflix/fast.com, Google Fiber, Ookla, Box-test, M-Lab, USEN, iNonius)
 - Sends results to Zabbix via trapper items (using [zappix](https://pypi.org/project/zappix/))
 - Optional Grafana Cloud integration via Prometheus Remote Write
+- Optional OpenTelemetry (OTLP) metrics export
 - Configurable test frequency per site (probability-based throttling)
 - Screenshot capture for debugging
 - Headless or GUI Chrome mode
@@ -34,6 +35,7 @@ speedtest-z automates major speed test sites with a web browser, capturing real 
 - [Supported Test Sites](#supported-test-sites)
 - [Zabbix Integration](#zabbix-integration)
 - [Grafana Cloud Integration](#grafana-cloud-integration)
+- [OpenTelemetry (OTLP) Integration](#opentelemetry-otlp-integration)
 - [Deployment (systemd)](#deployment-systemd)
 - [License](#license)
 
@@ -78,6 +80,14 @@ pip install speedtest-z[grafana]
 ```
 
 This installs `cramjam` for Snappy compression required by Prometheus Remote Write.
+
+### OpenTelemetry Support (optional)
+
+```bash
+pip install speedtest-z[otel]
+```
+
+This installs the OpenTelemetry SDK and OTLP HTTP exporter for sending metrics via OTLP.
 
 ### Tab Completion (optional)
 
@@ -139,6 +149,13 @@ inonius = 50
 # remote_write_url = https://prometheus-prod-XX-prod-XX.grafana.net/api/prom/push
 # username =
 # token =
+
+# [otel]
+# # OpenTelemetry (OTLP) metrics export
+# enable = false
+# endpoint = https://otlp-gateway-prod-XX.grafana.net/otlp
+# # Comma-separated Key=Value pairs (same format as OTEL_EXPORTER_OTLP_HEADERS)
+# headers = Authorization=Basic <base64-encoded-credentials>
 ```
 
 > **Note:** The `dryrun` key (without underscore) is still supported for backward compatibility but `dry_run` is preferred.
@@ -287,6 +304,25 @@ token = <your-grafana-cloud-api-token>
 
 3. Metrics are sent as `speedtest_<metric>` with a `site` label (e.g., `speedtest_download{site="cloudflare"}`).
 4. Both Zabbix and Grafana can be enabled simultaneously -- results are sent to all enabled backends.
+
+## OpenTelemetry (OTLP) Integration
+
+speedtest-z can export metrics via OpenTelemetry Protocol (OTLP) to any OTLP-compatible backend.
+
+1. Install with OTel support: `pip install speedtest-z[otel]`
+2. Add the `[otel]` section to `config.ini`:
+
+```ini
+[otel]
+enable = true
+endpoint = https://otlp-gateway-prod-XX.grafana.net/otlp
+headers = Authorization=Basic <base64-encoded-credentials>
+```
+
+3. Metrics are sent as `speedtest_<metric>` with `site` and `host` labels.
+4. All three backends (Zabbix, Grafana, OTel) can be enabled simultaneously.
+
+> **Note:** As of Feb 2026, direct OTLP metrics ingestion (without a collector) is supported by few backends. Grafana Cloud is the most mature option. Mackerel, GCP Cloud Monitoring, and AWS CloudWatch currently support OTLP traces only; Datadog requires an allowlisted organization.
 
 ## Deployment (systemd)
 

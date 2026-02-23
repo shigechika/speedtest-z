@@ -15,6 +15,7 @@ def _make_app(dryrun=True, zabbix_enable=True):
         app.zabbix_port = 10051
         app.zabbix_host = "speedtest-agent"
         app.grafana_sender = None
+        app.otel_sender = None
     return app
 
 

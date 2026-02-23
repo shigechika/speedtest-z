@@ -100,6 +100,31 @@ class SpeedtestZ:
                 except configparser.NoOptionError as e:
                     logger.error(f"[grafana] config incomplete: {e}")
 
+        # [otel]
+        self.otel_sender = None
+        if self.config.has_section("otel"):
+            otel_enable = self.config.getboolean("otel", "enable", fallback=False)
+            if otel_enable:
+                try:
+                    from speedtest_z.otel import OtelSender
+
+                    endpoint = self.config.get("otel", "endpoint")
+                    headers_str = self.config.get("otel", "headers", fallback="")
+                    # "Key1=Val1,Key2=Val2" → dict
+                    headers = {}
+                    for pair in headers_str.split(","):
+                        pair = pair.strip()
+                        if "=" in pair:
+                            k, v = pair.split("=", 1)
+                            headers[k.strip()] = v.strip()
+                    self.otel_sender = OtelSender(endpoint, headers, self.zabbix_host)
+                except ImportError:
+                    logger.warning(
+                        "opentelemetry not installed. Run: pip install speedtest-z[otel]"
+                    )
+                except configparser.NoOptionError as e:
+                    logger.error(f"[otel] config incomplete: {e}")
+
         # [snapshot]
         self.snapshot_enable = self.config.getboolean("snapshot", "enable", fallback=False)
         self.snapshot_dir = self.config.get("snapshot", "save_dir", fallback="./snapshots")
@@ -181,6 +206,8 @@ class SpeedtestZ:
         if hasattr(self, "driver"):
             logger.info("Closing browser session...")
             self.driver.quit()
+        if hasattr(self, "otel_sender") and self.otel_sender:
+            self.otel_sender.shutdown()
 
     def take_snapshot(self, filename_base: str) -> None:
         """Save a screenshot of the current page."""
@@ -227,6 +254,13 @@ class SpeedtestZ:
                 self.grafana_sender.send(data_list)
             except Exception as e:
                 logger.error(f"Failed to send to Grafana: {e}")
+
+        # OTel 送信
+        if self.otel_sender:
+            try:
+                self.otel_sender.send(data_list)
+            except Exception as e:
+                logger.error(f"Failed to send to OTel: {e}")
 
     def _get_window_position(self) -> tuple[int, int]:
         """Calculate top-right window position based on OS."""
