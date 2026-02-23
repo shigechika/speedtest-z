@@ -3,11 +3,21 @@
 import configparser
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from speedtest_z.runner import SpeedtestZ
+
+try:
+    import opentelemetry.sdk.metrics  # noqa: F401
+
+    _has_otel = True
+except ImportError:
+    _has_otel = False
 
 # --- OtelSender のユニットテスト ---
 
 
+@pytest.mark.skipif(not _has_otel, reason="opentelemetry not installed")
 class TestOtelSender:
     """OtelSender のテスト"""
 
