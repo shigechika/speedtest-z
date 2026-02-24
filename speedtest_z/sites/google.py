@@ -48,7 +48,7 @@ def run_google(app: SpeedtestZ) -> None:
             continue_btn.click()
             logger.info("google: Popup 'CONTINUE' Clicked")
         except TimeoutException:
-            pass
+            logger.debug("google: Continue popup not found")
         except Exception as e:
             logger.warning(f"google: Popup handling warning: {e}")
 

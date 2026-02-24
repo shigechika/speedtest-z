@@ -48,7 +48,7 @@ def run_ookla(app: SpeedtestZ) -> None:
                     app.driver.execute_script("arguments[0].click();", consent)
                     logger.info("ookla: Consent accepted (auto)")
                 except TimeoutException:
-                    pass
+                    logger.debug("ookla: Consent dialog not found (auto)")
             else:
                 # バナーが出ていたらユーザが「Continue」をクリックするまで待つ
                 try:
@@ -59,7 +59,7 @@ def run_ookla(app: SpeedtestZ) -> None:
                     WebDriverWait(app.driver, 120).until(EC.invisibility_of_element(banner))
                     logger.info("ookla: Privacy banner dismissed by user")
                 except TimeoutException:
-                    pass
+                    logger.debug("ookla: Privacy banner not found or not dismissed")
 
             # Server Selection
             if app.ookla_server is not None:
@@ -71,8 +71,8 @@ def run_ookla(app: SpeedtestZ) -> None:
                     if app.ookla_server in curr_srv_elem.text:
                         logger.info(f"ookla: Server match ({curr_srv_elem.text}).")
                         need_change = False
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"ookla: Could not read current server: {e}")
 
                 if need_change:
                     logger.info("ookla: Search [Change Server]")
@@ -85,7 +85,8 @@ def run_ookla(app: SpeedtestZ) -> None:
                             xp.click()
                             is_success = True
                             break
-                        except Exception:
+                        except Exception as e:
+                            logger.debug(f"ookla: Change Server click retry: {e}")
                             time.sleep(1)
 
                     if not is_success:
@@ -96,8 +97,8 @@ def run_ookla(app: SpeedtestZ) -> None:
                             )
                             app.driver.execute_script("arguments[0].click();", xp)
                             is_success = True
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"ookla: Change Server JS fallback failed: {e}")
 
                     if is_success:
                         try:

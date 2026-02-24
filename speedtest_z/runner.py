@@ -94,7 +94,7 @@ class SpeedtestZ:
                     token = self.config.get("grafana", "token")
                     self.grafana_sender = GrafanaSender(url, username, token)
                 except ImportError:
-                    logger.warning("cramjam not installed. Run: pip install speedtest-z[grafana]")
+                    logger.error("cramjam not installed. Run: pip install speedtest-z[grafana]")
                 except configparser.NoSectionError:
                     logger.error("[grafana] section missing required keys")
                 except configparser.NoOptionError as e:
@@ -119,7 +119,7 @@ class SpeedtestZ:
                             headers[k.strip()] = v.strip()
                     self.otel_sender = OtelSender(endpoint, headers, self.zabbix_host)
                 except ImportError:
-                    logger.warning(
+                    logger.error(
                         "opentelemetry not installed. Run: pip install speedtest-z[otel]"
                     )
                 except configparser.NoOptionError as e:
@@ -235,8 +235,8 @@ class SpeedtestZ:
 
         if self.dryrun:
             target_host = data_list[0].get("host", "unknown")
-            logger.info(f"Buffered for {target_host}: {data_list}")
-            logger.info("Dryrun: True - Data not sent.")
+            logger.debug(f"Buffered for {target_host}: {data_list}")
+            logger.debug("Dryrun: True - Data not sent.")
             return
 
         # Zabbix 送信
@@ -245,22 +245,22 @@ class SpeedtestZ:
                 sender = Sender(self.zabbix_server, self.zabbix_port)
                 res = sender.send_bulk(packet)
                 logger.info(f"Zabbix Response: {res}")
-            except Exception as e:
-                logger.error(f"Failed to send to Zabbix: {e}")
+            except Exception:
+                logger.exception("Failed to send to Zabbix")
 
         # Grafana 送信
         if self.grafana_sender:
             try:
                 self.grafana_sender.send(data_list)
-            except Exception as e:
-                logger.error(f"Failed to send to Grafana: {e}")
+            except Exception:
+                logger.exception("Failed to send to Grafana")
 
         # OTel 送信
         if self.otel_sender:
             try:
                 self.otel_sender.send(data_list)
-            except Exception as e:
-                logger.error(f"Failed to send to OTel: {e}")
+            except Exception:
+                logger.exception("Failed to send to OTel")
 
     def _get_window_position(self) -> tuple[int, int]:
         """Calculate top-right window position based on OS."""

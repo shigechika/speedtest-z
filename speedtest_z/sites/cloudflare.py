@@ -70,8 +70,8 @@ def _extract_by_label(
                 return f"{value:.3f}"
             return f"{value}"
 
-    except (NoSuchElementException, Exception):
-        pass
+    except (NoSuchElementException, Exception) as e:
+        logger.debug(f"cloudflare: Failed to extract '{label_text}': {e}")
     return ""
 
 

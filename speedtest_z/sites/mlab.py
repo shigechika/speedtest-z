@@ -34,7 +34,7 @@ def run_mlab(app: SpeedtestZ) -> None:
                 app.driver.execute_script("arguments[0].click();", chk_box)
                 logger.info("mlab: Consent checked (auto)")
             except TimeoutException:
-                pass
+                logger.debug("mlab: Consent checkbox not found (auto)")
         else:
             # ユーザがチェックボックスをクリックするまで待つ
             try:
@@ -48,7 +48,7 @@ def run_mlab(app: SpeedtestZ) -> None:
                     )
                     logger.info("mlab: Consent checked by user")
             except TimeoutException:
-                pass
+                logger.debug("mlab: Consent checkbox not found or not checked")
 
         try:
             start_btn = app.wait.until(
