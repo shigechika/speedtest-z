@@ -24,6 +24,10 @@ snapshots/
 debian/files
 debian/.debhelper/
 debian/speedtest-z/
+debian/*.debhelper.log
+debian/*.substvars
+debian/debhelper-build-stamp
+debian/*.debhelper
 
 # バックアップ
 *~
