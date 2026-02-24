@@ -23,9 +23,10 @@ Selenium を使って複数の速度テストサイト（Cloudflare, Netflix/fas
 - `speedtest_z/types.py` — ZabbixItem TypedDict
 - `speedtest_z/sites/` — サイトごとのランナー（`run_xxx(app)` 関数）
 - `speedtest_z/__init__.py` — バージョン情報（setuptools-scm で自動採番）
-- `config.ini` — 実行設定（探索順: CWD → ~/.config/speedtest-z/）
+- `config.ini` — 実行設定（探索順: CLI → CWD → ~/.config/speedtest-z/ → /etc/speedtest-z/）
 - `logging.ini` — ログ設定（同上、コンソールは stderr 出力）
-- `deploy/` — systemd service/timer, cron（デプロイ参考用）
+- `deploy/` — systemd service/timer, cron（手動デプロイ参考用）
+- `debian/` — .deb パッケージング設定（dh-virtualenv）
 - `speedtest-z_templates.yaml` — Zabbix テンプレート
 
 ## コマンド
@@ -62,6 +63,7 @@ python -m build
 
 - `.github/workflows/ci.yml` — push/PR 時に構文チェック + ビルドテスト（Python 3.10〜3.14）
 - `.github/workflows/release.yml` — `v*` タグ push 時に PyPI へ自動公開（Trusted Publishers）
+- `.github/workflows/deb.yml` — `v*` タグ push 時に jammy/noble 向け .deb ビルド → GitHub Release にアップロード
 
 ## リリース手順
 

@@ -39,6 +39,28 @@ speedtest-z は Web ブラウザで主要な速度テストサイトを自動巡
 brew install shigechika/tap/speedtest-z
 ```
 
+### Debian / Ubuntu (.deb)
+
+[GitHub Releases](https://github.com/shigechika/speedtest-z/releases) からディストリビューションに合った `.deb` パッケージをダウンロード:
+
+```bash
+# Ubuntu 24.04 (Noble)
+sudo dpkg -i speedtest-z_*~noble.deb
+
+# Ubuntu 22.04 (Jammy)
+sudo dpkg -i speedtest-z_*~jammy.deb
+```
+
+`.deb` パッケージは Python 依存をすべて含む自己完結型 virtualenv（`/opt/venvs/speedtest-z/`）、systemd service/timer（無効状態でインストール）、設定ファイル（`/etc/speedtest-z/`）を含みます。
+
+```bash
+# 設定を編集
+sudo vi /etc/speedtest-z/config.ini
+
+# スケジュール実行を有効化（10分間隔）
+sudo systemctl enable --now speedtest-z.timer
+```
+
 ### pip
 
 ```bash
@@ -94,6 +116,7 @@ eval "$(register-python-argcomplete speedtest-z)"
 1. CLI で指定されたパス（`-c` / `--config`）
 2. カレントディレクトリの `./config.ini`
 3. `~/.config/speedtest-z/config.ini`（XDG_CONFIG_HOME）
+4. `/etc/speedtest-z/config.ini`（システム全体、`.deb` パッケージで使用）
 
 `config.ini-sample` をコピーして編集してください。
 
@@ -168,8 +191,9 @@ inonius = 50
 
 1. カレントディレクトリの `./logging.ini`
 2. `~/.config/speedtest-z/logging.ini`（XDG_CONFIG_HOME）
+3. `/etc/speedtest-z/logging.ini`（システム全体）
 
-どちらも見つからない場合は、デフォルトのログ設定（INFO レベル、stdout 出力）が使用されます。
+いずれも見つからない場合は、デフォルトのログ設定（INFO レベル、stdout 出力）が使用されます。
 
 ## 使い方
 
@@ -334,7 +358,9 @@ headers = Authorization=Basic <base64エンコード済み認証情報>
 
 ## デプロイ（systemd）
 
-`deploy/` ディレクトリに systemd のサービスファイルとタイマーファイルが含まれています。
+> **Note:** `.deb` パッケージには systemd service/timer が同梱されています。インストール後 `sudo systemctl enable --now speedtest-z.timer` で有効化するだけです。
+
+pip でインストールした場合は、`deploy/` ディレクトリに systemd のサービスファイルとタイマーファイルが含まれています。
 
 ```bash
 # サービスファイルとタイマーファイルをコピー

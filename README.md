@@ -52,6 +52,28 @@ speedtest-z automates major speed test sites with a web browser, capturing real 
 brew install shigechika/tap/speedtest-z
 ```
 
+### Debian / Ubuntu (.deb)
+
+Download the `.deb` package for your distribution from [GitHub Releases](https://github.com/shigechika/speedtest-z/releases):
+
+```bash
+# Ubuntu 24.04 (Noble)
+sudo dpkg -i speedtest-z_*~noble.deb
+
+# Ubuntu 22.04 (Jammy)
+sudo dpkg -i speedtest-z_*~jammy.deb
+```
+
+The `.deb` package includes all Python dependencies in a self-contained virtualenv (`/opt/venvs/speedtest-z/`), systemd service/timer (installed disabled), and config files in `/etc/speedtest-z/`.
+
+```bash
+# Edit config
+sudo vi /etc/speedtest-z/config.ini
+
+# Enable scheduled execution (every 10 minutes)
+sudo systemctl enable --now speedtest-z.timer
+```
+
 ### pip
 
 ```bash
@@ -106,6 +128,7 @@ The configuration file is searched in the following order (`-c` / `--config` can
 
 1. `./config.ini` in the current directory
 2. `~/.config/speedtest-z/config.ini` (XDG_CONFIG_HOME)
+3. `/etc/speedtest-z/config.ini` (system-wide, used by `.deb` package)
 
 Copy `config.ini-sample` to one of these locations and edit as needed.
 
@@ -166,8 +189,9 @@ An optional `logging.ini` file can be used to customize log output. The file is 
 
 1. `./logging.ini` in the current directory
 2. `~/.config/speedtest-z/logging.ini` (XDG_CONFIG_HOME)
+3. `/etc/speedtest-z/logging.ini` (system-wide)
 
-If neither is found, the default logging configuration (INFO level to stdout) is used.
+If none is found, the default logging configuration (INFO level to stdout) is used.
 
 ## Usage
 
@@ -328,7 +352,9 @@ headers = Authorization=Basic <base64-encoded-credentials>
 
 ## Deployment (systemd)
 
-The `deploy/` directory contains systemd unit files for scheduled execution:
+> **Note:** The `.deb` package includes systemd service/timer files pre-configured. Just run `sudo systemctl enable --now speedtest-z.timer` after installing.
+
+For manual (pip) installations, the `deploy/` directory contains systemd unit files for scheduled execution:
 
 | File | Description |
 |------|-------------|

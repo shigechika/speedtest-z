@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.8.0] - 2026-02-24
+
+### Added
+- Debian/Ubuntu `.deb` package building with dh-virtualenv (`debian/` directory)
+- `.github/workflows/deb.yml` CI for building `.deb` packages (jammy, noble)
+- `/etc/speedtest-z/` as system-wide config path fallback
+- System user `speedtest-z`, directories `/var/lib/speedtest-z/`, `/var/log/speedtest-z/`
+- Hardened systemd service with `ProtectSystem=strict`, `PrivateTmp=yes`, etc.
+- `/etc/cron.d/speedtest-z-cleaner` for Chrome temp file cleanup
+
+### Changed
+- Config file search order: CLI → CWD → `~/.config/speedtest-z/` → `/etc/speedtest-z/`
+
 ## [0.7.1] - 2026-02-23
 
 ### Fixed
@@ -148,6 +161,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - systemd timer deployment files
 - PyPI release workflow (TestPyPI + PyPI)
 
+[0.8.0]: https://github.com/shigechika/speedtest-z/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/shigechika/speedtest-z/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/shigechika/speedtest-z/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/shigechika/speedtest-z/compare/v0.6.1...v0.6.2
