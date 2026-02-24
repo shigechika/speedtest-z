@@ -19,6 +19,7 @@ def _find_config(name: str, cli_path: str | None = None) -> str | None:
         1. Path specified via CLI (``-c`` / ``--config``)
         2. Current working directory
         3. ``~/.config/speedtest-z/`` (XDG_CONFIG_HOME)
+        4. ``/etc/speedtest-z/``
     """
     if cli_path:
         if os.path.isfile(cli_path):
@@ -33,6 +34,11 @@ def _find_config(name: str, cli_path: str | None = None) -> str | None:
     xdg_path = os.path.join(xdg, "speedtest-z", name)
     if os.path.isfile(xdg_path):
         return xdg_path
+
+    # システム全体の設定（deb パッケージ向け）
+    etc_path = os.path.join("/etc/speedtest-z", name)
+    if os.path.isfile(etc_path):
+        return etc_path
 
     return None
 

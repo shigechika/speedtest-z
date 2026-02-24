@@ -1,0 +1,73 @@
+name: Build .deb packages
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-deb:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            codename: jammy
+          - os: ubuntu-24.04
+            codename: noble
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            debhelper \
+            dh-virtualenv \
+            python3-dev \
+            python3-venv \
+            python3-pip \
+            python3-setuptools \
+            dpkg-dev
+
+      - name: Update debian/changelog version from git tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i "1s/([^)]*)/($VERSION-1)/" debian/changelog
+
+      - name: Build .deb package
+        run: dpkg-buildpackage -us -uc -b
+
+      - name: Rename .deb with codename suffix
+        run: |
+          for deb in ../speedtest-z_*.deb; do
+            newname=$(echo "$deb" | sed "s/\.deb$/~${{ matrix.codename }}.deb/")
+            mv "$deb" "$newname"
+          done
+
+      - name: Wait for GitHub Release to exist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          for i in $(seq 1 30); do
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              echo "Release $TAG found"
+              exit 0
+            fi
+            echo "Waiting for release $TAG... ($i/30)"
+            sleep 30
+          done
+          echo "Release $TAG not found after 15 minutes, creating it"
+          gh release create "$TAG" --generate-notes
+
+      - name: Upload .deb to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${GITHUB_REF_NAME}" ../speedtest-z_*~${{ matrix.codename }}.deb --clobber

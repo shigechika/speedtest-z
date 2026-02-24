@@ -51,6 +51,41 @@ class TestFindConfig:
         monkeypatch.chdir(tmp_path)
         assert _find_config("config.ini") == str(conf_dir / "config.ini")
 
+    def test_etc_fallback(self, tmp_path, monkeypatch):
+        """/etc/speedtest-z/ にフォールバック"""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty"))
+        etc_dir = tmp_path / "etc" / "speedtest-z"
+        etc_dir.mkdir(parents=True)
+        (etc_dir / "config.ini").write_text("[general]\n")
+        # os.path.isfile を差し替えて /etc/speedtest-z/ をシミュレート
+        _real_isfile = os.path.isfile
+
+        def patched_isfile(path):
+            if path == "/etc/speedtest-z/config.ini":
+                return _real_isfile(str(etc_dir / "config.ini"))
+            return _real_isfile(path)
+
+        monkeypatch.setattr("speedtest_z.config.os.path.isfile", patched_isfile)
+        assert _find_config("config.ini") == "/etc/speedtest-z/config.ini"
+
+    def test_cwd_over_etc(self, tmp_path, monkeypatch):
+        """CWD は /etc/speedtest-z/ より優先"""
+        (tmp_path / "config.ini").write_text("[general]\n")
+        monkeypatch.chdir(tmp_path)
+        # /etc にもあっても CWD が優先される
+        assert _find_config("config.ini") == "config.ini"
+
+    def test_xdg_over_etc(self, tmp_path, monkeypatch):
+        """XDG は /etc/speedtest-z/ より優先"""
+        xdg = tmp_path / "xdg"
+        conf_dir = xdg / "speedtest-z"
+        conf_dir.mkdir(parents=True)
+        (conf_dir / "config.ini").write_text("[general]\n")
+        monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg))
+        monkeypatch.chdir(tmp_path)
+        assert _find_config("config.ini") == str(conf_dir / "config.ini")
+
     def test_not_found(self, tmp_path, monkeypatch):
         """どこにもなければ None"""
         monkeypatch.chdir(tmp_path)

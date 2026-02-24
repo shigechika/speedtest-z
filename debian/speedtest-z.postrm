@@ -1,0 +1,25 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    purge)
+        # ログとデータディレクトリの削除
+        rm -rf /var/log/speedtest-z
+        rm -rf /var/lib/speedtest-z
+
+        # 設定ディレクトリの削除
+        rm -rf /etc/speedtest-z
+
+        # speedtest-z ユーザ/グループの削除
+        if getent passwd speedtest-z >/dev/null 2>&1; then
+            deluser --quiet --system speedtest-z || true
+        fi
+        if getent group speedtest-z >/dev/null 2>&1; then
+            delgroup --quiet --system speedtest-z || true
+        fi
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0

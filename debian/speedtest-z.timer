@@ -1,0 +1,10 @@
+[Unit]
+Description=speedtest-z timer - run speed tests periodically
+
+[Timer]
+OnCalendar=*-*-* *:00/10:00
+RandomizedDelaySec=180
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -19,12 +19,14 @@ _MESSAGES: dict[str, tuple[str, str]] = {
         "  config.ini-sample を以下のいずれかにコピーしてください:\n"
         "    ./config.ini\n"
         "    ~/.config/speedtest-z/config.ini\n"
+        "    /etc/speedtest-z/config.ini\n"
         "  config.ini-sample:\n"
         "    https://github.com/shigechika/speedtest-z/blob/main/config.ini-sample",
         "config.ini not found.\n"
         "  Copy config.ini-sample to one of the following locations:\n"
         "    ./config.ini\n"
         "    ~/.config/speedtest-z/config.ini\n"
+        "    /etc/speedtest-z/config.ini\n"
         "  config.ini-sample:\n"
         "    https://github.com/shigechika/speedtest-z/blob/main/config.ini-sample",
     ),
@@ -33,12 +35,14 @@ _MESSAGES: dict[str, tuple[str, str]] = {
         "  config.ini-sample を以下のいずれかにコピーしてください:\n"
         "    ./config.ini\n"
         "    ~/.config/speedtest-z/config.ini\n"
+        "    /etc/speedtest-z/config.ini\n"
         "  config.ini-sample:\n"
         "    https://github.com/shigechika/speedtest-z/blob/main/config.ini-sample",
         "config.ini not found. Using default settings.\n"
         "  Copy config.ini-sample to one of the following locations:\n"
         "    ./config.ini\n"
         "    ~/.config/speedtest-z/config.ini\n"
+        "    /etc/speedtest-z/config.ini\n"
         "  config.ini-sample:\n"
         "    https://github.com/shigechika/speedtest-z/blob/main/config.ini-sample",
     ),

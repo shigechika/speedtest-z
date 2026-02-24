@@ -20,5 +20,10 @@ logger.log*
 # スナップショット
 snapshots/
 
+# debian パッケージビルド
+debian/files
+debian/.debhelper/
+debian/speedtest-z/
+
 # バックアップ
 *~

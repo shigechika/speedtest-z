@@ -1,0 +1,20 @@
+[Unit]
+Description=speedtest-z - Automated multi-site speed test runner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/speedtest-z
+ExecStart=/usr/bin/speedtest-z $SPEEDTEST_Z_OPTS
+WorkingDirectory=/var/lib/speedtest-z
+User=speedtest-z
+Group=speedtest-z
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/log/speedtest-z /var/lib/speedtest-z /tmp
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

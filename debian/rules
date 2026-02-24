@@ -1,0 +1,35 @@
+#!/usr/bin/make -f
+export DH_VIRTUALENV_INSTALL_ROOT=/opt/venvs
+export SETUPTOOLS_SCM_PRETEND_VERSION=$(shell dpkg-parsechangelog -S Version | sed 's/-.*//')
+
+%:
+	dh $@ --with python-virtualenv
+
+override_dh_virtualenv:
+	dh_virtualenv --python /usr/bin/python3 \
+		--install-suffix speedtest-z \
+		--extras grafana,otel \
+		--preinstall "setuptools>=68.0" \
+		--preinstall "setuptools-scm>=8" \
+		--preinstall "pip>=23.0" --pip-tool pip
+
+override_dh_install:
+	dh_install
+	# config.ini-sample → /etc/speedtest-z/config.ini（リネーム）
+	install -D -m 644 config.ini-sample debian/speedtest-z/etc/speedtest-z/config.ini
+	# /etc/default/speedtest-z
+	install -D -m 644 deploy/speedtest-z.default debian/speedtest-z/etc/default/speedtest-z
+	# Chrome 一時ファイル削除 cron
+	install -D -m 644 deploy/SeleniumCleaner.cron debian/speedtest-z/etc/cron.d/speedtest-z-cleaner
+
+override_dh_installsystemd:
+	dh_installsystemd --no-enable --no-start --name=speedtest-z
+
+override_dh_auto_test:
+	true
+
+override_dh_strip:
+	true
+
+override_dh_shlibdeps:
+	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
