@@ -4,10 +4,11 @@ Description=speedtest-z service
 [Service]
 Type=simple
 EnvironmentFile=-/etc/default/speedtest-z
-ExecStart=%h/speedtest-z/.venv/bin/speedtest-z $SPEEDTEST_Z_OPTS
-WorkingDirectory=%h/speedtest-z
-User=shige
-Group=shige
+# パスは環境に合わせて変更してください
+ExecStart=/home/speedtest-z/.local/bin/speedtest-z $SPEEDTEST_Z_OPTS
+WorkingDirectory=/home/speedtest-z
+User=speedtest-z
+Group=speedtest-z
 
 [Install]
 WantedBy=multi-user.target

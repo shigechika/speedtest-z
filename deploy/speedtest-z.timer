@@ -3,6 +3,7 @@ Description=speedtest-z timer
 
 [Timer]
 OnCalendar=*-*-* *:00/10:00
+RandomizedDelaySec=180
 
 [Install]
 WantedBy=timers.target
