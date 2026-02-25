@@ -4,6 +4,11 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build (e.g. 0.8.1)"
+        required: true
 
 jobs:
   build-deb:
@@ -37,9 +42,13 @@ jobs:
             python3-setuptools \
             dpkg-dev
 
-      - name: Update debian/changelog version from git tag
+      - name: Update debian/changelog version
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
           sed -i "1s/([^)]*)/($VERSION-1)/" debian/changelog
 
       - name: Build .deb package
@@ -53,6 +62,7 @@ jobs:
           done
 
       - name: Wait for GitHub Release to exist
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -69,6 +79,7 @@ jobs:
           gh release create "$TAG" --generate-notes
 
       - name: Upload .deb to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
