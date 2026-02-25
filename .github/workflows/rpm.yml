@@ -1,0 +1,138 @@
+name: Build RPM packages
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-rpm:
+    runs-on: ubuntu-latest
+    container: rockylinux:9
+    permissions:
+      contents: write
+
+    steps:
+      - name: Install system dependencies
+        run: |
+          dnf install -y \
+            python3.11 python3.11-devel python3.11-pip \
+            ruby ruby-devel gcc make rpm-build \
+            git-core
+
+      - name: Install fpm
+        run: gem install fpm
+
+      - name: Install GitHub CLI
+        run: |
+          dnf install -y 'dnf-command(config-manager)'
+          dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
+          dnf install -y gh
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mark git directory as safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Extract version from tag
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Build virtualenv
+        run: |
+          python3.11 -m venv /opt/venvs/speedtest-z
+          /opt/venvs/speedtest-z/bin/pip install --upgrade pip setuptools "setuptools-scm>=8"
+          SETUPTOOLS_SCM_PRETEND_VERSION="${VERSION}" \
+            /opt/venvs/speedtest-z/bin/pip install ".[grafana,otel]"
+          /opt/venvs/speedtest-z/bin/speedtest-z --version
+
+      - name: Prepare staging directory
+        run: |
+          STAGING="${GITHUB_WORKSPACE}/staging"
+          mkdir -p "${STAGING}"
+
+          # venv
+          mkdir -p "${STAGING}/opt/venvs"
+          cp -a /opt/venvs/speedtest-z "${STAGING}/opt/venvs/"
+
+          # /usr/bin symlink
+          mkdir -p "${STAGING}/usr/bin"
+          ln -sf /opt/venvs/speedtest-z/bin/speedtest-z "${STAGING}/usr/bin/speedtest-z"
+
+          # 設定ファイル
+          mkdir -p "${STAGING}/etc/speedtest-z"
+          cp config.ini-sample "${STAGING}/etc/speedtest-z/config.ini"
+          cp logging.ini "${STAGING}/etc/speedtest-z/logging.ini"
+
+          # /etc/default
+          mkdir -p "${STAGING}/etc/default"
+          cp deploy/speedtest-z.default "${STAGING}/etc/default/speedtest-z"
+
+          # systemd ユニット
+          mkdir -p "${STAGING}/usr/lib/systemd/system"
+          cp debian/speedtest-z.service "${STAGING}/usr/lib/systemd/system/"
+          cp debian/speedtest-z.timer "${STAGING}/usr/lib/systemd/system/"
+
+          # cron
+          mkdir -p "${STAGING}/etc/cron.d"
+          cp deploy/SeleniumCleaner.cron "${STAGING}/etc/cron.d/speedtest-z-cleaner"
+
+      - name: Build RPM with fpm
+        run: |
+          fpm -s dir -t rpm \
+            -C "${GITHUB_WORKSPACE}/staging" \
+            -n speedtest-z \
+            -v "${VERSION}" \
+            --iteration 1.el9 \
+            --license "Apache-2.0" \
+            --vendor "AIKAWA Shigechika" \
+            --maintainer "AIKAWA Shigechika <shigechika@users.noreply.github.com>" \
+            --url "https://github.com/shigechika/speedtest-z" \
+            --description "Automated multi-site speed test runner with Selenium WebDriver" \
+            --rpm-summary "Automated multi-site speed test runner" \
+            --depends python3.11 \
+            --config-files /etc/speedtest-z/config.ini \
+            --config-files /etc/speedtest-z/logging.ini \
+            --config-files /etc/default/speedtest-z \
+            --before-install rpm/pre-install.sh \
+            --after-install rpm/post-install.sh \
+            --before-remove rpm/pre-remove.sh \
+            --after-remove rpm/post-remove.sh \
+            .
+
+      - name: Verify RPM
+        run: |
+          echo "=== RPM info ==="
+          rpm -qpi speedtest-z-*.rpm
+          echo ""
+          echo "=== File list (first 40 lines) ==="
+          rpm -qpl speedtest-z-*.rpm | head -40
+          echo ""
+          echo "=== Config files ==="
+          rpm -qpc speedtest-z-*.rpm
+          echo ""
+          echo "=== Scripts ==="
+          rpm -qp --scripts speedtest-z-*.rpm
+
+      - name: Wait for GitHub Release to exist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          for i in $(seq 1 30); do
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              echo "Release $TAG found"
+              exit 0
+            fi
+            echo "Waiting for release $TAG... ($i/30)"
+            sleep 30
+          done
+          echo "Release $TAG not found after 15 minutes, creating it"
+          gh release create "$TAG" --generate-notes
+
+      - name: Upload RPM to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${GITHUB_REF_NAME}" speedtest-z-*.rpm --clobber

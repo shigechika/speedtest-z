@@ -29,5 +29,9 @@ debian/*.substvars
 debian/debhelper-build-stamp
 debian/*.debhelper
 
+# RPM ビルド成果物
+*.rpm
+staging/
+
 # バックアップ
 *~
