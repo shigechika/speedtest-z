@@ -74,6 +74,18 @@ sudo vi /etc/speedtest-z/config.ini
 sudo systemctl enable --now speedtest-z.timer
 ```
 
+### RHEL / Rocky Linux / AlmaLinux (.rpm)
+
+Download the `.rpm` package from [GitHub Releases](https://github.com/shigechika/speedtest-z/releases):
+
+```bash
+# RHEL 9 / Rocky Linux 9 / AlmaLinux 9
+sudo dnf install python3.11
+sudo rpm -ivh speedtest-z-*-1.el9.x86_64.rpm
+```
+
+The `.rpm` package has the same structure as the `.deb` package: self-contained virtualenv in `/opt/venvs/speedtest-z/`, systemd service/timer, and config files in `/etc/speedtest-z/`.
+
 ### pip
 
 ```bash
@@ -352,7 +364,7 @@ headers = Authorization=Basic <base64-encoded-credentials>
 
 ## Deployment (systemd)
 
-> **Note:** The `.deb` package includes systemd service/timer files pre-configured. Just run `sudo systemctl enable --now speedtest-z.timer` after installing.
+> **Note:** The `.deb` and `.rpm` packages include systemd service/timer files pre-configured. Just run `sudo systemctl enable --now speedtest-z.timer` after installing.
 
 For manual (pip) installations, the `deploy/` directory contains systemd unit files for scheduled execution:
 
