@@ -86,10 +86,13 @@ sudo rpm -ivh speedtest-z-*-1.el9.x86_64.rpm
 
 The `.rpm` package has the same structure as the `.deb` package: self-contained virtualenv in `/opt/venvs/speedtest-z/`, systemd service/timer, and config files in `/etc/speedtest-z/`.
 
-### pip
+### pip / uv
 
 ```bash
 pip install speedtest-z
+
+# or using uv
+uv tool install speedtest-z
 ```
 
 ### Development Setup
@@ -100,6 +103,9 @@ cd speedtest-z
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -e .
+
+# or using uv
+uv sync
 ```
 
 ### Dependencies
@@ -111,6 +117,9 @@ pip install -e .
 
 ```bash
 pip install speedtest-z[grafana]
+
+# or using uv
+uv tool install "speedtest-z[grafana]"
 ```
 
 This installs `cramjam` for Snappy compression required by Prometheus Remote Write.
@@ -119,6 +128,9 @@ This installs `cramjam` for Snappy compression required by Prometheus Remote Wri
 
 ```bash
 pip install speedtest-z[otel]
+
+# or using uv
+uv tool install "speedtest-z[otel]"
 ```
 
 This installs the OpenTelemetry SDK and OTLP HTTP exporter for sending metrics via OTLP.

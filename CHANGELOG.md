@@ -5,12 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [0.8.2] - 2026-02-25
+## [0.8.3] - 2026-02-25
 
 ### Added
 - RHEL 9 / Rocky Linux 9 / AlmaLinux 9 `.rpm` package building with fpm (`rpm/` directory)
 - `.github/workflows/rpm.yml` CI for building `.rpm` packages on Rocky Linux 9 container
 - `workflow_dispatch` trigger for both `.deb` and `.rpm` workflows (manual build testing without tag)
+- `uv` installation instructions in README
 
 ### Changed
 - Logging: bare `except: pass` replaced with `logger.debug` in site runners for easier troubleshooting
@@ -20,6 +21,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `deploy/speedtest-z.service` generalized for reusable template
 - `deploy/speedtest-z.timer` added `RandomizedDelaySec=180`
 - `grafana-dashboard.json` line interpolation smooth, lineWidth 1, pointSize 3
+
+### Fixed
+- `ruff format` violation in `runner.py` that caused CI failure in v0.8.2
+
+## [0.8.2] - 2026-02-25
+
+### Note
+- CI (`ruff format --check`) failed due to formatting violation in `runner.py`. Packages (PyPI, .deb, .rpm) were published successfully. Superseded by v0.8.3.
 
 ## [0.8.1] - 2026-02-24
 
@@ -182,6 +191,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - systemd timer deployment files
 - PyPI release workflow (TestPyPI + PyPI)
 
+[0.8.3]: https://github.com/shigechika/speedtest-z/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/shigechika/speedtest-z/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/shigechika/speedtest-z/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/shigechika/speedtest-z/compare/v0.7.1...v0.8.0

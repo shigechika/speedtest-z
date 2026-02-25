@@ -73,10 +73,13 @@ sudo rpm -ivh speedtest-z-*-1.el9.x86_64.rpm
 
 `.rpm` パッケージは `.deb` と同様の構成です: `/opt/venvs/speedtest-z/` に自己完結型 virtualenv、systemd service/timer、設定ファイル（`/etc/speedtest-z/`）を含みます。
 
-### pip
+### pip / uv
 
 ```bash
 pip install speedtest-z
+
+# uv を使う場合
+uv tool install speedtest-z
 ```
 
 ### 開発用インストール
@@ -87,6 +90,9 @@ cd speedtest-z
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -e .
+
+# uv を使う場合
+uv sync
 ```
 
 ### 依存ライブラリ
@@ -98,6 +104,9 @@ pip install -e .
 
 ```bash
 pip install speedtest-z[grafana]
+
+# uv を使う場合
+uv tool install "speedtest-z[grafana]"
 ```
 
 Prometheus Remote Write に必要な Snappy 圧縮ライブラリ `cramjam` がインストールされます。
@@ -106,6 +115,9 @@ Prometheus Remote Write に必要な Snappy 圧縮ライブラリ `cramjam` が�
 
 ```bash
 pip install speedtest-z[otel]
+
+# uv を使う場合
+uv tool install "speedtest-z[otel]"
 ```
 
 OpenTelemetry SDK と OTLP HTTP エクスポーターがインストールされます。

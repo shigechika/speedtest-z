@@ -119,9 +119,7 @@ class SpeedtestZ:
                             headers[k.strip()] = v.strip()
                     self.otel_sender = OtelSender(endpoint, headers, self.zabbix_host)
                 except ImportError:
-                    logger.error(
-                        "opentelemetry not installed. Run: pip install speedtest-z[otel]"
-                    )
+                    logger.error("opentelemetry not installed. Run: pip install speedtest-z[otel]")
                 except configparser.NoOptionError as e:
                     logger.error(f"[otel] config incomplete: {e}")
 

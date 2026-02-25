@@ -89,6 +89,14 @@ python -m build
 - `opentelemetry-*` は optional dependency: `pip install speedtest-z[otel]`
 - `send_results()` が全バックエンド（Zabbix + Grafana + OTel）への送信を一括管理
 
+## コーディングルール
+
+- **Python ファイルを編集したら、コミット前に必ず `ruff format` と `ruff check` を実行すること**
+  - `ruff format speedtest_z/ tests/` — 自動整形
+  - `ruff check speedtest_z/ tests/` — lint チェック
+  - CI で `ruff format --check` が走るため、未整形のままコミットすると CI が失敗する
+  - 過去に2回この失敗でパッチバージョンを消費している（v0.8.2 等）
+
 ## 注意事項
 
 - `config.ini` は `.gitignore` で除外（`config.ini-sample` をコピーして使用）
