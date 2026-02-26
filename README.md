@@ -52,6 +52,8 @@ speedtest-z automates major speed test sites with a web browser, capturing real 
 brew install shigechika/tap/speedtest-z
 ```
 
+Pre-built bottles are available for macOS Sonoma (14) and Sequoia (15) on Apple Silicon. Installation completes in seconds.
+
 ### Debian / Ubuntu (.deb)
 
 Download the `.deb` package for your distribution from [GitHub Releases](https://github.com/shigechika/speedtest-z/releases):
