@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 from speedtest_z.sites.cloudflare import _extract_by_label, run_cloudflare
 
@@ -134,3 +134,109 @@ class TestRunCloudflare:
         assert data[1]["key"] == "cloudflare.upload"
         assert data[2]["key"] == "cloudflare.latency"
         assert data[3]["key"] == "cloudflare.jitter"
+
+    def test_download_extraction_failure_returns_early(self, mock_app):
+        """Return early when download speed extraction fails."""
+        mock_app._should_run = MagicMock(return_value=True)
+        mock_app._load_with_retry = MagicMock(return_value=True)
+        mock_app.send_results = MagicMock()
+        mock_app.take_snapshot = MagicMock()
+
+        with (
+            patch("speedtest_z.sites.cloudflare.WebDriverWait"),
+            patch("speedtest_z.sites.cloudflare.time"),
+            patch(
+                "speedtest_z.sites.cloudflare._extract_by_label",
+                side_effect=["", "50.2", "10.1", "1.5"],
+            ),
+        ):
+            run_cloudflare(mock_app)
+
+        mock_app.send_results.assert_not_called()
+        mock_app.take_snapshot.assert_any_call("cloudflare_error_parse")
+
+    def test_timeout_waiting_for_completion(self, mock_app):
+        """Continue even when Quality Scores timeout occurs."""
+        mock_app._should_run = MagicMock(return_value=True)
+        mock_app._load_with_retry = MagicMock(return_value=True)
+        mock_app.send_results = MagicMock()
+        mock_app.take_snapshot = MagicMock()
+
+        with (
+            patch("speedtest_z.sites.cloudflare.WebDriverWait") as mock_wdw,
+            patch("speedtest_z.sites.cloudflare.time"),
+            patch(
+                "speedtest_z.sites.cloudflare._extract_by_label",
+                side_effect=["100.0", "50.0", "10.0", "1.0"],
+            ),
+        ):
+            mock_wdw.return_value.until.side_effect = [
+                MagicMock(),  # Start button
+                True,  # invisibility
+                TimeoutException(),  # Quality Scores timeout
+            ]
+            run_cloudflare(mock_app)
+
+        # Should still try to extract results after timeout
+        mock_app.send_results.assert_called_once()
+        mock_app.take_snapshot.assert_any_call("cloudflare_timeout")
+
+    def test_snapshot_always_taken(self, mock_app):
+        """Snapshot is always taken in the finally block."""
+        mock_app._should_run = MagicMock(return_value=True)
+        mock_app._load_with_retry = MagicMock(return_value=True)
+        mock_app.send_results = MagicMock()
+        mock_app.take_snapshot = MagicMock()
+
+        with (
+            patch("speedtest_z.sites.cloudflare.WebDriverWait"),
+            patch("speedtest_z.sites.cloudflare.time"),
+            patch(
+                "speedtest_z.sites.cloudflare._extract_by_label",
+                side_effect=["100.0", "50.0", "10.0", "1.0"],
+            ),
+        ):
+            run_cloudflare(mock_app)
+
+        mock_app.take_snapshot.assert_any_call("cloudflare")
+
+    def test_zabbix_host_in_data(self, mock_app):
+        """Each data item includes the correct zabbix_host."""
+        mock_app._should_run = MagicMock(return_value=True)
+        mock_app._load_with_retry = MagicMock(return_value=True)
+        mock_app.send_results = MagicMock()
+        mock_app.take_snapshot = MagicMock()
+        mock_app.zabbix_host = "cf-host"
+
+        with (
+            patch("speedtest_z.sites.cloudflare.WebDriverWait"),
+            patch("speedtest_z.sites.cloudflare.time"),
+            patch(
+                "speedtest_z.sites.cloudflare._extract_by_label",
+                side_effect=["100.0", "50.0", "10.0", "1.0"],
+            ),
+        ):
+            run_cloudflare(mock_app)
+
+        data = mock_app.send_results.call_args[0][0]
+        for item in data:
+            assert item["host"] == "cf-host"
+
+    def test_extraction_error_returns_early(self, mock_app):
+        """Return early when _extract_by_label raises an exception."""
+        mock_app._should_run = MagicMock(return_value=True)
+        mock_app._load_with_retry = MagicMock(return_value=True)
+        mock_app.send_results = MagicMock()
+        mock_app.take_snapshot = MagicMock()
+
+        with (
+            patch("speedtest_z.sites.cloudflare.WebDriverWait"),
+            patch("speedtest_z.sites.cloudflare.time"),
+            patch(
+                "speedtest_z.sites.cloudflare._extract_by_label",
+                side_effect=Exception("extraction error"),
+            ),
+        ):
+            run_cloudflare(mock_app)
+
+        mock_app.send_results.assert_not_called()
