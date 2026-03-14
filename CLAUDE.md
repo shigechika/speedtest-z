@@ -39,12 +39,14 @@ python3 -m venv .venv
 pip install -e .
 # Grafana Cloud 連携を使う場合
 pip install -e ".[grafana]"
+# OpenTelemetry (OTLP) 連携を使う場合
+pip install -e ".[otel]"
 
 # lint / format
 ruff check speedtest_z/ tests/
 ruff format --check speedtest_z/ tests/
 
-# テスト
+# テスト（OTel テストは opentelemetry 未インストール時に自動スキップ）
 pytest tests/ -v
 
 # CLI
