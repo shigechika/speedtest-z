@@ -31,6 +31,9 @@ jobs:
       - name: Format check (ruff format)
         run: ruff format --check speedtest_z/ tests/
 
+      - name: Type check (mypy)
+        run: mypy speedtest_z/
+
       - name: Syntax check
         run: python3 -c "import speedtest_z.cli"
 

@@ -21,6 +21,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from speedtest_z.config import _find_config
 from speedtest_z.i18n import _msg
 from speedtest_z.sender import SenderManager
+from speedtest_z.types import MetricSender
 
 logger = logging.getLogger("speedtest-z")
 
@@ -79,14 +80,15 @@ class SpeedtestZ:
         self.zabbix_host = self.config.get("zabbix", "host", fallback="speedtest-agent")
 
         # Sender management (Zabbix, Grafana, OTel)
-        self.sender = SenderManager(self.config, self.zabbix_host, self.dryrun)
+        _sender = SenderManager(self.config, self.zabbix_host, self.dryrun)
+        self.sender: MetricSender = _sender
 
         # Backward-compatible attributes delegated to sender
-        self.zabbix_enable = self.sender.zabbix_enable
-        self.zabbix_server = self.sender.zabbix_server
-        self.zabbix_port = self.sender.zabbix_port
-        self.grafana_sender = self.sender.grafana_sender
-        self.otel_sender = self.sender.otel_sender
+        self.zabbix_enable = _sender.zabbix_enable
+        self.zabbix_server = _sender.zabbix_server
+        self.zabbix_port = _sender.zabbix_port
+        self.grafana_sender = _sender.grafana_sender
+        self.otel_sender = _sender.otel_sender
 
         # [snapshot]
         self.snapshot_enable = self.config.getboolean("snapshot", "enable", fallback=False)
@@ -140,7 +142,7 @@ class SpeedtestZ:
                     logger.info(f"Window moved to Top-Right: {pos}")
 
         except Exception as e:
-            logger.error(_msg("chrome_init_failed", error=e))
+            logger.error(_msg("chrome_init_failed", error=str(e)))
             sys.exit(1)
 
     def _should_run(self, site_name: str) -> bool:

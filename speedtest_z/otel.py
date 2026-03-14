@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.sdk.metrics import MeterProvider
@@ -39,7 +40,7 @@ class OtelSender:
         self.provider = MeterProvider(resource=self.resource, metric_readers=[reader])
         self.meter = self.provider.get_meter("speedtest-z")
         # 作成済み gauge をキャッシュ
-        self._gauges: dict[str, object] = {}
+        self._gauges: dict[str, Any] = {}
 
     def send(self, data_list: list[dict[str, str]]) -> None:
         """Send metrics via OTLP."""

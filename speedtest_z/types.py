@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import Protocol, TypedDict
 
 
 class ZabbixItem(TypedDict):
@@ -11,3 +11,15 @@ class ZabbixItem(TypedDict):
     host: str
     key: str
     value: str
+
+
+class MetricSender(Protocol):
+    """Protocol for metric backends (SenderManager, OutputCollector)."""
+
+    def send(self, data_list: list[dict[str, str]]) -> None:
+        """Send measurement results."""
+        ...
+
+    def close(self) -> None:
+        """Shut down the backend."""
+        ...
