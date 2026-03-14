@@ -35,7 +35,7 @@ jobs:
         run: python3 -c "import speedtest_z.cli"
 
       - name: Run tests
-        run: pytest tests/ -v --tb=short
+        run: pytest tests/ -v --tb=short --cov=speedtest_z --cov-report=term-missing
 
       - name: CLI version check
         run: speedtest-z --version

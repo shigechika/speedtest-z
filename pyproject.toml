@@ -33,7 +33,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["ruff"]
-test = ["pytest"]
+test = ["pytest", "pytest-cov"]
 completion = ["argcomplete"]
 grafana = ["cramjam"]
 otel = ["opentelemetry-api", "opentelemetry-sdk", "opentelemetry-exporter-otlp-proto-http"]
