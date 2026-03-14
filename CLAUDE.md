@@ -13,14 +13,15 @@ Selenium を使って複数の速度テストサイト（Cloudflare, Netflix/fas
 ## アーキテクチャ
 
 - `speedtest_z/cli.py` — CLI エントリポイント（`main()`）
-- `speedtest_z/runner.py` — SpeedtestZ コアクラス（WebDriver 管理・結果送信）
+- `speedtest_z/runner.py` — SpeedtestZ コアクラス（WebDriver 管理・サイト実行オーケストレーション）
+- `speedtest_z/sender.py` — SenderManager（Zabbix/Grafana/OTel バックエンド一括管理）
 - `speedtest_z/grafana.py` — Grafana Cloud Prometheus Remote Write 送信（Protobuf エンコーダー + GrafanaSender）
 - `speedtest_z/otel.py` — OpenTelemetry OTLP 送信（OtelSender、要 `pip install speedtest-z[otel]`）
 - `speedtest_z/config.py` — 設定ファイル探索・ログ設定
 - `speedtest_z/i18n.py` — ロケール判定・メッセージ辞書
-- `speedtest_z/output.py` — JSON/CSV 出力（OutputCollector）
+- `speedtest_z/output.py` — JSON/CSV 出力（OutputCollector、MetricSender 互換）
 - `speedtest_z/healthcheck.py` — `--check` URL 疎通確認
-- `speedtest_z/types.py` — ZabbixItem TypedDict
+- `speedtest_z/types.py` — ZabbixItem TypedDict + MetricSender プロトコル
 - `speedtest_z/sites/` — サイトごとのランナー（`run_xxx(app)` 関数）
 - `speedtest_z/__init__.py` — バージョン情報（setuptools-scm で自動採番）
 - `config.ini` — 実行設定（探索順: CLI → CWD → ~/.config/speedtest-z/ → /etc/speedtest-z/）
@@ -89,7 +90,8 @@ python -m build
 - `--output json/csv` 時は stdout 出力のみ（バックエンド送信なし）。ログは stderr に出力されるため `2>/dev/null` で抑制可能
 - `cramjam` は optional dependency: `pip install speedtest-z[grafana]`
 - `opentelemetry-*` は optional dependency: `pip install speedtest-z[otel]`
-- `send_results()` が全バックエンド（Zabbix + Grafana + OTel）への送信を一括管理
+- `SenderManager.send()` が全バックエンド（Zabbix + Grafana + OTel）への送信を一括管理
+- `--output json/csv` 時は `OutputCollector` が `SenderManager` の代わりに `app.sender` に差し替わる（`MetricSender` プロトコル準拠）
 
 ## コーディングルール
 
