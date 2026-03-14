@@ -17,6 +17,7 @@ from speedtest_z.grafana import (
     encode_write_request,
 )
 from speedtest_z.runner import SpeedtestZ
+from speedtest_z.sender import SenderManager
 
 # --- Protobuf エンコーダーのユニットテスト ---
 
@@ -269,18 +270,18 @@ class TestCramjamFallback:
 # --- send_results() の統合テスト ---
 
 
-def _make_app(dryrun=True, zabbix_enable=False, grafana_sender=None):
-    """WebDriver を迂回して SpeedtestZ インスタンスを作成"""
-    with patch.object(SpeedtestZ, "__init__", lambda self, *a, **kw: None):
-        app = SpeedtestZ.__new__(SpeedtestZ)
-        app.dryrun = dryrun
-        app.zabbix_enable = zabbix_enable
-        app.zabbix_server = "127.0.0.1"
-        app.zabbix_port = 10051
-        app.zabbix_host = "speedtest-agent"
-        app.grafana_sender = grafana_sender
-        app.otel_sender = None
-    return app
+def _make_sender(dryrun=True, zabbix_enable=False, grafana_sender=None):
+    """SenderManager インスタンスを直接作成"""
+    with patch.object(SenderManager, "__init__", lambda self, *a, **kw: None):
+        sender = SenderManager.__new__(SenderManager)
+        sender.dry_run = dryrun
+        sender.zabbix_enable = zabbix_enable
+        sender.zabbix_server = "127.0.0.1"
+        sender.zabbix_port = 10051
+        sender.zabbix_host = "speedtest-agent"
+        sender.grafana_sender = grafana_sender
+        sender.otel_sender = None
+    return sender
 
 
 class TestSendResultsZabbixEnable:
@@ -288,20 +289,20 @@ class TestSendResultsZabbixEnable:
 
     def test_zabbix_disabled_no_send(self):
         """zabbix_enable=False では Sender が呼ばれないこと"""
-        app = _make_app(dryrun=False, zabbix_enable=False)
+        sender = _make_sender(dryrun=False, zabbix_enable=False)
         data = [{"key": "speedtest.dl", "value": "100.5"}]
-        with patch("speedtest_z.runner.Sender") as mock_sender:
-            app.send_results(data)
+        with patch("speedtest_z.sender.Sender") as mock_sender:
+            sender.send(data)
             mock_sender.assert_not_called()
 
     def test_zabbix_enabled_sends(self):
         """zabbix_enable=True では Sender.send_bulk() が呼ばれること"""
-        app = _make_app(dryrun=False, zabbix_enable=True)
+        sender = _make_sender(dryrun=False, zabbix_enable=True)
         data = [{"key": "speedtest.dl", "value": "100.5"}]
-        with patch("speedtest_z.runner.Sender") as mock_sender_cls:
+        with patch("speedtest_z.sender.Sender") as mock_sender_cls:
             mock_instance = MagicMock()
             mock_sender_cls.return_value = mock_instance
-            app.send_results(data)
+            sender.send(data)
             mock_sender_cls.assert_called_once_with("127.0.0.1", 10051)
             mock_instance.send_bulk.assert_called_once()
 
@@ -312,38 +313,38 @@ class TestSendResultsGrafana:
     def test_grafana_sender_called(self):
         """grafana_sender が設定されていれば send() が呼ばれること"""
         mock_grafana = MagicMock()
-        app = _make_app(dryrun=False, grafana_sender=mock_grafana)
+        sender = _make_sender(dryrun=False, grafana_sender=mock_grafana)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
-        with patch("speedtest_z.runner.Sender"):
-            app.send_results(data)
+        with patch("speedtest_z.sender.Sender"):
+            sender.send(data)
             mock_grafana.send.assert_called_once_with(data)
 
     def test_grafana_sender_not_called_on_dryrun(self):
         """dryrun=True では grafana_sender.send() が呼ばれないこと"""
         mock_grafana = MagicMock()
-        app = _make_app(dryrun=True, grafana_sender=mock_grafana)
+        sender = _make_sender(dryrun=True, grafana_sender=mock_grafana)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
-        app.send_results(data)
+        sender.send(data)
         mock_grafana.send.assert_not_called()
 
     def test_grafana_error_handled(self):
         """Grafana 送信エラーでもクラッシュしないこと"""
         mock_grafana = MagicMock()
         mock_grafana.send.side_effect = Exception("Connection error")
-        app = _make_app(dryrun=False, grafana_sender=mock_grafana)
+        sender = _make_sender(dryrun=False, grafana_sender=mock_grafana)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
-        with patch("speedtest_z.runner.Sender"):
-            app.send_results(data)  # 例外が伝播しない
+        with patch("speedtest_z.sender.Sender"):
+            sender.send(data)  # 例外が伝播しない
 
     def test_both_zabbix_and_grafana(self):
         """Zabbix と Grafana の両方が呼ばれること"""
         mock_grafana = MagicMock()
-        app = _make_app(dryrun=False, zabbix_enable=True, grafana_sender=mock_grafana)
+        sender = _make_sender(dryrun=False, zabbix_enable=True, grafana_sender=mock_grafana)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
-        with patch("speedtest_z.runner.Sender") as mock_sender_cls:
+        with patch("speedtest_z.sender.Sender") as mock_sender_cls:
             mock_instance = MagicMock()
             mock_sender_cls.return_value = mock_instance
-            app.send_results(data)
+            sender.send(data)
             mock_instance.send_bulk.assert_called_once()
             mock_grafana.send.assert_called_once_with(data)
 

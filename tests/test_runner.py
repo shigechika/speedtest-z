@@ -5,10 +5,25 @@ import configparser
 from unittest.mock import MagicMock, patch
 
 from speedtest_z.runner import SpeedtestZ
+from speedtest_z.sender import SenderManager
 
 # ---------------------------------------------------------------------------
 # Helper: create SpeedtestZ instance bypassing WebDriver init
 # ---------------------------------------------------------------------------
+
+
+def _make_sender(dryrun=True, zabbix_enable=False, grafana_sender=None, otel_sender=None):
+    """Create a SenderManager instance for direct testing."""
+    with patch.object(SenderManager, "__init__", lambda self, *a, **kw: None):
+        sender = SenderManager.__new__(SenderManager)
+        sender.dry_run = dryrun
+        sender.zabbix_enable = zabbix_enable
+        sender.zabbix_server = "127.0.0.1"
+        sender.zabbix_port = 10051
+        sender.zabbix_host = "speedtest-agent"
+        sender.grafana_sender = grafana_sender
+        sender.otel_sender = otel_sender
+    return sender
 
 
 def _make_app(
@@ -45,6 +60,10 @@ def _make_app(
         app.driver = MagicMock()
         app.wait = MagicMock()
         app.action_chains = MagicMock()
+        # SenderManager mock
+        sender = MagicMock(spec=SenderManager)
+        sender.otel_sender = otel_sender
+        app.sender = sender
     return app
 
 
@@ -220,51 +239,58 @@ class TestLoadWithRetry:
 
 
 class TestSendResultsOtel:
-    """Tests for send_results() OTel backend dispatch."""
+    """Tests for SenderManager.send() OTel backend dispatch."""
 
     def test_otel_sender_called(self):
         """OTel sender is called when configured and not dryrun."""
         mock_otel = MagicMock()
-        app = _make_app(dryrun=False, otel_sender=mock_otel)
+        sender = _make_sender(dryrun=False, otel_sender=mock_otel)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
-        with patch("speedtest_z.runner.Sender"):
-            app.send_results(data)
+        with patch("speedtest_z.sender.Sender"):
+            sender.send(data)
         mock_otel.send.assert_called_once_with(data)
 
     def test_otel_sender_not_called_on_dryrun(self):
         """OTel sender is NOT called when dryrun is True."""
         mock_otel = MagicMock()
-        app = _make_app(dryrun=True, otel_sender=mock_otel)
+        sender = _make_sender(dryrun=True, otel_sender=mock_otel)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
-        app.send_results(data)
+        sender.send(data)
         mock_otel.send.assert_not_called()
 
     def test_otel_error_handled(self):
         """OTel send error does not crash."""
         mock_otel = MagicMock()
         mock_otel.send.side_effect = Exception("OTel export failed")
-        app = _make_app(dryrun=False, otel_sender=mock_otel)
+        sender = _make_sender(dryrun=False, otel_sender=mock_otel)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
-        with patch("speedtest_z.runner.Sender"):
-            app.send_results(data)  # should not raise
+        with patch("speedtest_z.sender.Sender"):
+            sender.send(data)  # should not raise
 
     def test_all_backends_called(self):
         """All three backends (Zabbix, Grafana, OTel) are called together."""
         mock_grafana = MagicMock()
         mock_otel = MagicMock()
-        app = _make_app(
+        sender = _make_sender(
             dryrun=False,
             zabbix_enable=True,
             grafana_sender=mock_grafana,
             otel_sender=mock_otel,
         )
         data = [{"key": "cloudflare.download", "value": "100.5"}]
-        with patch("speedtest_z.runner.Sender") as mock_sender_cls:
+        with patch("speedtest_z.sender.Sender") as mock_sender_cls:
             mock_sender_cls.return_value = MagicMock()
-            app.send_results(data)
+            sender.send(data)
             mock_sender_cls.return_value.send_bulk.assert_called_once()
         mock_grafana.send.assert_called_once_with(data)
         mock_otel.send.assert_called_once_with(data)
+
+    def test_delegation_from_app(self):
+        """SpeedtestZ.send_results() delegates to SenderManager.send()."""
+        app = _make_app(dryrun=False)
+        data = [{"key": "cloudflare.download", "value": "100.5"}]
+        app.send_results(data)
+        app.sender.send.assert_called_once_with(data)
 
 
 # ===========================================================================
@@ -413,18 +439,11 @@ class TestClose:
         app.close()
         app.driver.quit.assert_called_once()
 
-    def test_close_shuts_down_otel(self):
-        """close() calls otel_sender.shutdown()."""
-        mock_otel = MagicMock()
-        app = _make_app(otel_sender=mock_otel)
+    def test_close_calls_sender_close(self):
+        """close() calls sender.close()."""
+        app = _make_app()
         app.close()
-        mock_otel.shutdown.assert_called_once()
-
-    def test_close_without_otel(self):
-        """close() works when otel_sender is None."""
-        app = _make_app(otel_sender=None)
-        app.close()  # should not raise
-        app.driver.quit.assert_called_once()
+        app.sender.close.assert_called_once()
 
     def test_close_without_driver(self):
         """close() works when driver attribute is missing."""
@@ -432,9 +451,34 @@ class TestClose:
         del app.driver
         app.close()  # should not raise
 
-    def test_close_without_otel_attribute(self):
-        """close() works when otel_sender attribute is missing."""
+    def test_close_without_sender(self):
+        """close() works when sender attribute is missing but otel_sender exists."""
+        mock_otel = MagicMock()
+        app = _make_app(otel_sender=mock_otel)
+        del app.sender
+        app.close()  # should not raise, falls back to otel_sender.shutdown()
+        mock_otel.shutdown.assert_called_once()
+
+    def test_close_without_sender_or_otel(self):
+        """close() works when neither sender nor otel_sender exist."""
         app = _make_app()
+        del app.sender
         del app.otel_sender
         app.close()  # should not raise
         app.driver.quit.assert_called_once()
+
+
+class TestSenderManagerClose:
+    """Tests for SenderManager.close() cleanup logic."""
+
+    def test_close_shuts_down_otel(self):
+        """close() calls otel_sender.shutdown()."""
+        mock_otel = MagicMock()
+        sender = _make_sender(otel_sender=mock_otel)
+        sender.close()
+        mock_otel.shutdown.assert_called_once()
+
+    def test_close_without_otel(self):
+        """close() works when otel_sender is None."""
+        sender = _make_sender(otel_sender=None)
+        sender.close()  # should not raise

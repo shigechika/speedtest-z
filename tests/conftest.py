@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from speedtest_z.runner import SpeedtestZ
+from speedtest_z.sender import SenderManager
 
 
 @pytest.fixture
@@ -113,4 +114,8 @@ def mock_app(mock_config, mock_driver):
         app.auto_consent = False
         app.ookla_server = None
         app.chrome_profile_dir = "/tmp/chrome-profile"
+        # SenderManager mock
+        sender = MagicMock(spec=SenderManager)
+        sender.otel_sender = None
+        app.sender = sender
     return app

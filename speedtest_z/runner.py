@@ -17,10 +17,10 @@ import types as types_mod
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
-from zappix.sender import Sender, SenderData
 
 from speedtest_z.config import _find_config
 from speedtest_z.i18n import _msg
+from speedtest_z.sender import SenderManager
 
 logger = logging.getLogger("speedtest-z")
 
@@ -75,53 +75,18 @@ class SpeedtestZ:
             if getattr(args, "yes", False):
                 self.auto_consent = True
 
-        # [zabbix]
-        self.zabbix_enable = self.config.getboolean("zabbix", "enable", fallback=False)
-        self.zabbix_server = self.config.get("zabbix", "server", fallback="127.0.0.1")
-        self.zabbix_port = self.config.getint("zabbix", "port", fallback=10051)
+        # [zabbix] — host name (used by SenderManager and as default host)
         self.zabbix_host = self.config.get("zabbix", "host", fallback="speedtest-agent")
 
-        # [grafana]
-        self.grafana_sender = None
-        if self.config.has_section("grafana"):
-            grafana_enable = self.config.getboolean("grafana", "enable", fallback=False)
-            if grafana_enable:
-                try:
-                    from speedtest_z.grafana import GrafanaSender
+        # Sender management (Zabbix, Grafana, OTel)
+        self.sender = SenderManager(self.config, self.zabbix_host, self.dryrun)
 
-                    url = self.config.get("grafana", "remote_write_url")
-                    username = self.config.get("grafana", "username")
-                    token = self.config.get("grafana", "token")
-                    self.grafana_sender = GrafanaSender(url, username, token)
-                except ImportError:
-                    logger.error("cramjam not installed. Run: pip install speedtest-z[grafana]")
-                except configparser.NoSectionError:
-                    logger.error("[grafana] section missing required keys")
-                except configparser.NoOptionError as e:
-                    logger.error(f"[grafana] config incomplete: {e}")
-
-        # [otel]
-        self.otel_sender = None
-        if self.config.has_section("otel"):
-            otel_enable = self.config.getboolean("otel", "enable", fallback=False)
-            if otel_enable:
-                try:
-                    from speedtest_z.otel import OtelSender
-
-                    endpoint = self.config.get("otel", "endpoint")
-                    headers_str = self.config.get("otel", "headers", fallback="")
-                    # "Key1=Val1,Key2=Val2" → dict
-                    headers = {}
-                    for pair in headers_str.split(","):
-                        pair = pair.strip()
-                        if "=" in pair:
-                            k, v = pair.split("=", 1)
-                            headers[k.strip()] = v.strip()
-                    self.otel_sender = OtelSender(endpoint, headers, self.zabbix_host)
-                except ImportError:
-                    logger.error("opentelemetry not installed. Run: pip install speedtest-z[otel]")
-                except configparser.NoOptionError as e:
-                    logger.error(f"[otel] config incomplete: {e}")
+        # Backward-compatible attributes delegated to sender
+        self.zabbix_enable = self.sender.zabbix_enable
+        self.zabbix_server = self.sender.zabbix_server
+        self.zabbix_port = self.sender.zabbix_port
+        self.grafana_sender = self.sender.grafana_sender
+        self.otel_sender = self.sender.otel_sender
 
         # [snapshot]
         self.snapshot_enable = self.config.getboolean("snapshot", "enable", fallback=False)
@@ -204,7 +169,10 @@ class SpeedtestZ:
         if hasattr(self, "driver"):
             logger.info("Closing browser session...")
             self.driver.quit()
-        if hasattr(self, "otel_sender") and self.otel_sender:
+        if hasattr(self, "sender"):
+            self.sender.close()
+        elif hasattr(self, "otel_sender") and self.otel_sender:
+            # Fallback for test instances created without SenderManager
             self.otel_sender.shutdown()
 
     def take_snapshot(self, filename_base: str) -> None:
@@ -221,44 +189,11 @@ class SpeedtestZ:
             logger.warning(f"Failed to take snapshot: {e}")
 
     def send_results(self, data_list: list[dict[str, str]]) -> None:
-        """Send measurement results to enabled backends (Zabbix, Grafana)."""
-        if not data_list:
-            return
+        """Send measurement results to enabled backends (Zabbix, Grafana, OTel).
 
-        packet = []
-        for item in data_list:
-            hostname = item.get("host", self.zabbix_host)
-            metric = SenderData(hostname, item["key"], item["value"])
-            packet.append(metric)
-
-        if self.dryrun:
-            target_host = data_list[0].get("host", "unknown")
-            logger.debug(f"Buffered for {target_host}: {data_list}")
-            logger.debug("Dryrun: True - Data not sent.")
-            return
-
-        # Zabbix 送信
-        if self.zabbix_enable:
-            try:
-                sender = Sender(self.zabbix_server, self.zabbix_port)
-                res = sender.send_bulk(packet)
-                logger.info(f"Zabbix Response: {res}")
-            except Exception:
-                logger.exception("Failed to send to Zabbix")
-
-        # Grafana 送信
-        if self.grafana_sender:
-            try:
-                self.grafana_sender.send(data_list)
-            except Exception:
-                logger.exception("Failed to send to Grafana")
-
-        # OTel 送信
-        if self.otel_sender:
-            try:
-                self.otel_sender.send(data_list)
-            except Exception:
-                logger.exception("Failed to send to OTel")
+        Delegates to SenderManager.send().
+        """
+        self.sender.send(data_list)
 
     def _get_window_position(self) -> tuple[int, int]:
         """Calculate top-right window position based on OS."""

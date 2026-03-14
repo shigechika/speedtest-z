@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from speedtest_z.runner import SpeedtestZ
+from speedtest_z.sender import SenderManager
 
 try:
     import opentelemetry.sdk.metrics  # noqa: F401
@@ -199,64 +200,64 @@ class TestOtelImportFallback:
 # --- send_results() の統合テスト ---
 
 
-def _make_app(dryrun=True, zabbix_enable=False, grafana_sender=None, otel_sender=None):
-    """WebDriver を迂回して SpeedtestZ インスタンスを作成"""
-    with patch.object(SpeedtestZ, "__init__", lambda self, *a, **kw: None):
-        app = SpeedtestZ.__new__(SpeedtestZ)
-        app.dryrun = dryrun
-        app.zabbix_enable = zabbix_enable
-        app.zabbix_server = "127.0.0.1"
-        app.zabbix_port = 10051
-        app.zabbix_host = "speedtest-agent"
-        app.grafana_sender = grafana_sender
-        app.otel_sender = otel_sender
-    return app
+def _make_sender(dryrun=True, zabbix_enable=False, grafana_sender=None, otel_sender=None):
+    """SenderManager インスタンスを直接作成"""
+    with patch.object(SenderManager, "__init__", lambda self, *a, **kw: None):
+        sender = SenderManager.__new__(SenderManager)
+        sender.dry_run = dryrun
+        sender.zabbix_enable = zabbix_enable
+        sender.zabbix_server = "127.0.0.1"
+        sender.zabbix_port = 10051
+        sender.zabbix_host = "speedtest-agent"
+        sender.grafana_sender = grafana_sender
+        sender.otel_sender = otel_sender
+    return sender
 
 
 class TestSendResultsOtel:
-    """send_results() の OTel 送信テスト"""
+    """SenderManager.send() の OTel 送信テスト"""
 
     def test_otel_sender_called(self):
         """otel_sender が設定されていれば send() が呼ばれること"""
         mock_otel = MagicMock()
-        app = _make_app(dryrun=False, otel_sender=mock_otel)
+        sender = _make_sender(dryrun=False, otel_sender=mock_otel)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
-        with patch("speedtest_z.runner.Sender"):
-            app.send_results(data)
+        with patch("speedtest_z.sender.Sender"):
+            sender.send(data)
             mock_otel.send.assert_called_once_with(data)
 
     def test_otel_sender_not_called_on_dryrun(self):
         """dryrun=True では otel_sender.send() が呼ばれないこと"""
         mock_otel = MagicMock()
-        app = _make_app(dryrun=True, otel_sender=mock_otel)
+        sender = _make_sender(dryrun=True, otel_sender=mock_otel)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
-        app.send_results(data)
+        sender.send(data)
         mock_otel.send.assert_not_called()
 
     def test_otel_error_handled(self):
         """OTel 送信エラーでもクラッシュしないこと"""
         mock_otel = MagicMock()
         mock_otel.send.side_effect = Exception("Connection error")
-        app = _make_app(dryrun=False, otel_sender=mock_otel)
+        sender = _make_sender(dryrun=False, otel_sender=mock_otel)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
-        with patch("speedtest_z.runner.Sender"):
-            app.send_results(data)  # 例外が伝播しない
+        with patch("speedtest_z.sender.Sender"):
+            sender.send(data)  # 例外が伝播しない
 
     def test_all_three_backends(self):
         """Zabbix, Grafana, OTel の3つ全てが呼ばれること"""
         mock_grafana = MagicMock()
         mock_otel = MagicMock()
-        app = _make_app(
+        sender = _make_sender(
             dryrun=False,
             zabbix_enable=True,
             grafana_sender=mock_grafana,
             otel_sender=mock_otel,
         )
         data = [{"key": "cloudflare.download", "value": "100.5"}]
-        with patch("speedtest_z.runner.Sender") as mock_sender_cls:
+        with patch("speedtest_z.sender.Sender") as mock_sender_cls:
             mock_instance = MagicMock()
             mock_sender_cls.return_value = mock_instance
-            app.send_results(data)
+            sender.send(data)
             mock_instance.send_bulk.assert_called_once()
             mock_grafana.send.assert_called_once_with(data)
             mock_otel.send.assert_called_once_with(data)
@@ -266,22 +267,16 @@ class TestSendResultsOtel:
 
 
 class TestCloseOtel:
-    """close() での OTel シャットダウンテスト"""
+    """SenderManager.close() での OTel シャットダウンテスト"""
 
     def test_close_calls_otel_shutdown(self):
         """close() で otel_sender.shutdown() が呼ばれること"""
         mock_otel = MagicMock()
-        with patch.object(SpeedtestZ, "__init__", lambda self, *a, **kw: None):
-            app = SpeedtestZ.__new__(SpeedtestZ)
-            app.driver = MagicMock()
-            app.otel_sender = mock_otel
-        app.close()
+        sender = _make_sender(otel_sender=mock_otel)
+        sender.close()
         mock_otel.shutdown.assert_called_once()
 
     def test_close_without_otel(self):
         """otel_sender=None でも close() がエラーにならないこと"""
-        with patch.object(SpeedtestZ, "__init__", lambda self, *a, **kw: None):
-            app = SpeedtestZ.__new__(SpeedtestZ)
-            app.driver = MagicMock()
-            app.otel_sender = None
-        app.close()  # エラーが出ないこと
+        sender = _make_sender(otel_sender=None)
+        sender.close()  # エラーが出ないこと
