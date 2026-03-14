@@ -125,6 +125,36 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _init_logging(args: argparse.Namespace) -> None:
+    """Configure logging based on CLI arguments.
+
+    Redirect logs to stderr when output format is json/csv
+    (stdout is reserved for structured output).
+    """
+    output_fmt = getattr(args, "output", "zabbix")
+    log_stream = "stderr" if output_fmt in ("json", "csv") else "stdout"
+    _setup_logging(debug=args.debug, stream=log_stream)
+
+
+def _confirm_execution(args: argparse.Namespace, sites: list[str]) -> bool:
+    """Show confirmation prompt on TTY and return True to continue.
+
+    The prompt is always shown on TTY regardless of the --yes flag.
+    Returns True if the user confirms or stdin is not a TTY.
+    Returns False if the user declines.
+    """
+    if not sys.stdin.isatty():
+        return True
+
+    site_list = ", ".join(sites)
+    print(_msg("confirm_prompt", count=len(sites), sites=site_list))
+    answer = input(_msg("confirm_input")).strip().lower()
+    if answer not in ("y", "yes"):
+        print(_msg("confirm_abort"))
+        return False
+    return True
+
+
 def main() -> None:
     """CLI entry point."""
     parser = _build_parser()
@@ -157,11 +187,7 @@ def main() -> None:
 
         sys.exit(check_sites(args.sites or None))
 
-    # logging 設定（--debug 対応）
-    # json/csv 出力時は stdout を占有するため、ログを stderr に出す
-    output_fmt = getattr(args, "output", "zabbix")
-    log_stream = "stderr" if output_fmt in ("json", "csv") else "stdout"
-    _setup_logging(debug=args.debug, stream=log_stream)
+    _init_logging(args)
 
     # config.ini の存在チェック（必須）
     config_path = _find_config("config.ini", args.config)
@@ -170,15 +196,9 @@ def main() -> None:
         sys.exit(1)
     args.config = config_path  # 見つかったパスで上書き
 
-    # TTY 実行時の確認プロンプト（--yes とは無関係に常に確認）
-    if sys.stdin.isatty():
-        sites = args.sites if args.sites else AVAILABLE_SITES
-        site_list = ", ".join(sites)
-        print(_msg("confirm_prompt", count=len(sites), sites=site_list))
-        answer = input(_msg("confirm_input")).strip().lower()
-        if answer not in ("y", "yes"):
-            print(_msg("confirm_abort"))
-            return
+    sites = args.sites if args.sites else AVAILABLE_SITES
+    if not _confirm_execution(args, sites):
+        return
 
     logger.info("speedtest-z: START")
 
@@ -186,18 +206,14 @@ def main() -> None:
 
     app = SpeedtestZ(args)
 
-    # json/csv モードでは send_results を OutputCollector に差し替え
-    collector = None
+    # json/csv モードでは SenderManager の代わりに OutputCollector を使う
     output_fmt = getattr(args, "output", "zabbix")
     if output_fmt in ("json", "csv"):
         from speedtest_z.output import OutputCollector
 
-        collector = OutputCollector(output_fmt)
-        app._original_send_results = app.send_results
-        app.send_results = collector.add
+        app.sender = OutputCollector(output_fmt)
 
     try:
-        sites = args.sites if args.sites else AVAILABLE_SITES
         site_runners = get_site_runners()
         for site in sites:
             runner = site_runners.get(site)
@@ -210,8 +226,6 @@ def main() -> None:
     except Exception as e:
         logger.error(f"Fatal Error: {e}")
     finally:
-        if collector:
-            collector.flush()
         app.close()
 
     logger.info("speedtest-z: FINISH")
