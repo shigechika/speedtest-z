@@ -12,10 +12,10 @@ from datetime import datetime, timezone
 class OutputCollector:
     """Collect measurement results and flush them in the requested format.
 
-    Used when ``--output json`` or ``--output csv`` is specified.  Each
-    site runner calls ``app.send_results(data)`` as before; the CLI
-    layer intercepts this and calls :meth:`add` instead of actually
-    sending to backends.
+    Used when ``--output json`` or ``--output csv`` is specified.
+    Implements the same ``send()`` / ``close()`` interface as
+    :class:`~speedtest_z.sender.SenderManager`, so it can be used as
+    a drop-in replacement via ``app.sender = OutputCollector(fmt)``.
 
     Args:
         fmt: Output format (``"json"`` or ``"csv"``).
@@ -37,6 +37,21 @@ class OutputCollector:
                     "value": item["value"],
                 }
             )
+
+    # SenderManager-compatible interface
+    def send(self, data_list: list[dict[str, str]]) -> None:
+        """Buffer results (SenderManager-compatible interface).
+
+        Alias for :meth:`add`.
+        """
+        self.add(data_list)
+
+    def close(self) -> None:
+        """Flush buffered records to stdout (SenderManager-compatible interface).
+
+        Alias for :meth:`flush`.
+        """
+        self.flush()
 
     def flush(self) -> None:
         """Write all buffered records to stdout."""
