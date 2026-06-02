@@ -1,9 +1,15 @@
 """設定ファイル探索のテスト"""
 
+import logging
 import os
+import sys
 from unittest.mock import patch
 
-from speedtest_z.config import _find_config, _setup_logging
+from speedtest_z.config import (
+    _find_config,
+    _redirect_console_logging_to_stderr,
+    _setup_logging,
+)
 from speedtest_z.runner import SpeedtestZ
 
 
@@ -139,6 +145,42 @@ class TestSetupLogging:
             _setup_logging(debug=True)
             call_kwargs = mock_basic.call_args
             assert call_kwargs[1]["level"] == 10  # logging.DEBUG
+
+    def test_redirect_console_logging_to_stderr(self):
+        """A stdout StreamHandler is redirected to stderr; file handlers untouched."""
+        root = logging.getLogger()
+        saved = root.handlers[:]
+        try:
+            stdout_handler = logging.StreamHandler(sys.stdout)
+            stderr_handler = logging.StreamHandler(sys.stderr)
+            root.handlers = [stdout_handler, stderr_handler]
+            _redirect_console_logging_to_stderr()
+            assert stdout_handler.stream is sys.stderr
+            assert stderr_handler.stream is sys.stderr  # already stderr, unchanged
+        finally:
+            root.handlers = saved
+
+    def test_setup_logging_stderr_redirects_with_ini(self, tmp_path, monkeypatch):
+        """With a logging.ini present, stream='stderr' triggers the redirect."""
+        (tmp_path / "logging.ini").write_text("[loggers]\nkeys=root\n")
+        monkeypatch.chdir(tmp_path)
+        with (
+            patch("speedtest_z.config.logging.config.fileConfig"),
+            patch("speedtest_z.config._redirect_console_logging_to_stderr") as mock_redirect,
+        ):
+            _setup_logging(debug=False, stream="stderr")
+            mock_redirect.assert_called_once()
+
+    def test_setup_logging_stdout_no_redirect_with_ini(self, tmp_path, monkeypatch):
+        """With a logging.ini present, the default stdout stream does not redirect."""
+        (tmp_path / "logging.ini").write_text("[loggers]\nkeys=root\n")
+        monkeypatch.chdir(tmp_path)
+        with (
+            patch("speedtest_z.config.logging.config.fileConfig"),
+            patch("speedtest_z.config._redirect_console_logging_to_stderr") as mock_redirect,
+        ):
+            _setup_logging(debug=False, stream="stdout")
+            mock_redirect.assert_not_called()
 
 
 class TestChromeProfileDir:
