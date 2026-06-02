@@ -40,6 +40,12 @@ class SenderManager:
             grafana_enable = config.getboolean("grafana", "enable", fallback=False)
             if grafana_enable:
                 try:
+                    # cramjam is an optional dependency ([grafana] extra).
+                    # GrafanaSender only imports it inside send(), so import it
+                    # explicitly here to detect a missing install at startup and
+                    # surface the install hint.
+                    import cramjam  # noqa: F401
+
                     from speedtest_z.grafana import GrafanaSender
 
                     url = config.get("grafana", "remote_write_url")
@@ -48,8 +54,6 @@ class SenderManager:
                     self.grafana_sender = GrafanaSender(url, username, token)
                 except ImportError:
                     logger.error("cramjam not installed. Run: pip install speedtest-z[grafana]")
-                except configparser.NoSectionError:
-                    logger.error("[grafana] section missing required keys")
                 except configparser.NoOptionError as e:
                     logger.error(f"[grafana] config incomplete: {e}")
 
@@ -79,6 +83,14 @@ class SenderManager:
     def send(self, data_list: list[dict[str, str]]) -> None:
         """Send measurement results to all enabled backends."""
         if not data_list:
+            return
+
+        # Drop empty values. Zabbix would accept an empty value as-is while
+        # Grafana/OTel silently skip it on float() failure; filtering here keeps
+        # what is sent consistent across all backends.
+        data_list = [item for item in data_list if str(item.get("value", "")).strip()]
+        if not data_list:
+            logger.debug("No non-empty metrics to send.")
             return
 
         packet = []

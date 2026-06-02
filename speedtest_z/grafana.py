@@ -80,8 +80,23 @@ def encode_write_request(timeseries_list: list[bytes]) -> bytes:
     return data
 
 
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Refuse to follow HTTP redirects.
+
+    Prevents the ``Authorization`` header (and the metric payload) from being
+    forwarded to a redirect target.  A redirect from a Prometheus Remote Write
+    endpoint is anomalous, so it is surfaced as an :class:`~urllib.error.HTTPError`.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]
+        return None
+
+
 class GrafanaSender:
     """Grafana Cloud Prometheus Remote Write sender."""
+
+    # A single push completes within seconds, so use a short cap to avoid hangs.
+    TIMEOUT = 30
 
     def __init__(self, url: str, username: str, token: str) -> None:
         """Initialize with Grafana Cloud credentials."""
@@ -139,10 +154,14 @@ class GrafanaSender:
         req.add_header("X-Prometheus-Remote-Write-Version", "0.1.0")
 
         credentials = base64.b64encode(f"{self.username}:{self.token}".encode()).decode()
-        req.add_header("Authorization", f"Basic {credentials}")
+        # An unredirected header is not forwarded on redirects, so the
+        # credentials never leak to a redirect target (defense in depth with
+        # the no-redirect opener below).
+        req.add_unredirected_header("Authorization", f"Basic {credentials}")
 
+        opener = urllib.request.build_opener(_NoRedirectHandler)
         try:
-            with urllib.request.urlopen(req) as resp:
+            with opener.open(req, timeout=self.TIMEOUT) as resp:
                 logger.info(f"Grafana push OK: {resp.status} {resp.reason}")
         except urllib.error.HTTPError as e:
             body = e.read().decode("utf-8", errors="replace")

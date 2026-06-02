@@ -182,6 +182,41 @@ class TestRunMlab:
 
         mock_app.take_snapshot.assert_any_call("mlab")
 
+    def test_invalid_download_skips_send(self, mock_app):
+        """Skip send and snapshot when the download value has no digit."""
+        mock_app._should_run = MagicMock(return_value=True)
+        mock_app._load_with_retry = MagicMock(return_value=True)
+        mock_app.auto_consent = True
+        mock_app.send_results = MagicMock()
+        mock_app.take_snapshot = MagicMock()
+        mock_app.driver.find_element.side_effect = _mock_find_element_results(download="")
+
+        with patch("speedtest_z.sites.mlab.WebDriverWait") as mock_wdw:
+            mock_app.wait.until.side_effect = [MagicMock(), MagicMock()]
+            mock_wdw.return_value.until.return_value = True
+            run_mlab(mock_app)
+
+        mock_app.send_results.assert_not_called()
+        mock_app.take_snapshot.assert_any_call("mlab_error_parse")
+
+    def test_empty_download_does_not_raise(self, mock_app):
+        """Empty result text is handled without IndexError from split()."""
+        mock_app._should_run = MagicMock(return_value=True)
+        mock_app._load_with_retry = MagicMock(return_value=True)
+        mock_app.auto_consent = True
+        mock_app.send_results = MagicMock()
+        mock_app.take_snapshot = MagicMock()
+        mock_app.driver.find_element.side_effect = _mock_find_element_results(
+            download="", upload="", latency="", retrans=""
+        )
+
+        with patch("speedtest_z.sites.mlab.WebDriverWait") as mock_wdw:
+            mock_app.wait.until.side_effect = [MagicMock(), MagicMock()]
+            mock_wdw.return_value.until.return_value = True
+            run_mlab(mock_app)  # must not raise IndexError
+
+        mock_app.send_results.assert_not_called()
+
     def test_manual_consent_mode(self, mock_app):
         """In manual consent mode, wait for user to check the checkbox."""
         mock_app._should_run = MagicMock(return_value=True)

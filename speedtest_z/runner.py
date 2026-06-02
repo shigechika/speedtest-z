@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import configparser
+import contextlib
 import logging
 import os
 import platform
@@ -135,13 +136,21 @@ class SpeedtestZ:
             self.action_chains = ActionChains(self.driver)
 
             if not self.headless:
-                self.driver.set_window_size(self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
-                pos = self._get_window_position()
-                if pos:
-                    self.driver.set_window_position(*pos)
-                    logger.info(f"Window moved to Top-Right: {pos}")
+                # Window positioning is cosmetic; keep going if it fails.
+                try:
+                    self.driver.set_window_size(self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
+                    pos = self._get_window_position()
+                    if pos:
+                        self.driver.set_window_position(*pos)
+                        logger.info(f"Window moved to Top-Right: {pos}")
+                except Exception as e:
+                    logger.warning(f"Window positioning failed: {e}")
 
         except Exception as e:
+            # Do not leak an already-started Chrome/chromedriver process.
+            if getattr(self, "driver", None):
+                with contextlib.suppress(Exception):
+                    self.driver.quit()
             logger.error(_msg("chrome_init_failed", error=str(e)))
             sys.exit(1)
 
@@ -167,10 +176,19 @@ class SpeedtestZ:
             return False
 
     def close(self) -> None:
-        """Close the browser and clean up."""
+        """Close the browser and clean up.
+
+        Idempotent: safe to call more than once (e.g. via both the SIGTERM
+        handler and the ``finally`` block in :func:`speedtest_z.cli.main`).
+        """
+        if getattr(self, "_closed", False):
+            return
+        self._closed = True
+
         if hasattr(self, "driver"):
             logger.info("Closing browser session...")
-            self.driver.quit()
+            with contextlib.suppress(Exception):
+                self.driver.quit()
         if hasattr(self, "sender"):
             self.sender.close()
         elif hasattr(self, "otel_sender") and self.otel_sender:

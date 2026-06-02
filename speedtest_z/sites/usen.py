@@ -73,6 +73,11 @@ def run_usen(app: SpeedtestZ) -> None:
 
             logger.debug(f"usen Result: {download=} {upload=} {ping=} {jitter=}")
 
+            if not any(c.isdigit() for c in download):
+                logger.error("usen: Invalid download value; skipping send.")
+                app.take_snapshot("usen_error_parse")
+                return
+
             data = [
                 {
                     "host": app.zabbix_host,

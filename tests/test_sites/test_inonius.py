@@ -4,7 +4,34 @@ from unittest.mock import MagicMock, patch
 
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
-from speedtest_z.sites.inonius import _inonius_fallback_start, run_inonius
+from speedtest_z.sites.inonius import (
+    _inonius_fallback_start,
+    _inonius_is_running,
+    run_inonius,
+)
+
+
+class TestInoniusIsRunning:
+    """Tests for _inonius_is_running() progress detection."""
+
+    def test_true_when_digit_present(self, mock_app):
+        """A measurement value (digit) means the test is running."""
+        el = MagicMock()
+        el.text = "123"
+        mock_app.driver.find_element.return_value = el
+        assert _inonius_is_running(mock_app.driver) is True
+
+    def test_false_when_no_digit(self, mock_app):
+        """Empty/no-digit text means the test has not started."""
+        el = MagicMock()
+        el.text = ""
+        mock_app.driver.find_element.return_value = el
+        assert _inonius_is_running(mock_app.driver) is False
+
+    def test_false_when_elements_missing(self, mock_app):
+        """Missing progress elements mean the test is not running."""
+        mock_app.driver.find_element.side_effect = NoSuchElementException("nope")
+        assert _inonius_is_running(mock_app.driver) is False
 
 
 class TestInoniusFallbackStart:

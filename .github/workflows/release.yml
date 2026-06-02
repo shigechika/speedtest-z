@@ -73,7 +73,10 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" --generate-notes
+          TAG: ${{ github.ref_name }}
+        # Idempotent: the deb/rpm workflows may have created the release first.
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --generate-notes
 
   notify-homebrew:
     name: Notify Homebrew Tap
