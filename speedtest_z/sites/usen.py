@@ -43,7 +43,8 @@ def run_usen(app: SpeedtestZ) -> None:
         try:
             WebDriverWait(app.driver, 10).until(
                 lambda d: (
-                    "speedtest_wait" in d.find_element(By.TAG_NAME, "body").get_attribute("class")
+                    "speedtest_wait"
+                    in (d.find_element(By.TAG_NAME, "body").get_attribute("class") or "")
                 )
             )
             logger.info("usen: Measuring... (speedtest_wait class detected)")
@@ -55,7 +56,7 @@ def run_usen(app: SpeedtestZ) -> None:
             WebDriverWait(app.driver, 120).until(
                 lambda d: (
                     "speedtest_wait"
-                    not in d.find_element(By.TAG_NAME, "body").get_attribute("class")
+                    not in (d.find_element(By.TAG_NAME, "body").get_attribute("class") or "")
                 )
             )
             time.sleep(2)
