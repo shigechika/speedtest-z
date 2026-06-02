@@ -187,3 +187,22 @@ class TestRunUsen:
         data = mock_app.send_results.call_args[0][0]
         for item in data:
             assert item["host"] == "usen-host"
+
+    def test_invalid_download_skips_send(self, mock_app):
+        """Skip send and snapshot when the download value has no digit."""
+        mock_app._should_run = MagicMock(return_value=True)
+        mock_app._load_with_retry = MagicMock(return_value=True)
+        mock_app.send_results = MagicMock()
+        mock_app.take_snapshot = MagicMock()
+        mock_app.driver.find_element.side_effect = _mock_find_element_results(download="")
+
+        with (
+            patch("speedtest_z.sites.usen.WebDriverWait") as mock_wdw,
+            patch("speedtest_z.sites.usen.time"),
+        ):
+            mock_app.wait.until.return_value = MagicMock()
+            mock_wdw.return_value.until.return_value = True
+            run_usen(mock_app)
+
+        mock_app.send_results.assert_not_called()
+        mock_app.take_snapshot.assert_any_call("usen_error_parse")

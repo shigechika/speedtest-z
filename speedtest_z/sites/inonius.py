@@ -5,7 +5,11 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+    TimeoutException,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -17,27 +21,47 @@ logger = logging.getLogger("speedtest-z")
 
 URL = "https://inonius.net/speedtest/"
 
+# Download display elements (IPv4 / IPv6) used to detect progress: they show a
+# number once the test is actually running.
+_PROGRESS_XPATHS = (
+    "/html/body/div/astro-island/div/div[1]/div/div[1]/div[1]/div[1]/div/div/span[1]",  # IPv4_DL
+    "/html/body/div/astro-island/div/div[2]/div/div[1]/div[1]/div[1]/div/div/span[1]",  # IPv6_DL
+)
+
+
+def _inonius_is_running(driver) -> bool:  # type: ignore[no-untyped-def]
+    """Return True if a measurement value (a digit) is visible.
+
+    Mere presence of the page container does not mean the test started, so
+    this checks the download display elements for an actual numeric reading.
+    """
+    for xpath in _PROGRESS_XPATHS:
+        try:
+            if any(ch.isdigit() for ch in driver.find_element(By.XPATH, xpath).text):
+                return True
+        except (NoSuchElementException, StaleElementReferenceException):
+            # Element absent or momentarily stale while polling: not yet running.
+            continue
+    return False
+
 
 def _inonius_fallback_start(app: SpeedtestZ) -> bool:
-    """Attempt to start iNonius test when consent dialog was skipped.
+    """Detect an auto-started iNonius test when the consent dialog was skipped.
 
-    When cookies remember consent, the dialog may not appear and the test
-    may start automatically or require a manual start button click.
-    Returns True if the test appears to be running, False otherwise.
+    When cookies remember consent, the dialog may not appear and the test may
+    start automatically.  Instead of trusting that the page merely loaded, this
+    polls for an actual measurement value before declaring the test running, so
+    a page that did *not* auto-start fails fast (with a snapshot) rather than
+    falsely proceeding to a guaranteed completion-wait timeout.
+
+    Returns True if a measurement is progressing, False otherwise.
     """
     try:
-        # dialog なしでテストが自動開始されたか確認
-        # Download/Upload の数値やアニメーションが表示されていれば進行中
-        WebDriverWait(app.driver, 10).until(
-            lambda d: (
-                d.find_elements(By.CSS_SELECTOR, "astro-island > div")
-                and not d.find_elements(By.CSS_SELECTOR, "dialog[open]")
-            )
-        )
-        logger.info("inonius: Test already running (cookie consent)")
+        WebDriverWait(app.driver, 15).until(_inonius_is_running)
+        logger.info("inonius: Test is running (auto-started via cookie consent)")
         return True
     except TimeoutException:
-        logger.error("inonius: Could not start test (no dialog, no auto-start)")
+        logger.error("inonius: Could not start test (no dialog, no measurement progress)")
         app.take_snapshot("inonius_error_fallback")
         return False
 

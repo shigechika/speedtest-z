@@ -467,6 +467,21 @@ class TestClose:
         app.close()  # should not raise
         app.driver.quit.assert_called_once()
 
+    def test_close_is_idempotent(self):
+        """Calling close() twice quits the driver only once (SIGTERM + finally)."""
+        app = _make_app()
+        app.close()
+        app.close()
+        app.driver.quit.assert_called_once()
+        app.sender.close.assert_called_once()
+
+    def test_close_survives_driver_quit_error(self):
+        """A driver.quit() error is suppressed so sender.close() still runs."""
+        app = _make_app()
+        app.driver.quit.side_effect = Exception("session already closed")
+        app.close()  # should not raise
+        app.sender.close.assert_called_once()
+
 
 class TestSenderManagerClose:
     """Tests for SenderManager.close() cleanup logic."""

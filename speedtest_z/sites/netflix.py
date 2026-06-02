@@ -61,6 +61,11 @@ def run_netflix(app: SpeedtestZ) -> None:
 
             logger.debug(f"netflix: Result: {download=} {upload=} {latency=} {server_locations=}")
 
+            if not any(c.isdigit() for c in download):
+                logger.error("netflix: Invalid download value; skipping send.")
+                app.take_snapshot("netflix_error_parse")
+                return
+
             data = [
                 {
                     "host": app.zabbix_host,

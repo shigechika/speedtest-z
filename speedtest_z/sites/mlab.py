@@ -75,16 +75,26 @@ def run_mlab(app: SpeedtestZ) -> None:
         base_xp = '//*[@id="measurementSpace"]//table/tbody'
 
         try:
+            # Take the first token safely to avoid IndexError on empty text.
+            def _first_token(text: str) -> str:
+                parts = text.split()
+                return parts[0] if parts else ""
+
             raw_dl = app.driver.find_element(By.XPATH, f"{base_xp}/tr[3]/td[3]/strong").text
-            download = raw_dl.split()[0]
+            download = _first_token(raw_dl)
             raw_ul = app.driver.find_element(By.XPATH, f"{base_xp}/tr[4]/td[3]/strong").text
-            upload = raw_ul.split()[0]
+            upload = _first_token(raw_ul)
             raw_lat = app.driver.find_element(By.XPATH, f"{base_xp}/tr[5]/td[3]/strong").text
-            latency = raw_lat.split()[0]
+            latency = _first_token(raw_lat)
             raw_retr = app.driver.find_element(By.XPATH, f"{base_xp}/tr[6]/td[3]/strong").text
             retrans = raw_retr.replace("%", "").strip()
 
             logger.debug(f"mlab Result: {download=} {upload=} {latency=} {retrans=}")
+
+            if not any(c.isdigit() for c in download):
+                logger.error("mlab: Invalid download value; skipping send.")
+                app.take_snapshot("mlab_error_parse")
+                return
 
             data = [
                 {
