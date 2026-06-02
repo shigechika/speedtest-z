@@ -35,7 +35,7 @@ jobs:
           dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
           dnf install -y gh
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
