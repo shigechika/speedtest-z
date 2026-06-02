@@ -1,1 +1,4 @@
-0  *    * * *   root    find /tmp -mmin +180 \( -name "*com.google.Chrome.*" -or -name "*org.chromium.Chromium.*" \) -type d -exec rm -vfr {} \; | logger --tag SeleniumCleaner
+# Remove stale Chrome/Chromium temp dirs left by Selenium. Scoped to direct
+# children of /tmp (-mindepth/-maxdepth 1, no recursion) and to dirs older than
+# 180 min, to avoid touching /tmp itself or attacker-named nested paths.
+0  *    * * *   root    find /tmp -mindepth 1 -maxdepth 1 -mmin +180 -type d \( -name "*com.google.Chrome.*" -o -name "*org.chromium.Chromium.*" \) -exec rm -vrf {} \; | logger --tag SeleniumCleaner

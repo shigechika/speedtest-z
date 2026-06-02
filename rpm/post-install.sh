@@ -2,10 +2,10 @@
 # RPM %post — パッケージインストール後に実行
 # $1: 1=新規インストール, 2=アップグレード
 
-# ディレクトリ作成
+# Create runtime directories (logs go to logger.log under the working
+# directory and to journald, so no separate /var/log dir is needed)
 install -d -o speedtest-z -g speedtest-z -m 0755 /var/lib/speedtest-z
 install -d -o speedtest-z -g speedtest-z -m 0755 /var/lib/speedtest-z/snapshots
-install -d -o speedtest-z -g speedtest-z -m 0755 /var/log/speedtest-z
 
 # config.ini の権限設定（トークンを含む可能性があるため）
 if [ -f /etc/speedtest-z/config.ini ]; then
