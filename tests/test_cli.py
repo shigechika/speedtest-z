@@ -1,4 +1,4 @@
-"""CLI パーサーのテスト"""
+"""Tests for the CLI parser."""
 
 from unittest.mock import MagicMock, patch
 
@@ -14,10 +14,10 @@ from speedtest_z.sites import AVAILABLE_SITES
 
 
 class TestBuildParser:
-    """_build_parser() のテスト"""
+    """Tests for _build_parser()."""
 
     def test_default_args(self):
-        """デフォルト引数の確認"""
+        """Check the default arguments."""
         parser = _build_parser()
         args = parser.parse_args([])
         assert args.config is None
@@ -30,126 +30,126 @@ class TestBuildParser:
         assert args.sites == []
 
     def test_dry_run(self):
-        """-n で dry_run=True"""
+        """-n sets dry_run=True."""
         parser = _build_parser()
         args = parser.parse_args(["-n"])
         assert args.dry_run is True
 
     def test_dry_run_long(self):
-        """--dry-run でも同様"""
+        """--dry-run behaves the same."""
         parser = _build_parser()
         args = parser.parse_args(["--dry-run"])
         assert args.dry_run is True
 
     def test_headless(self):
-        """--headless で headless=True"""
+        """--headless sets headless=True."""
         parser = _build_parser()
         args = parser.parse_args(["--headless"])
         assert args.headless is True
 
     def test_no_headless(self):
-        """--no-headless で headless=False"""
+        """--no-headless sets headless=False."""
         parser = _build_parser()
         args = parser.parse_args(["--no-headless"])
         assert args.headless is False
 
     def test_headed_alias(self):
-        """--headed は --no-headless のエイリアス"""
+        """--headed is an alias for --no-headless."""
         parser = _build_parser()
         args = parser.parse_args(["--headed"])
         assert args.headless is False
 
     def test_timeout(self):
-        """--timeout でタイムアウト設定"""
+        """--timeout sets the timeout."""
         parser = _build_parser()
         args = parser.parse_args(["--timeout", "60"])
         assert args.timeout == 60
 
     def test_config_path(self):
-        """-c で設定ファイルパス指定"""
+        """-c specifies the config file path."""
         parser = _build_parser()
         args = parser.parse_args(["-c", "/tmp/my.ini"])
         assert args.config == "/tmp/my.ini"
 
     def test_debug(self):
-        """-d でデバッグモード"""
+        """-d enables debug mode."""
         parser = _build_parser()
         args = parser.parse_args(["-d"])
         assert args.debug is True
 
     def test_single_site(self):
-        """サイト名を1つ指定"""
+        """Specify a single site name."""
         parser = _build_parser()
         args = parser.parse_args(["cloudflare"])
         assert args.sites == ["cloudflare"]
 
     def test_multiple_sites(self):
-        """サイト名を複数指定"""
+        """Specify multiple site names."""
         parser = _build_parser()
         args = parser.parse_args(["cloudflare", "netflix"])
         assert args.sites == ["cloudflare", "netflix"]
 
     def test_list_sites_flag(self):
-        """--list-sites フラグ"""
+        """--list-sites flag."""
         parser = _build_parser()
         args = parser.parse_args(["--list-sites"])
         assert args.list_sites is True
 
     def test_epilog_contains_github_url(self):
-        """epilog に GitHub URL が含まれること"""
+        """The epilog should contain the GitHub URL."""
         parser = _build_parser()
         assert "https://github.com/shigechika/speedtest-z" in parser.epilog
 
     def test_man_flag(self):
-        """-m で man=True"""
+        """-m sets man=True."""
         parser = _build_parser()
         args = parser.parse_args(["-m"])
         assert args.man is True
 
     def test_man_long_flag(self):
-        """--man でも同様"""
+        """--man behaves the same."""
         parser = _build_parser()
         args = parser.parse_args(["--man"])
         assert args.man is True
 
     def test_man_default_false(self):
-        """デフォルトで man=False"""
+        """man defaults to False."""
         parser = _build_parser()
         args = parser.parse_args([])
         assert args.man is False
 
     def test_yes_short(self):
-        """-y で yes=True"""
+        """-y sets yes=True."""
         parser = _build_parser()
         args = parser.parse_args(["-y"])
         assert args.yes is True
 
     def test_yes_long(self):
-        """--yes でも同様"""
+        """--yes behaves the same."""
         parser = _build_parser()
         args = parser.parse_args(["--yes"])
         assert args.yes is True
 
 
 class TestShowManual:
-    """_show_manual() のテスト"""
+    """Tests for _show_manual()."""
 
     def test_manual_text_contains_speedtest(self):
-        """マニュアルテキストに speedtest-z が含まれること"""
+        """The manual text should contain speedtest-z."""
         with patch("pydoc.pager") as mock_pager:
             _show_manual()
             text = mock_pager.call_args[0][0]
             assert "speedtest-z" in text
 
     def test_manual_japanese_locale(self):
-        """日本語ロケールで README.ja.md が表示されること"""
+        """README.ja.md is shown in a Japanese locale."""
         with patch("pydoc.pager") as mock_pager, patch("speedtest_z.cli._LANG_JA", True):
             _show_manual()
             text = mock_pager.call_args[0][0]
             assert "特徴" in text
 
     def test_manual_english_locale(self):
-        """英語ロケールで README.md が表示されること"""
+        """README.md is shown in an English locale."""
         with patch("pydoc.pager") as mock_pager, patch("speedtest_z.cli._LANG_JA", False):
             _show_manual()
             text = mock_pager.call_args[0][0]
@@ -157,10 +157,10 @@ class TestShowManual:
 
 
 class TestMainMan:
-    """main() の --man 分岐テスト"""
+    """Tests for the --man branch of main()."""
 
     def test_man_calls_show_manual(self):
-        """--man で _show_manual() が呼ばれること"""
+        """--man should call _show_manual()."""
         with (
             patch("speedtest_z.cli._build_parser") as mock_parser,
             patch("speedtest_z.cli._show_manual") as mock_show,
@@ -174,10 +174,10 @@ class TestMainMan:
 
 
 class TestMainListSites:
-    """main() の --list-sites 分岐テスト"""
+    """Tests for the --list-sites branch of main()."""
 
     def test_list_sites_output(self, capsys):
-        """--list-sites でサイト一覧を出力して終了"""
+        """--list-sites prints the site list and exits."""
         with patch("speedtest_z.cli._build_parser") as mock_parser:
             mock_args = MagicMock()
             mock_args.man = False
@@ -192,10 +192,10 @@ class TestMainListSites:
 
 
 class TestMainConfigRequired:
-    """main() の config.ini 必須チェックテスト"""
+    """Tests that main() requires config.ini."""
 
     def test_exit_when_config_not_found(self):
-        """config.ini が見つからない場合 sys.exit(1)"""
+        """sys.exit(1) when config.ini is not found."""
         with (
             patch("speedtest_z.cli._build_parser") as mock_parser,
             patch("speedtest_z.cli._setup_logging"),
@@ -213,7 +213,7 @@ class TestMainConfigRequired:
             assert exc_info.value.code == 1
 
     def test_config_path_passed_to_speedtestz(self):
-        """見つかった config パスが args.config に設定されること"""
+        """The discovered config path is set on args.config."""
         with (
             patch("speedtest_z.cli._build_parser") as mock_parser,
             patch("speedtest_z.cli._setup_logging"),
@@ -231,7 +231,7 @@ class TestMainConfigRequired:
             mock_args.yes = True
             mock_args.sites = []
             mock_parser.return_value.parse_args.return_value = mock_args
-            # SpeedtestZ のインスタンスもモック
+            # Also mock the SpeedtestZ instance.
             mock_app = MagicMock()
             mock_stz.return_value = mock_app
             mock_stdin.isatty.return_value = False
@@ -241,10 +241,10 @@ class TestMainConfigRequired:
 
 
 class TestMainConfirmPrompt:
-    """main() の確認プロンプトテスト"""
+    """Tests for the confirmation prompt in main()."""
 
     def _make_args(self, yes=False, sites=None):
-        """テスト用の mock args を生成"""
+        """Build mock args for tests."""
         mock_args = MagicMock()
         mock_args.man = False
         mock_args.list_sites = False
@@ -256,7 +256,7 @@ class TestMainConfirmPrompt:
         return mock_args
 
     def test_prompt_shown_on_tty(self, capsys):
-        """TTY で --yes なしの場合、確認プロンプトが表示されること"""
+        """The confirmation prompt is shown on a TTY without --yes."""
         with (
             patch("speedtest_z.cli._build_parser") as mock_parser,
             patch("speedtest_z.cli._setup_logging"),
@@ -269,11 +269,11 @@ class TestMainConfirmPrompt:
             mock_stdin.isatty.return_value = True
             main()
         captured = capsys.readouterr()
-        # ロケールに依存しないアサーション
+        # Locale-independent assertion.
         assert _msg("confirm_abort") in captured.out
 
     def test_prompt_yes_continues(self):
-        """確認プロンプトで y を入力すると続行されること"""
+        """Entering y at the confirmation prompt continues."""
         with (
             patch("speedtest_z.cli._build_parser") as mock_parser,
             patch("speedtest_z.cli._setup_logging"),
@@ -292,7 +292,7 @@ class TestMainConfirmPrompt:
             mock_stz.assert_called_once()
 
     def test_prompt_shown_with_yes_flag(self):
-        """--yes フラグでも TTY なら確認プロンプトが表示されること"""
+        """The confirmation prompt is still shown on a TTY even with --yes."""
         with (
             patch("speedtest_z.cli._build_parser") as mock_parser,
             patch("speedtest_z.cli._setup_logging"),
@@ -312,7 +312,7 @@ class TestMainConfirmPrompt:
             mock_stz.assert_called_once()
 
     def test_prompt_skipped_on_non_tty(self):
-        """非 TTY（パイプ/cron）ではプロンプトが表示されないこと"""
+        """The prompt is not shown on a non-TTY (pipe/cron)."""
         with (
             patch("speedtest_z.cli._build_parser") as mock_parser,
             patch("speedtest_z.cli._setup_logging"),
@@ -332,7 +332,7 @@ class TestMainConfirmPrompt:
             mock_stz.assert_called_once()
 
     def test_prompt_shows_specified_sites(self, capsys):
-        """サイト指定時、指定サイトがプロンプトに表示されること"""
+        """When sites are specified, they appear in the prompt."""
         with (
             patch("speedtest_z.cli._build_parser") as mock_parser,
             patch("speedtest_z.cli._setup_logging"),
@@ -348,7 +348,7 @@ class TestMainConfirmPrompt:
         assert "cloudflare, netflix" in captured.out
 
     def test_prompt_abort_with_empty_input(self, capsys):
-        """空入力（Enter のみ）で中止されること"""
+        """Empty input (just Enter) aborts."""
         with (
             patch("speedtest_z.cli._build_parser") as mock_parser,
             patch("speedtest_z.cli._setup_logging"),
@@ -405,48 +405,48 @@ class TestMainFatalExit:
 
 
 class TestI18nMessages:
-    """_msg() の日英切り替えテスト"""
+    """Tests for _msg() switching between Japanese and English."""
 
     def test_msg_japanese(self):
-        """_LANG_JA=True で日本語メッセージが返ること"""
+        """_LANG_JA=True returns Japanese messages."""
         with patch("speedtest_z.i18n._LANG_JA", True):
             assert _msg("confirm_abort") == "中止しました。"
             assert _msg("manual_not_found") == "マニュアルが見つかりません。"
 
     def test_msg_english(self):
-        """_LANG_JA=False で英語メッセージが返ること"""
+        """_LANG_JA=False returns English messages."""
         with patch("speedtest_z.i18n._LANG_JA", False):
             assert _msg("confirm_abort") == "Aborted."
             assert _msg("manual_not_found") == "Manual not found."
 
     def test_msg_with_kwargs_japanese(self):
-        """日本語メッセージのフォーマット引数が展開されること"""
+        """Format arguments are expanded in a Japanese message."""
         with patch("speedtest_z.i18n._LANG_JA", True):
             result = _msg("config_not_found_cli", path="/tmp/test.ini")
             assert result == "/tmp/test.ini が見つかりません"
 
     def test_msg_with_kwargs_english(self):
-        """英語メッセージのフォーマット引数が展開されること"""
+        """Format arguments are expanded in an English message."""
         with patch("speedtest_z.i18n._LANG_JA", False):
             result = _msg("config_not_found_cli", path="/tmp/test.ini")
             assert result == "/tmp/test.ini not found"
 
     def test_confirm_prompt_japanese(self):
-        """日本語の確認プロンプトメッセージ"""
+        """The Japanese confirmation prompt message."""
         with patch("speedtest_z.i18n._LANG_JA", True):
             result = _msg("confirm_prompt", count=2, sites="cloudflare, netflix")
             assert "2 サイトに接続します" in result
             assert "cloudflare, netflix" in result
 
     def test_confirm_prompt_english(self):
-        """英語の確認プロンプトメッセージ"""
+        """The English confirmation prompt message."""
         with patch("speedtest_z.i18n._LANG_JA", False):
             result = _msg("confirm_prompt", count=2, sites="cloudflare, netflix")
             assert "connecting to 2 site(s)" in result
             assert "cloudflare, netflix" in result
 
     def test_prompt_shown_japanese(self, capsys):
-        """日本語ロケールで日本語プロンプトが表示されること"""
+        """The Japanese prompt is shown in a Japanese locale."""
         with (
             patch("speedtest_z.cli._build_parser") as mock_parser,
             patch("speedtest_z.cli._setup_logging"),
@@ -471,7 +471,7 @@ class TestI18nMessages:
         assert "中止しました。" in captured.out
 
     def test_prompt_shown_english(self, capsys):
-        """英語ロケールで英語プロンプトが表示されること"""
+        """The English prompt is shown in an English locale."""
         with (
             patch("speedtest_z.cli._build_parser") as mock_parser,
             patch("speedtest_z.cli._setup_logging"),

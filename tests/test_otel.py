@@ -1,4 +1,4 @@
-"""OpenTelemetry 統合のテスト"""
+"""Tests for the OpenTelemetry integration."""
 
 import configparser
 from unittest.mock import MagicMock, patch
@@ -15,15 +15,15 @@ try:
 except ImportError:
     _has_otel = False
 
-# --- OtelSender のユニットテスト ---
+# --- Unit tests for OtelSender ---
 
 
 @pytest.mark.skipif(not _has_otel, reason="opentelemetry not installed")
 class TestOtelSender:
-    """OtelSender のテスト"""
+    """Tests for OtelSender."""
 
     def _make_sender(self):
-        """モック化した OtelSender を作成"""
+        """Create a mocked OtelSender."""
         with (
             patch("speedtest_z.otel.OTLPMetricExporter") as mock_exporter_cls,
             patch("speedtest_z.otel.PeriodicExportingMetricReader"),
@@ -41,21 +41,21 @@ class TestOtelSender:
                 {"Api-Key": "test-key"},
                 "test-host",
             )
-            # モック参照を保持
+            # Keep references to the mocks
             sender._mock_exporter_cls = mock_exporter_cls
             sender._mock_provider = mock_provider
             sender._mock_meter = mock_meter
         return sender
 
     def test_init(self):
-        """初期化で属性が設定されること"""
+        """Attributes are set during initialization."""
         sender = self._make_sender()
         assert sender.provider is not None
         assert sender.meter is not None
         assert sender._gauges == {}
 
     def test_send_numeric_values(self):
-        """数値メトリクスが gauge に記録されること"""
+        """Numeric metrics are recorded on a gauge."""
         sender = self._make_sender()
         mock_gauge = MagicMock()
         sender._mock_meter.create_gauge.return_value = mock_gauge
@@ -66,37 +66,37 @@ class TestOtelSender:
         ]
         sender.send(data)
 
-        # gauge が作成されたことを確認
+        # Verify the gauges were created
         assert sender._mock_meter.create_gauge.call_count == 2
-        # set() が呼ばれたことを確認
+        # Verify set() was called
         assert mock_gauge.set.call_count == 2
         mock_gauge.set.assert_any_call(100.5, {"site": "cloudflare", "host": "test-host"})
         mock_gauge.set.assert_any_call(50.2, {"site": "cloudflare", "host": "test-host"})
-        # force_flush が呼ばれたことを確認
+        # Verify force_flush was called
         sender._mock_provider.force_flush.assert_called_once()
 
     def test_send_skips_non_numeric(self):
-        """数値でない値はスキップされること"""
+        """Non-numeric values are skipped."""
         sender = self._make_sender()
         data = [
             {"key": "netflix.server-locations", "value": "Tokyo, Osaka"},
             {"key": "boxtest.POP", "value": "NRT"},
         ]
         sender.send(data)
-        # gauge が作成されない
+        # No gauge is created
         sender._mock_meter.create_gauge.assert_not_called()
-        # force_flush は呼ばれる（空でも）
+        # force_flush is still called (even when empty)
         sender._mock_provider.force_flush.assert_called_once()
 
     def test_send_skips_invalid_key(self):
-        """ドットなしの key はスキップされること"""
+        """A key without a dot is skipped."""
         sender = self._make_sender()
         data = [{"key": "invalid_key", "value": "100.5"}]
         sender.send(data)
         sender._mock_meter.create_gauge.assert_not_called()
 
     def test_send_mixed_values(self):
-        """数値と非数値が混在する場合、数値のみ記録されること"""
+        """When numeric and non-numeric values are mixed, only the numeric ones are recorded."""
         sender = self._make_sender()
         mock_gauge = MagicMock()
         sender._mock_meter.create_gauge.return_value = mock_gauge
@@ -106,19 +106,19 @@ class TestOtelSender:
             {"key": "netflix.server-locations", "value": "Tokyo"},
         ]
         sender.send(data)
-        # 数値の1つだけ gauge が作成される
+        # A gauge is created only for the single numeric value
         sender._mock_meter.create_gauge.assert_called_once_with("speedtest_download")
         mock_gauge.set.assert_called_once_with(100.5, {"site": "cloudflare", "host": "test"})
 
     def test_send_empty_list(self):
-        """空リストでもエラーにならないこと"""
+        """An empty list does not error."""
         sender = self._make_sender()
         sender.send([])
         sender._mock_meter.create_gauge.assert_not_called()
         sender._mock_provider.force_flush.assert_called_once()
 
     def test_send_caches_gauge(self):
-        """同名メトリクスの gauge がキャッシュされること"""
+        """The gauge for an identically named metric is cached."""
         sender = self._make_sender()
         mock_gauge = MagicMock()
         sender._mock_meter.create_gauge.return_value = mock_gauge
@@ -128,12 +128,12 @@ class TestOtelSender:
             {"key": "netflix.download", "value": "80.0", "host": "h1"},
         ]
         sender.send(data)
-        # 同じ metric_name "speedtest_download" なので create_gauge は1回
+        # Same metric_name "speedtest_download", so create_gauge is called once
         sender._mock_meter.create_gauge.assert_called_once_with("speedtest_download")
         assert mock_gauge.set.call_count == 2
 
     def test_send_hyphen_to_underscore(self):
-        """メトリクス名のハイフンがアンダースコアに変換されること"""
+        """Hyphens in the metric name are converted to underscores."""
         sender = self._make_sender()
         mock_gauge = MagicMock()
         sender._mock_meter.create_gauge.return_value = mock_gauge
@@ -144,20 +144,20 @@ class TestOtelSender:
         mock_gauge.set.assert_called_once_with(3.0, {"site": "netflix", "host": "h1"})
 
     def test_shutdown(self):
-        """shutdown() で provider.shutdown() が呼ばれること"""
+        """provider.shutdown() is called by shutdown()."""
         sender = self._make_sender()
         sender.shutdown()
         sender._mock_provider.shutdown.assert_called_once()
 
 
-# --- ImportError 時のフォールバックテスト ---
+# --- Fallback tests for ImportError ---
 
 
 class TestOtelImportFallback:
-    """opentelemetry 未インストール時の graceful fallback テスト"""
+    """Graceful fallback tests for when opentelemetry is not installed."""
 
     def test_runner_otel_without_opentelemetry(self):
-        """opentelemetry なしで [otel] enable=true の場合、警告が出ること"""
+        """A warning is emitted when [otel] enable=true but opentelemetry is missing."""
         config = configparser.ConfigParser()
         config.read_dict(
             {
@@ -186,7 +186,7 @@ class TestOtelImportFallback:
             app.dryrun = True
             app.otel_sender = None
             app.zabbix_host = "test"
-            # [otel] セクションの読み込みをシミュレート
+            # Simulate loading the [otel] section
             if config.has_section("otel"):
                 otel_enable = config.getboolean("otel", "enable", fallback=False)
                 if otel_enable:
@@ -197,11 +197,11 @@ class TestOtelImportFallback:
             assert app.otel_sender is None
 
 
-# --- send_results() の統合テスト ---
+# --- Integration tests for send_results() ---
 
 
 def _make_sender(dryrun=True, zabbix_enable=False, grafana_sender=None, otel_sender=None):
-    """SenderManager インスタンスを直接作成"""
+    """Create a SenderManager instance directly."""
     with patch.object(SenderManager, "__init__", lambda self, *a, **kw: None):
         sender = SenderManager.__new__(SenderManager)
         sender.dry_run = dryrun
@@ -215,10 +215,10 @@ def _make_sender(dryrun=True, zabbix_enable=False, grafana_sender=None, otel_sen
 
 
 class TestSendResultsOtel:
-    """SenderManager.send() の OTel 送信テスト"""
+    """OTel send tests for SenderManager.send()."""
 
     def test_otel_sender_called(self):
-        """otel_sender が設定されていれば send() が呼ばれること"""
+        """send() is called when otel_sender is set."""
         mock_otel = MagicMock()
         sender = _make_sender(dryrun=False, otel_sender=mock_otel)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
@@ -227,7 +227,7 @@ class TestSendResultsOtel:
             mock_otel.send.assert_called_once_with(data)
 
     def test_otel_sender_not_called_on_dryrun(self):
-        """dryrun=True では otel_sender.send() が呼ばれないこと"""
+        """otel_sender.send() is not called when dryrun=True."""
         mock_otel = MagicMock()
         sender = _make_sender(dryrun=True, otel_sender=mock_otel)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
@@ -235,16 +235,16 @@ class TestSendResultsOtel:
         mock_otel.send.assert_not_called()
 
     def test_otel_error_handled(self):
-        """OTel 送信エラーでもクラッシュしないこと"""
+        """An OTel send error does not crash the run."""
         mock_otel = MagicMock()
         mock_otel.send.side_effect = Exception("Connection error")
         sender = _make_sender(dryrun=False, otel_sender=mock_otel)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
         with patch("speedtest_z.sender.Sender"):
-            sender.send(data)  # 例外が伝播しない
+            sender.send(data)  # the exception does not propagate
 
     def test_all_three_backends(self):
-        """Zabbix, Grafana, OTel の3つ全てが呼ばれること"""
+        """All three of Zabbix, Grafana, and OTel are called."""
         mock_grafana = MagicMock()
         mock_otel = MagicMock()
         sender = _make_sender(
@@ -263,20 +263,20 @@ class TestSendResultsOtel:
             mock_otel.send.assert_called_once_with(data)
 
 
-# --- close() の OTel シャットダウンテスト ---
+# --- OTel shutdown tests for close() ---
 
 
 class TestCloseOtel:
-    """SenderManager.close() での OTel シャットダウンテスト"""
+    """OTel shutdown tests for SenderManager.close()."""
 
     def test_close_calls_otel_shutdown(self):
-        """close() で otel_sender.shutdown() が呼ばれること"""
+        """otel_sender.shutdown() is called by close()."""
         mock_otel = MagicMock()
         sender = _make_sender(otel_sender=mock_otel)
         sender.close()
         mock_otel.shutdown.assert_called_once()
 
     def test_close_without_otel(self):
-        """otel_sender=None でも close() がエラーにならないこと"""
+        """close() does not error even when otel_sender=None."""
         sender = _make_sender(otel_sender=None)
-        sender.close()  # エラーが出ないこと
+        sender.close()  # should not raise

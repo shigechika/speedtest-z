@@ -21,16 +21,16 @@ def _show_manual() -> None:
     import pydoc
     from importlib.resources import files
 
-    # ロケールに応じて日本語版/英語版を選択
+    # Select the Japanese/English version based on locale
     readme = "README.ja.md" if _LANG_JA else "README.md"
 
     text = None
 
-    # 1. importlib.resources でパッケージ内から読み込み (pip install 時)
+    # 1. Read from inside the package via importlib.resources (pip install)
     with contextlib.suppress(FileNotFoundError, TypeError):
         text = files("speedtest_z").joinpath(readme).read_text(encoding="utf-8")
 
-    # 2. フォールバック: リポジトリルートの README (開発時)
+    # 2. Fallback: README at the repository root (development)
     if not text:
         dev_path = os.path.normpath(os.path.join(os.path.dirname(__file__), os.pardir, readme))
         if os.path.isfile(dev_path):
@@ -169,19 +169,19 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    # --man は Chrome 不要で応答
+    # --man responds without needing Chrome
     if args.man:
         _show_manual()
         return
 
-    # --list-sites は Chrome 不要で応答
+    # --list-sites responds without needing Chrome
     if args.list_sites:
         print("Available test sites:")
         for site in AVAILABLE_SITES:
             print(f"  {site}")
         return
 
-    # --check は Chrome 不要で応答
+    # --check responds without needing Chrome
     if args.check:
         from speedtest_z.healthcheck import check_sites
 
@@ -189,12 +189,12 @@ def main() -> None:
 
     _init_logging(args)
 
-    # config.ini の存在チェック（必須）
+    # Check that config.ini exists (required)
     config_path = _find_config("config.ini", args.config)
     if config_path is None:
         logger.error(_msg("config_not_found"))
         sys.exit(1)
-    args.config = config_path  # 見つかったパスで上書き
+    args.config = config_path  # overwrite with the resolved path
 
     sites = args.sites if args.sites else AVAILABLE_SITES
     if not _confirm_execution(args, sites):
@@ -206,7 +206,7 @@ def main() -> None:
 
     app = SpeedtestZ(args)
 
-    # json/csv モードでは SenderManager の代わりに OutputCollector を使う
+    # In json/csv mode, use OutputCollector instead of SenderManager
     output_fmt = getattr(args, "output", "zabbix")
     if output_fmt in ("json", "csv"):
         from speedtest_z.output import OutputCollector

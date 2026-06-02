@@ -63,7 +63,7 @@ class OutputCollector:
     def _flush_json(self) -> None:
         """Output as JSON array."""
         json.dump(self._records, sys.stdout, ensure_ascii=False, indent=2)
-        print()  # 末尾改行
+        print()  # trailing newline
 
     def _flush_csv(self) -> None:
         """Output as CSV with header."""

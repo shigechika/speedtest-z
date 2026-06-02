@@ -39,7 +39,7 @@ class SpeedtestZ:
 
     def __init__(self, args: argparse.Namespace | None = None) -> None:
         """Initialize SpeedtestZ with CLI arguments and config file."""
-        # 設定ファイルの読み込み
+        # Load the config file
         self.config = configparser.ConfigParser()
         config_path = _find_config("config.ini", getattr(args, "config", None))
         if config_path:
@@ -48,7 +48,7 @@ class SpeedtestZ:
         else:
             logger.warning(_msg("config_not_found_fallback"))
 
-        # [general] — dry_run を優先、なければ旧名 dryrun にフォールバック
+        # [general] — prefer dry_run, falling back to the old name dryrun
         self.dryrun = self.config.getboolean("general", "dry_run", fallback=None)
         if self.dryrun is None:
             self.dryrun = self.config.getboolean("general", "dryrun", fallback=True)
@@ -61,7 +61,7 @@ class SpeedtestZ:
             )
         )
 
-        # CLI 引数でオーバーライド
+        # Override with CLI arguments
         self.explicit_sites = False
         self.auto_consent = False
         if args:
@@ -96,10 +96,10 @@ class SpeedtestZ:
         if self.snapshot_enable:
             os.makedirs(self.snapshot_dir, exist_ok=True)
 
-        # WebDriver の初期化
+        # Initialize the WebDriver
         self._init_driver()
 
-        # SIGTERM ハンドリング
+        # SIGTERM handling
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
     def _handle_sigterm(self, signum: int, frame: types_mod.FrameType | None) -> None:

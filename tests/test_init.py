@@ -1,20 +1,20 @@
-"""__init__.py のテスト"""
+"""Tests for __init__.py."""
 
 import re
 from unittest.mock import patch
 
 
 class TestVersion:
-    """バージョン取得のテスト"""
+    """Tests for version retrieval."""
 
     def test_version_is_string(self):
-        """__version__ が文字列であること"""
+        """__version__ should be a string."""
         from speedtest_z import __version__
 
         assert isinstance(__version__, str)
 
     def test_version_not_empty(self):
-        """__version__ が空でないこと"""
+        """__version__ should not be empty."""
         from speedtest_z import __version__
 
         assert len(__version__) > 0

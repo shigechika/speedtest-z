@@ -50,7 +50,7 @@ def run_ookla(app: SpeedtestZ) -> None:
                 except TimeoutException:
                     logger.debug("ookla: Consent dialog not found (auto)")
             else:
-                # バナーが出ていたらユーザが「Continue」をクリックするまで待つ
+                # If a banner is shown, wait for the user to click "Continue"
                 try:
                     banner = WebDriverWait(app.driver, 5).until(
                         EC.visibility_of_element_located((By.ID, "onetrust-banner-sdk"))
