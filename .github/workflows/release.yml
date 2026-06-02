@@ -62,25 +62,12 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 
-  github-release:
-    needs: publish
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-        # Idempotent: the deb/rpm workflows may have created the release first.
-        run: |
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --generate-notes
-
+  # The GitHub Release itself is created by release-please (the release PR
+  # merge tags vX.Y.Z and publishes the Release), so this workflow only
+  # publishes to PyPI and notifies the Homebrew tap.
   notify-homebrew:
     name: Notify Homebrew Tap
-    needs: github-release
+    needs: publish
     runs-on: ubuntu-latest
     steps:
       - name: Extract version from tag

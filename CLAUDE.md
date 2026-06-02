@@ -23,7 +23,7 @@ Selenium を使って複数の速度テストサイト（Cloudflare, Netflix/fas
 - `speedtest_z/healthcheck.py` — `--check` URL 疎通確認
 - `speedtest_z/types.py` — ZabbixItem TypedDict + MetricSender プロトコル
 - `speedtest_z/sites/` — サイトごとのランナー（`run_xxx(app)` 関数）
-- `speedtest_z/__init__.py` — バージョン情報（setuptools-scm で自動採番）
+- `speedtest_z/__init__.py` — バージョン情報（`importlib.metadata` で取得。バージョンは `pyproject.toml` の静的 `version` を release-please が管理）
 - `config.ini` — 実行設定（探索順: CLI → CWD → ~/.config/speedtest-z/ → /etc/speedtest-z/）
 - `logging.ini` — ログ設定（同上、コンソールは stderr 出力）
 - `deploy/` — systemd service/timer, cron（手動デプロイ参考用）
@@ -66,19 +66,23 @@ python -m build
 ## CI/CD
 
 - `.github/workflows/ci.yml` — push/PR 時に構文チェック + ビルドテスト（Python 3.10〜3.14）
+- `.github/workflows/release-please.yml` — main への push 時に release-please が Release PR を維持。マージで `vX.Y.Z` タグと GitHub Release を自動作成
 - `.github/workflows/release.yml` — `v*` タグ push 時に PyPI へ自動公開（Trusted Publishers）
 - `.github/workflows/deb.yml` — `v*` タグ push 時に jammy/noble 向け .deb ビルド → GitHub Release にアップロード
 - `.github/workflows/rpm.yml` — `v*` タグ push 時に Rocky 9 向け .rpm ビルド（fpm）→ GitHub Release にアップロード
 
-## リリース手順
+## リリース手順（release-please）
 
-タグを打つ前に以下のドキュメントが最新か確認し、必要なら更新してから commit & push すること:
+バージョン管理は **release-please** が担当する。`pyproject.toml` の静的 `version` と `CHANGELOG.md` は release-please が自動更新する（手動編集しない）。
 
-1. **README.md / README.ja.md** — 新しい CLI オプション・機能・対応サイトの追記
-2. **CHANGELOG.md** — リリースエントリの追加
-3. 上記を commit & push してからタグを作成する
+1. **Conventional Commits** で main にマージする（`feat:` → minor、`fix:` → patch、`feat!:`/`BREAKING CHANGE` → 1.0 未満は minor）
+2. release-please が **Release PR** を自動で開く/更新する（次バージョン + CHANGELOG エントリを含む）
+3. README 等の更新が必要なら通常の PR で先に入れておく
+4. Release PR をマージすると `vX.Y.Z` タグと GitHub Release が作成され、`release.yml`（PyPI）・`deb.yml`・`rpm.yml` が発火する
 
-**重要: PyPI はバージョンの上書きを許可しない。** 一度タグを push して PyPI に公開されたバージョンは、タグを削除・再作成しても同じバージョン番号では再公開できない。ドキュメント修正のみでもパッチバージョンを上げること（例: v0.5.0 → v0.5.1）。
+**重要: タグ起動を効かせるには PAT が必要。** release-please が `GITHUB_TOKEN` で作成したタグは他ワークフローを起動しない（GitHub の仕様）。リポジトリシークレット `RELEASE_PLEASE_TOKEN`（PAT もしくは GitHub App トークン）を設定すると、release-please が作るタグで PyPI/deb/rpm が自動発火する。未設定時は release-please 自体は動くが、ビルド/公開は手動発火（`deb.yml`/`rpm.yml` の workflow_dispatch 等）が必要。
+
+**重要: PyPI はバージョンの上書きを許可しない。** release-please は常に新しいバージョンを採番するためこの問題は基本的に起きないが、公開済みバージョンの再公開はできない点に留意する。
 
 ## config.ini の設計
 

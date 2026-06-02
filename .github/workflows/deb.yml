@@ -43,13 +43,24 @@ jobs:
             dpkg-dev
 
       - name: Update debian/changelog version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          if [ -n "${{ inputs.version }}" ]; then
-            VERSION="${{ inputs.version }}"
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
           else
             VERSION="${GITHUB_REF_NAME#v}"
           fi
-          sed -i "1s/([^)]*)/($VERSION-1)/" debian/changelog
+          # Prepend a proper changelog stanza (version, entry, maintainer, date)
+          # instead of only rewriting the version of the existing top entry.
+          {
+            printf '%s\n\n' "speedtest-z (${VERSION}-1) unstable; urgency=medium"
+            printf '  * Release %s\n\n' "${VERSION}"
+            printf ' -- %s  %s\n\n' \
+              "AIKAWA Shigechika <shigechika@users.noreply.github.com>" "$(date -R)"
+            cat debian/changelog
+          } > debian/changelog.new
+          mv debian/changelog.new debian/changelog
 
       - name: Build .deb package
         run: dpkg-buildpackage -us -uc -b
