@@ -27,8 +27,8 @@ classifiers = [
     "Topic :: System :: Networking",
 ]
 dependencies = [
-    "selenium",
-    "zappix",
+    "selenium>=4.10,<5",
+    "zappix>=1.2,<2",
 ]
 
 [project.optional-dependencies]

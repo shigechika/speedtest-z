@@ -223,8 +223,10 @@ def main() -> None:
                 logger.warning(f"Unknown site: {site}")
     except KeyboardInterrupt:
         logger.info("Interrupted by user")
-    except Exception as e:
-        logger.error(f"Fatal Error: {e}")
+    except Exception:
+        # Surface a non-zero exit code so systemd/cron can detect the failure.
+        logger.exception("Fatal Error")
+        sys.exit(1)
     finally:
         app.close()
 
