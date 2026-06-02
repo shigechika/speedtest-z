@@ -16,7 +16,7 @@ jobs:
       # GitHub Release. Set a RELEASE_PLEASE_TOKEN secret (a PAT or GitHub App
       # token) so that tag push triggers the PyPI/deb/rpm workflows — a tag
       # created with the default GITHUB_TOKEN does not trigger other workflows.
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
           config-file: release-please-config.json
