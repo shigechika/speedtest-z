@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.8.4](https://github.com/shigechika/speedtest-z/compare/v0.8.3...v0.8.4) (2026-06-02)
+
+
+### Bug Fixes
+
+* address priority findings from full-branch code review ([#9](https://github.com/shigechika/speedtest-z/issues/9)) ([4944fa4](https://github.com/shigechika/speedtest-z/commit/4944fa4bbed0bfef071da73f4b5f535d9eb0492b))
+* harden deploy/packaging scripts (cron scope, drop unused /var/log) ([#12](https://github.com/shigechika/speedtest-z/issues/12)) ([b24bb71](https://github.com/shigechika/speedtest-z/commit/b24bb71cb4d3a9fa658fabe360673fa51ce87944))
+* low-severity robustness and hygiene cleanups ([#11](https://github.com/shigechika/speedtest-z/issues/11)) ([8c694af](https://github.com/shigechika/speedtest-z/commit/8c694afca7c534330aebeffd6d46a0c23fd2ea4d))
+
+
+### Documentation
+
+* add Homebrew bottle availability note to README ([0555cd6](https://github.com/shigechika/speedtest-z/commit/0555cd629a855d1a36572a6256c1a393056d32c8))
+* add otel install command and test skip note to CLAUDE.md ([7b57bee](https://github.com/shigechika/speedtest-z/commit/7b57beeeafdfe8040aee232bddc9bf10c635e43b))
+* add troubleshooting section to README ([ad0eedf](https://github.com/shigechika/speedtest-z/commit/ad0eedfc6807b78036abfc7ec14810ee2a96dc84)), closes [#8](https://github.com/shigechika/speedtest-z/issues/8)
+* update CLAUDE.md architecture for SenderManager and MetricSender ([391ae97](https://github.com/shigechika/speedtest-z/commit/391ae97b168fb82f3531a1b798d8bb532bf518b0))
+* update example output with confirmation prompt, remove JANOG57 reference ([aa675db](https://github.com/shigechika/speedtest-z/commit/aa675db92e41cd6d94e50c81f6a2bff846915062))
+
 ## [0.8.3] - 2026-02-25
 
 ### Added
