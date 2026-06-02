@@ -367,6 +367,43 @@ class TestMainConfirmPrompt:
         mock_stz.assert_not_called()
 
 
+class TestMainFatalExit:
+    """main() exits non-zero when a site runner raises a fatal error."""
+
+    def test_fatal_exception_exits_1(self):
+        """A runner exception is logged and main() exits with code 1."""
+
+        def _boom(app):
+            raise RuntimeError("boom")
+
+        with (
+            patch("speedtest_z.cli._build_parser") as mock_parser,
+            patch("speedtest_z.cli._setup_logging"),
+            patch("speedtest_z.cli._find_config", return_value="/tmp/config.ini"),
+            patch("speedtest_z.runner.SpeedtestZ") as mock_stz,
+            patch("speedtest_z.cli.get_site_runners", return_value={"cloudflare": _boom}),
+            patch("sys.stdin") as mock_stdin,
+        ):
+            mock_args = MagicMock()
+            mock_args.man = False
+            mock_args.list_sites = False
+            mock_args.check = False
+            mock_args.debug = False
+            mock_args.config = None
+            mock_args.output = "zabbix"
+            mock_args.yes = True
+            mock_args.sites = ["cloudflare"]
+            mock_parser.return_value.parse_args.return_value = mock_args
+            mock_app = MagicMock()
+            mock_stz.return_value = mock_app
+            mock_stdin.isatty.return_value = False
+
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 1
+            mock_app.close.assert_called()  # finally still cleans up
+
+
 class TestI18nMessages:
     """_msg() の日英切り替えテスト"""
 

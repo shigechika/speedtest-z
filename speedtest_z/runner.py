@@ -31,7 +31,6 @@ class SpeedtestZ:
     """Browser-based speed test runner with Zabbix integration."""
 
     # Class constants
-    DEFAULT_TIMEOUT = 45
     BOXTEST_TIMEOUT = 90
     WINDOW_WIDTH = 1024
     WINDOW_HEIGHT = 1024
