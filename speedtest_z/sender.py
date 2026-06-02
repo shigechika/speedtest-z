@@ -51,6 +51,11 @@ class SenderManager:
                     url = config.get("grafana", "remote_write_url")
                     username = config.get("grafana", "username")
                     token = config.get("grafana", "token")
+                    if not url.startswith("https://"):
+                        logger.warning(
+                            "[grafana] remote_write_url is not https; "
+                            "credentials would be sent over plaintext"
+                        )
                     self.grafana_sender = GrafanaSender(url, username, token)
                 except ImportError:
                     logger.error("cramjam not installed. Run: pip install speedtest-z[grafana]")
@@ -66,6 +71,11 @@ class SenderManager:
                     from speedtest_z.otel import OtelSender
 
                     endpoint = config.get("otel", "endpoint")
+                    if not endpoint.startswith("https://"):
+                        logger.warning(
+                            "[otel] endpoint is not https; "
+                            "headers (e.g. auth) would be sent over plaintext"
+                        )
                     headers_str = config.get("otel", "headers", fallback="")
                     # "Key1=Val1,Key2=Val2" -> dict
                     headers: dict[str, str] = {}

@@ -30,7 +30,9 @@ def _find_config(name: str, cli_path: str | None = None) -> str | None:
     if os.path.isfile(name):
         return name
 
-    xdg = os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
+    # Use `or` so an empty XDG_CONFIG_HOME falls back to ~/.config (os.environ.get
+    # returns "" when the variable is set but empty, which would yield a relative path).
+    xdg = os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config")
     xdg_path = os.path.join(xdg, "speedtest-z", name)
     if os.path.isfile(xdg_path):
         return xdg_path
