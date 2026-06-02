@@ -12,8 +12,8 @@ import urllib.request
 logger = logging.getLogger("speedtest-z")
 
 
-# --- Protobuf 手動エンコーダー（protobuf パッケージ不要） ---
-# Prometheus Remote Write の proto 定義:
+# --- Manual Protobuf encoder (no protobuf package required) ---
+# Prometheus Remote Write proto definitions:
 #   WriteRequest { repeated TimeSeries timeseries = 1; }
 #   TimeSeries   { repeated Label labels = 1; repeated Sample samples = 2; }
 #   Label        { string name = 1; string value = 2; }
@@ -120,14 +120,14 @@ class GrafanaSender:
             key = item.get("key", "")
             value_str = item.get("value", "")
 
-            # 数値でない値はスキップ（server-locations, POP 等）
+            # skip non-numeric values (server-locations, POP, etc.)
             try:
                 value = float(value_str)
             except (ValueError, TypeError):
                 logger.debug(f"Grafana skip: {key} = {value_str} (non-numeric)")
                 continue
 
-            # key を site と metric に分離（例: cloudflare.download）
+            # split key into site and metric (e.g. cloudflare.download)
             parts = key.split(".", 1)
             if len(parts) != 2:
                 continue

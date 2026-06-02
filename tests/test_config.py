@@ -1,4 +1,4 @@
-"""設定ファイル探索のテスト"""
+"""Tests for config file discovery."""
 
 import logging
 import os
@@ -14,39 +14,39 @@ from speedtest_z.runner import SpeedtestZ
 
 
 class TestFindConfig:
-    """_find_config() のテスト"""
+    """Tests for _find_config()."""
 
     def test_cli_path_exists(self, tmp_path):
-        """CLI で指定したパスにファイルがあれば返す"""
+        """Return the CLI-specified path if the file exists."""
         f = tmp_path / "my.ini"
         f.write_text("[general]\n")
         assert _find_config("config.ini", cli_path=str(f)) == str(f)
 
     def test_cli_path_not_exists(self, tmp_path):
-        """CLI で指定したパスにファイルがなければ None"""
+        """None if the CLI-specified path does not exist."""
         result = _find_config("config.ini", cli_path=str(tmp_path / "no.ini"))
         assert result is None
 
     def test_current_dir(self, tmp_path, monkeypatch):
-        """カレントディレクトリの config.ini を検出"""
+        """Detect config.ini in the current directory."""
         (tmp_path / "config.ini").write_text("[general]\n")
         monkeypatch.chdir(tmp_path)
         assert _find_config("config.ini") == "config.ini"
 
     def test_xdg_config_home(self, tmp_path, monkeypatch):
-        """XDG_CONFIG_HOME 配下を検出"""
+        """Detect config under XDG_CONFIG_HOME."""
         xdg = tmp_path / "xdg"
         conf_dir = xdg / "speedtest-z"
         conf_dir.mkdir(parents=True)
         (conf_dir / "config.ini").write_text("[general]\n")
 
         monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg))
-        # カレントに config.ini がないディレクトリへ移動
+        # Move to a directory that has no config.ini in CWD.
         monkeypatch.chdir(tmp_path)
         assert _find_config("config.ini") == str(conf_dir / "config.ini")
 
     def test_xdg_default(self, tmp_path, monkeypatch):
-        """XDG_CONFIG_HOME 未設定時は ~/.config を使う"""
+        """Use ~/.config when XDG_CONFIG_HOME is unset."""
         fake_home = tmp_path / "home"
         conf_dir = fake_home / ".config" / "speedtest-z"
         conf_dir.mkdir(parents=True)
@@ -70,13 +70,13 @@ class TestFindConfig:
         assert _find_config("config.ini") == str(conf_dir / "config.ini")
 
     def test_etc_fallback(self, tmp_path, monkeypatch):
-        """/etc/speedtest-z/ にフォールバック"""
+        """Fall back to /etc/speedtest-z/."""
         monkeypatch.chdir(tmp_path)
         monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty"))
         etc_dir = tmp_path / "etc" / "speedtest-z"
         etc_dir.mkdir(parents=True)
         (etc_dir / "config.ini").write_text("[general]\n")
-        # os.path.isfile を差し替えて /etc/speedtest-z/ をシミュレート
+        # Patch os.path.isfile to simulate /etc/speedtest-z/.
         _real_isfile = os.path.isfile
 
         def patched_isfile(path):
@@ -88,14 +88,14 @@ class TestFindConfig:
         assert _find_config("config.ini") == "/etc/speedtest-z/config.ini"
 
     def test_cwd_over_etc(self, tmp_path, monkeypatch):
-        """CWD は /etc/speedtest-z/ より優先"""
+        """CWD takes priority over /etc/speedtest-z/."""
         (tmp_path / "config.ini").write_text("[general]\n")
         monkeypatch.chdir(tmp_path)
-        # /etc にもあっても CWD が優先される
+        # CWD wins even if /etc also has one.
         assert _find_config("config.ini") == "config.ini"
 
     def test_xdg_over_etc(self, tmp_path, monkeypatch):
-        """XDG は /etc/speedtest-z/ より優先"""
+        """XDG takes priority over /etc/speedtest-z/."""
         xdg = tmp_path / "xdg"
         conf_dir = xdg / "speedtest-z"
         conf_dir.mkdir(parents=True)
@@ -105,13 +105,13 @@ class TestFindConfig:
         assert _find_config("config.ini") == str(conf_dir / "config.ini")
 
     def test_not_found(self, tmp_path, monkeypatch):
-        """どこにもなければ None"""
+        """None if not found anywhere."""
         monkeypatch.chdir(tmp_path)
         monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty"))
         assert _find_config("config.ini") is None
 
     def test_cli_path_takes_priority(self, tmp_path, monkeypatch):
-        """CLI 指定はカレントディレクトリより優先"""
+        """A CLI-specified path takes priority over the current directory."""
         (tmp_path / "config.ini").write_text("[cwd]\n")
         cli_file = tmp_path / "cli.ini"
         cli_file.write_text("[cli]\n")
@@ -120,17 +120,17 @@ class TestFindConfig:
         assert _find_config("config.ini", cli_path=str(cli_file)) == str(cli_file)
 
     def test_logging_ini(self, tmp_path, monkeypatch):
-        """logging.ini も同じ探索ロジックで見つかる"""
+        """logging.ini is found via the same discovery logic."""
         (tmp_path / "logging.ini").write_text("[loggers]\n")
         monkeypatch.chdir(tmp_path)
         assert _find_config("logging.ini") == "logging.ini"
 
 
 class TestSetupLogging:
-    """_setup_logging() のテスト"""
+    """Tests for _setup_logging()."""
 
     def test_no_logging_ini(self, tmp_path, monkeypatch):
-        """logging.ini がなければ basicConfig で初期化"""
+        """Initialize via basicConfig when there is no logging.ini."""
         monkeypatch.chdir(tmp_path)
         monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty"))
         with patch("speedtest_z.config.logging.basicConfig") as mock_basic:
@@ -138,7 +138,7 @@ class TestSetupLogging:
             mock_basic.assert_called_once()
 
     def test_debug_mode(self, tmp_path, monkeypatch):
-        """debug=True で DEBUG レベルに設定"""
+        """debug=True sets the DEBUG level."""
         monkeypatch.chdir(tmp_path)
         monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty"))
         with patch("speedtest_z.config.logging.basicConfig") as mock_basic:
@@ -184,17 +184,17 @@ class TestSetupLogging:
 
 
 class TestChromeProfileDir:
-    """chrome_profile_dir 設定のテスト"""
+    """Tests for the chrome_profile_dir setting."""
 
     def _make_app(self, mock_config):
-        """WebDriver を迂回して SpeedtestZ インスタンスを作成"""
+        """Create a SpeedtestZ instance, bypassing the WebDriver."""
         with patch.object(SpeedtestZ, "__init__", lambda self, *a, **kw: None):
             app = SpeedtestZ.__new__(SpeedtestZ)
             app.config = mock_config
         return app
 
     def test_default_path(self, mock_config):
-        """デフォルトで ~/.config/speedtest-z/chrome-profile が設定される"""
+        """Defaults to ~/.config/speedtest-z/chrome-profile."""
         app = self._make_app(mock_config)
         app.chrome_profile_dir = os.path.expanduser(
             app.config.get(
@@ -205,7 +205,7 @@ class TestChromeProfileDir:
         assert app.chrome_profile_dir == expected
 
     def test_custom_path(self, mock_config):
-        """config でカスタムパスを指定"""
+        """Specify a custom path via config."""
         mock_config.set("general", "chrome_profile_dir", "/tmp/my-chrome-profile")
         app = self._make_app(mock_config)
         app.chrome_profile_dir = os.path.expanduser(
@@ -216,7 +216,7 @@ class TestChromeProfileDir:
         assert app.chrome_profile_dir == "/tmp/my-chrome-profile"
 
     def test_tilde_expansion(self, mock_config):
-        """~ がホームディレクトリに展開される"""
+        """~ is expanded to the home directory."""
         mock_config.set("general", "chrome_profile_dir", "~/my-profile")
         app = self._make_app(mock_config)
         app.chrome_profile_dir = os.path.expanduser(

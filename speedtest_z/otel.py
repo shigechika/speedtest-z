@@ -19,8 +19,8 @@ class OtelSender:
     def __init__(self, endpoint: str, headers: dict[str, str], host: str) -> None:
         """Initialize OtelSender with OTLP exporter and MeterProvider."""
         self.host = host
-        # endpoint をプログラムで渡す場合は /v1/metrics まで含める必要がある
-        # （環境変数 OTEL_EXPORTER_OTLP_ENDPOINT の場合のみ SDK が自動付加）
+        # When passing the endpoint programmatically, it must include /v1/metrics
+        # (the SDK only appends it automatically for the OTEL_EXPORTER_OTLP_ENDPOINT env var).
         if not endpoint.endswith("/v1/metrics"):
             endpoint = endpoint.rstrip("/") + "/v1/metrics"
         self.exporter = OTLPMetricExporter(
@@ -35,11 +35,11 @@ class OtelSender:
         )
         reader = PeriodicExportingMetricReader(
             self.exporter,
-            export_interval_millis=60000,  # 手動 flush するので長めに設定
+            export_interval_millis=60000,  # set long since we flush manually
         )
         self.provider = MeterProvider(resource=self.resource, metric_readers=[reader])
         self.meter = self.provider.get_meter("speedtest-z")
-        # 作成済み gauge をキャッシュ
+        # cache created gauges
         self._gauges: dict[str, Any] = {}
 
     def send(self, data_list: list[dict[str, str]]) -> None:
@@ -59,14 +59,14 @@ class OtelSender:
             site, metric = parts
             metric_name = f"speedtest_{metric.replace('-', '_')}"
 
-            # gauge を作成（同名なら SDK が内部でキャッシュ）
+            # create the gauge (the SDK caches it internally if the name matches)
             if metric_name not in self._gauges:
                 self._gauges[metric_name] = self.meter.create_gauge(metric_name)
 
             host = item.get("host", self.host)
             self._gauges[metric_name].set(value, {"site": site, "host": host})
 
-        # 即時エクスポート
+        # export immediately
         self.provider.force_flush()
 
     def shutdown(self) -> None:

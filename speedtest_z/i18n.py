@@ -5,10 +5,10 @@ from __future__ import annotations
 import locale
 import os
 
-# ロケール判定（ja_JP 等で始まれば日本語）
+# Locale detection (Japanese if it starts with ja_JP etc.)
 _LANG_JA: bool = (locale.getlocale()[0] or os.environ.get("LANG", "")).startswith("ja")
 
-# ユーザ向けメッセージ辞書 (日本語, 英語)
+# User-facing message dictionary (Japanese, English)
 _MESSAGES: dict[str, tuple[str, str]] = {
     "config_not_found_cli": (
         "{path} が見つかりません",

@@ -1,6 +1,6 @@
 #!/bin/sh
-# RPM %preun — パッケージ削除前に実行
-# $1: 0=最終削除, 1=アップグレード
+# RPM %preun — run before package removal
+# $1: 0=final removal, 1=upgrade
 
 if [ "$1" -eq 0 ]; then
     systemctl stop speedtest-z.timer speedtest-z.service 2>/dev/null || true

@@ -1,4 +1,4 @@
-"""Grafana Cloud 統合のテスト"""
+"""Tests for the Grafana Cloud integration."""
 
 import configparser
 import io
@@ -91,11 +91,11 @@ def _decode_write_request(data):
     return series
 
 
-# --- Protobuf エンコーダーのユニットテスト ---
+# --- Unit tests for the Protobuf encoders ---
 
 
 class TestEncodeVarint:
-    """_encode_varint() のテスト"""
+    """Tests for _encode_varint()."""
 
     def test_zero(self):
         assert _encode_varint(0) == b"\x00"
@@ -110,60 +110,60 @@ class TestEncodeVarint:
 
 
 class TestEncodeFields:
-    """各 Protobuf フィールドエンコーダーのテスト"""
+    """Tests for each Protobuf field encoder."""
 
     def test_encode_string(self):
-        """文字列が正しくエンコードされること"""
+        """A string is encoded correctly."""
         result = _encode_string(1, "test")
         # field 1, wire type 2 (length-delimited) = tag 0x0a
         assert result[0:1] == b"\x0a"
         assert b"test" in result
 
     def test_encode_double(self):
-        """double が正しくエンコードされること"""
+        """A double is encoded correctly."""
         result = _encode_double(1, 3.14)
         # field 1, wire type 1 (64-bit) = tag 0x09
         assert result[0:1] == b"\x09"
-        # 値の検証
+        # Verify the value
         value = struct.unpack("<d", result[1:])[0]
         assert abs(value - 3.14) < 1e-10
 
     def test_encode_int64(self):
-        """int64 が正しくエンコードされること"""
+        """An int64 is encoded correctly."""
         result = _encode_int64(2, 1000)
         # field 2, wire type 0 (varint) = tag 0x10
         assert result[0:1] == b"\x10"
 
     def test_encode_bytes(self):
-        """bytes が正しくエンコードされること"""
+        """Bytes are encoded correctly."""
         result = _encode_bytes(1, b"hello")
         assert b"hello" in result
 
 
 class TestEncodeLabel:
-    """encode_label() のテスト"""
+    """Tests for encode_label()."""
 
     def test_basic(self):
-        """ラベルのエンコード結果に name と value が含まれること"""
+        """The encoded label contains both name and value."""
         result = encode_label("__name__", "speedtest_download")
         assert b"__name__" in result
         assert b"speedtest_download" in result
 
 
 class TestEncodeSample:
-    """encode_sample() のテスト"""
+    """Tests for encode_sample()."""
 
     def test_basic(self):
-        """サンプルが正しくエンコードされること"""
+        """A sample is encoded correctly."""
         result = encode_sample(100.5, 1700000000000)
         assert len(result) > 0
 
 
 class TestEncodeTimeseries:
-    """encode_timeseries() のテスト"""
+    """Tests for encode_timeseries()."""
 
     def test_basic(self):
-        """TimeSeries が正しくエンコードされること"""
+        """A TimeSeries is encoded correctly."""
         labels = [("__name__", "speedtest_download"), ("site", "cloudflare")]
         result = encode_timeseries(labels, 100.5, 1700000000000)
         assert b"speedtest_download" in result
@@ -171,16 +171,16 @@ class TestEncodeTimeseries:
 
 
 class TestEncodeWriteRequest:
-    """encode_write_request() のテスト"""
+    """Tests for encode_write_request()."""
 
     def test_single(self):
-        """単一 TimeSeries の WriteRequest"""
+        """WriteRequest with a single TimeSeries."""
         ts = encode_timeseries([("__name__", "speedtest_download")], 100.5, 1700000000000)
         result = encode_write_request([ts])
         assert len(result) > 0
 
     def test_multiple(self):
-        """複数 TimeSeries の WriteRequest"""
+        """WriteRequest with multiple TimeSeries."""
         ts1 = encode_timeseries([("__name__", "speedtest_download")], 100.5, 1700000000000)
         ts2 = encode_timeseries([("__name__", "speedtest_upload")], 50.2, 1700000000000)
         result = encode_write_request([ts1, ts2])
@@ -228,21 +228,21 @@ class TestEncoderRoundTrip:
         assert series[1]["samples"][0][1] == 1700000000001
 
 
-# --- GrafanaSender のテスト ---
+# --- Tests for GrafanaSender ---
 
 
 class TestGrafanaSender:
-    """GrafanaSender のテスト"""
+    """Tests for GrafanaSender."""
 
     def test_init(self):
-        """初期化で属性が設定されること"""
+        """Attributes are set during initialization."""
         sender = GrafanaSender("https://example.com/push", "user", "token")
         assert sender.url == "https://example.com/push"
         assert sender.username == "user"
         assert sender.token == "token"
 
     def _mock_cramjam(self):
-        """cramjam モジュールのモックを返す"""
+        """Return a mock of the cramjam module."""
         mock_cramjam = MagicMock()
         mock_cramjam.snappy.compress_raw.return_value = b"compressed"
         return mock_cramjam
@@ -259,7 +259,7 @@ class TestGrafanaSender:
         return mock_opener
 
     def test_send_numeric_values(self):
-        """数値メトリクスが送信されること"""
+        """Numeric metrics are sent."""
         sender = GrafanaSender("https://example.com/push", "user", "token")
         data = [
             {"key": "cloudflare.download", "value": "100.5", "host": "test-host"},
@@ -273,7 +273,7 @@ class TestGrafanaSender:
             sender.send(data)
             mock_opener.open.assert_called_once()
 
-            # HTTP リクエストの検証
+            # Verify the HTTP request
             req = mock_opener.open.call_args[0][0]
             assert req.get_header("Content-type") == "application/x-protobuf"
             assert req.get_header("Content-encoding") == "snappy"
@@ -282,7 +282,7 @@ class TestGrafanaSender:
             assert "Authorization" in req.unredirected_hdrs
 
     def test_send_skips_non_numeric(self):
-        """数値でない値はスキップされること"""
+        """Non-numeric values are skipped."""
         sender = GrafanaSender("https://example.com/push", "user", "token")
         data = [
             {"key": "netflix.server-locations", "value": "Tokyo, Osaka"},
@@ -298,7 +298,7 @@ class TestGrafanaSender:
             mock_opener.open.assert_not_called()
 
     def test_send_skips_invalid_key(self):
-        """ドットなしの key はスキップされること"""
+        """A key without a dot is skipped."""
         sender = GrafanaSender("https://example.com/push", "user", "token")
         data = [{"key": "invalid_key", "value": "100.5"}]
         mock_opener = self._mock_opener()
@@ -310,7 +310,7 @@ class TestGrafanaSender:
             mock_opener.open.assert_not_called()
 
     def test_send_mixed_values(self):
-        """数値と非数値が混在する場合、数値のみ送信されること"""
+        """When numeric and non-numeric values are mixed, only the numeric ones are sent."""
         sender = GrafanaSender("https://example.com/push", "user", "token")
         data = [
             {"key": "cloudflare.download", "value": "100.5", "host": "test"},
@@ -366,20 +366,20 @@ class TestGrafanaSender:
             sender.send(data)
 
 
-# --- cramjam 未インストール時のフォールバックテスト ---
+# --- Fallback tests for when cramjam is not installed ---
 
 
 class TestCramjamFallback:
-    """cramjam 未インストール時の graceful fallback テスト"""
+    """Graceful fallback tests for when cramjam is not installed."""
 
     def test_grafana_init_without_cramjam(self):
-        """cramjam なしでも GrafanaSender の初期化でエラーにならないこと"""
-        # GrafanaSender 自体は cramjam を import しない（send() 時に import）
+        """Initializing GrafanaSender does not error even without cramjam."""
+        # GrafanaSender itself does not import cramjam (it imports it inside send())
         sender = GrafanaSender("https://example.com/push", "user", "token")
         assert sender is not None
 
     def test_runner_grafana_without_cramjam(self):
-        """cramjam なしで [grafana] enable=true の場合、警告が出ること"""
+        """A warning is emitted when [grafana] enable=true but cramjam is missing."""
         config = configparser.ConfigParser()
         config.read_dict(
             {
@@ -412,7 +412,7 @@ class TestCramjamFallback:
             app.config = config
             app.dryrun = True
             app.grafana_sender = None
-            # [grafana] セクションの読み込みをシミュレート
+            # Simulate loading the [grafana] section
             if config.has_section("grafana"):
                 grafana_enable = config.getboolean("grafana", "enable", fallback=False)
                 if grafana_enable:
@@ -423,11 +423,11 @@ class TestCramjamFallback:
             assert app.grafana_sender is None
 
 
-# --- send_results() の統合テスト ---
+# --- Integration tests for send_results() ---
 
 
 def _make_sender(dryrun=True, zabbix_enable=False, grafana_sender=None):
-    """SenderManager インスタンスを直接作成"""
+    """Create a SenderManager instance directly."""
     with patch.object(SenderManager, "__init__", lambda self, *a, **kw: None):
         sender = SenderManager.__new__(SenderManager)
         sender.dry_run = dryrun
@@ -441,10 +441,10 @@ def _make_sender(dryrun=True, zabbix_enable=False, grafana_sender=None):
 
 
 class TestSendResultsZabbixEnable:
-    """[zabbix] enable フラグのテスト"""
+    """Tests for the [zabbix] enable flag."""
 
     def test_zabbix_disabled_no_send(self):
-        """zabbix_enable=False では Sender が呼ばれないこと"""
+        """Sender is not called when zabbix_enable=False."""
         sender = _make_sender(dryrun=False, zabbix_enable=False)
         data = [{"key": "speedtest.dl", "value": "100.5"}]
         with patch("speedtest_z.sender.Sender") as mock_sender:
@@ -452,7 +452,7 @@ class TestSendResultsZabbixEnable:
             mock_sender.assert_not_called()
 
     def test_zabbix_enabled_sends(self):
-        """zabbix_enable=True では Sender.send_bulk() が呼ばれること"""
+        """Sender.send_bulk() is called when zabbix_enable=True."""
         sender = _make_sender(dryrun=False, zabbix_enable=True)
         data = [{"key": "speedtest.dl", "value": "100.5"}]
         with patch("speedtest_z.sender.Sender") as mock_sender_cls:
@@ -464,10 +464,10 @@ class TestSendResultsZabbixEnable:
 
 
 class TestSendResultsGrafana:
-    """send_results() の Grafana 送信テスト"""
+    """Grafana send tests for send_results()."""
 
     def test_grafana_sender_called(self):
-        """grafana_sender が設定されていれば send() が呼ばれること"""
+        """send() is called when grafana_sender is set."""
         mock_grafana = MagicMock()
         sender = _make_sender(dryrun=False, grafana_sender=mock_grafana)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
@@ -476,7 +476,7 @@ class TestSendResultsGrafana:
             mock_grafana.send.assert_called_once_with(data)
 
     def test_grafana_sender_not_called_on_dryrun(self):
-        """dryrun=True では grafana_sender.send() が呼ばれないこと"""
+        """grafana_sender.send() is not called when dryrun=True."""
         mock_grafana = MagicMock()
         sender = _make_sender(dryrun=True, grafana_sender=mock_grafana)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
@@ -484,16 +484,16 @@ class TestSendResultsGrafana:
         mock_grafana.send.assert_not_called()
 
     def test_grafana_error_handled(self):
-        """Grafana 送信エラーでもクラッシュしないこと"""
+        """A Grafana send error does not crash the run."""
         mock_grafana = MagicMock()
         mock_grafana.send.side_effect = Exception("Connection error")
         sender = _make_sender(dryrun=False, grafana_sender=mock_grafana)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
         with patch("speedtest_z.sender.Sender"):
-            sender.send(data)  # 例外が伝播しない
+            sender.send(data)  # the exception does not propagate
 
     def test_both_zabbix_and_grafana(self):
-        """Zabbix と Grafana の両方が呼ばれること"""
+        """Both Zabbix and Grafana are called."""
         mock_grafana = MagicMock()
         sender = _make_sender(dryrun=False, zabbix_enable=True, grafana_sender=mock_grafana)
         data = [{"key": "cloudflare.download", "value": "100.5"}]
@@ -505,42 +505,42 @@ class TestSendResultsGrafana:
             mock_grafana.send.assert_called_once_with(data)
 
 
-# --- config.ini の dry_run / dryrun 互換テスト ---
+# --- Compatibility tests for the dry_run / dryrun config keys ---
 
 
 class TestDryRunCompat:
-    """dry_run / dryrun 両方の config キー互換テスト"""
+    """Compatibility tests for both the dry_run and dryrun config keys."""
 
     def _make_app_with_config(self, config_dict):
-        """config 辞書から SpeedtestZ を作成"""
+        """Create a SpeedtestZ from a config dict."""
         config = configparser.ConfigParser()
         config.read_dict(config_dict)
         with patch.object(SpeedtestZ, "__init__", lambda self, *a, **kw: None):
             app = SpeedtestZ.__new__(SpeedtestZ)
             app.config = config
-            # dry_run / dryrun の互換読み込みロジックを再現
+            # Reproduce the dry_run / dryrun compatibility loading logic
             app.dryrun = config.getboolean("general", "dry_run", fallback=None)
             if app.dryrun is None:
                 app.dryrun = config.getboolean("general", "dryrun", fallback=True)
         return app
 
     def test_dry_run_key(self):
-        """dry_run キーが読み込まれること"""
+        """The dry_run key is read."""
         app = self._make_app_with_config({"general": {"dry_run": "false"}})
         assert app.dryrun is False
 
     def test_dryrun_key_fallback(self):
-        """旧名 dryrun キーがフォールバックで読み込まれること"""
+        """The legacy dryrun key is read as a fallback."""
         app = self._make_app_with_config({"general": {"dryrun": "false"}})
         assert app.dryrun is False
 
     def test_dry_run_takes_priority(self):
-        """dry_run と dryrun 両方ある場合、dry_run が優先されること"""
+        """When both dry_run and dryrun are present, dry_run takes priority."""
         app = self._make_app_with_config({"general": {"dry_run": "false", "dryrun": "true"}})
         assert app.dryrun is False
 
     def test_neither_key_defaults_true(self):
-        """どちらもない場合、デフォルト True になること"""
+        """Defaults to True when neither key is present."""
         app = self._make_app_with_config({"general": {"headless": "true"}})
         assert app.dryrun is True
 

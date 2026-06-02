@@ -7,7 +7,7 @@ case "$1" in
         rm -rf /var/lib/speedtest-z
         rm -rf /etc/speedtest-z
 
-        # speedtest-z ユーザ/グループの削除
+        # Remove the speedtest-z user/group
         if getent passwd speedtest-z >/dev/null 2>&1; then
             deluser --quiet --system speedtest-z || true
         fi
