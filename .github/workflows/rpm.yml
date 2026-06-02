@@ -1,9 +1,8 @@
 name: Build RPM packages
 
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       version:
@@ -29,7 +28,7 @@ jobs:
         run: gem install fpm
 
       - name: Install GitHub CLI
-        if: startsWith(github.ref, 'refs/tags/')
+        if: github.event_name == 'release'
         run: |
           dnf install -y 'dnf-command(config-manager)'
           dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
@@ -72,7 +71,7 @@ jobs:
           mkdir -p "${STAGING}/usr/bin"
           ln -sf /opt/venvs/speedtest-z/bin/speedtest-z "${STAGING}/usr/bin/speedtest-z"
 
-          # 設定ファイル
+          # Config files
           mkdir -p "${STAGING}/etc/speedtest-z"
           cp config.ini-sample "${STAGING}/etc/speedtest-z/config.ini"
           cp logging.ini "${STAGING}/etc/speedtest-z/logging.ini"
@@ -81,7 +80,7 @@ jobs:
           mkdir -p "${STAGING}/etc/default"
           cp deploy/speedtest-z.default "${STAGING}/etc/default/speedtest-z"
 
-          # systemd ユニット
+          # systemd units
           mkdir -p "${STAGING}/usr/lib/systemd/system"
           cp debian/speedtest-z.service "${STAGING}/usr/lib/systemd/system/"
           cp debian/speedtest-z.timer "${STAGING}/usr/lib/systemd/system/"
@@ -127,26 +126,10 @@ jobs:
           echo "=== Scripts ==="
           rpm -qp --scripts speedtest-z-*.rpm
 
-      - name: Wait for GitHub Release to exist
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          TAG="${GITHUB_REF_NAME}"
-          for i in $(seq 1 30); do
-            if gh release view "$TAG" >/dev/null 2>&1; then
-              echo "Release $TAG found"
-              exit 0
-            fi
-            echo "Waiting for release $TAG... ($i/30)"
-            sleep 30
-          done
-          echo "Release $TAG not found after 15 minutes, creating it"
-          # Tolerate a race with the release workflow.
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --generate-notes || true
-
+      # The GitHub Release already exists (this workflow is triggered by
+      # release:published), so just attach the .rpm asset to it.
       - name: Upload RPM to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

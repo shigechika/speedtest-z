@@ -1,12 +1,31 @@
 name: Release to PyPI
 
+# Fires when release-please publishes the Release after its PR is merged.
+# release-please creates the tag/Release via a PAT (RELEASE_PLEASE_TOKEN), so
+# the release:published event propagates and triggers this pipeline; a release
+# created by the default GITHUB_TOKEN cannot trigger other workflows.
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Verify pyproject version matches tag
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG_VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          if [ "$TAG" != "$PKG_VERSION" ]; then
+            echo "::error::Tag v$TAG does not match version $PKG_VERSION in pyproject.toml"
+            exit 1
+          fi
+          echo "Verified: tag v$TAG matches version $PKG_VERSION"
+
   build:
+    needs: verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -70,13 +89,10 @@ jobs:
     needs: publish
     runs-on: ubuntu-latest
     steps:
-      - name: Extract version from tag
-        id: version
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
       - name: Trigger homebrew-tap update
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
           gh api repos/shigechika/homebrew-tap/dispatches \
             -f event_type=update_speedtest_z \
-            -f 'client_payload[version]=${{ steps.version.outputs.tag }}'
-        env:
-          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+            -f "client_payload[version]=${GITHUB_REF_NAME}"
