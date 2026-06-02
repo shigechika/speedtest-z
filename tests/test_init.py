@@ -1,5 +1,6 @@
 """__init__.py のテスト"""
 
+import re
 from unittest.mock import patch
 
 
@@ -19,17 +20,21 @@ class TestVersion:
         assert len(__version__) > 0
 
     def test_version_fallback(self):
-        """PackageNotFoundError 時のフォールバック"""
+        """On PackageNotFoundError, __version__ falls back to a version string.
+
+        release-please keeps the fallback literal in __init__.py in sync with the
+        released version, so assert the semver shape rather than a fixed value.
+        """
         from importlib.metadata import PackageNotFoundError
 
         with patch("importlib.metadata.version", side_effect=PackageNotFoundError()):
-            # モジュールを再ロード
+            # Reload the module so the fallback branch runs.
             import importlib
 
             import speedtest_z
 
             importlib.reload(speedtest_z)
-            assert speedtest_z.__version__ == "0.0.0"
+            assert re.match(r"^\d+\.\d+\.\d+", speedtest_z.__version__)
 
-            # 元に戻す
+            # Restore the real version.
             importlib.reload(speedtest_z)
