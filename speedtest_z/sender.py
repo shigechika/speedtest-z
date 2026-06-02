@@ -10,6 +10,17 @@ from zappix.sender import Sender, SenderData
 logger = logging.getLogger("speedtest-z")
 
 
+def _is_plaintext_remote(url: str) -> bool:
+    """Return True if *url* sends over plaintext http to a non-local host.
+
+    Local endpoints (a co-located OTLP collector or Prometheus) over http are a
+    common, low-risk setup, so they are not flagged.
+    """
+    if url.startswith("https://"):
+        return False
+    return not any(host in url for host in ("localhost", "127.0.0.1", "[::1]"))
+
+
 class SenderManager:
     """Manages all metric backends (Zabbix, Grafana, OTel)."""
 
@@ -51,7 +62,7 @@ class SenderManager:
                     url = config.get("grafana", "remote_write_url")
                     username = config.get("grafana", "username")
                     token = config.get("grafana", "token")
-                    if not url.startswith("https://"):
+                    if _is_plaintext_remote(url):
                         logger.warning(
                             "[grafana] remote_write_url is not https; "
                             "credentials would be sent over plaintext"
@@ -71,7 +82,7 @@ class SenderManager:
                     from speedtest_z.otel import OtelSender
 
                     endpoint = config.get("otel", "endpoint")
-                    if not endpoint.startswith("https://"):
+                    if _is_plaintext_remote(endpoint):
                         logger.warning(
                             "[otel] endpoint is not https; "
                             "headers (e.g. auth) would be sent over plaintext"
