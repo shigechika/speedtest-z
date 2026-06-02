@@ -1,4 +1,4 @@
-"""speedtest-z テスト用共通フィクスチャ"""
+"""Shared fixtures for speedtest-z tests."""
 
 import argparse
 import configparser
@@ -12,7 +12,7 @@ from speedtest_z.sender import SenderManager
 
 @pytest.fixture
 def mock_args():
-    """CLI 引数のモック"""
+    """Mock of the CLI arguments."""
     return argparse.Namespace(
         config=None,
         dry_run=False,
@@ -27,7 +27,7 @@ def mock_args():
 
 @pytest.fixture
 def mock_config():
-    """ConfigParser のモック（config.ini-sample 相当）"""
+    """Mock ConfigParser (equivalent to config.ini-sample)."""
     config = configparser.ConfigParser()
     config.read_dict(
         {
@@ -62,7 +62,7 @@ def mock_config():
 
 @pytest.fixture
 def sample_config_ini(tmp_path):
-    """tmp_path に config.ini を作成して返す"""
+    """Create a config.ini under tmp_path and return it."""
     ini = tmp_path / "config.ini"
     ini.write_text(
         "[general]\n"
@@ -84,7 +84,7 @@ def sample_config_ini(tmp_path):
 
 @pytest.fixture
 def mock_driver():
-    """Selenium WebDriver のモック"""
+    """Mock of the Selenium WebDriver."""
     driver = MagicMock()
     driver.page_source = "<html></html>"
     return driver
@@ -92,7 +92,7 @@ def mock_driver():
 
 @pytest.fixture
 def mock_app(mock_config, mock_driver):
-    """SpeedtestZ インスタンスのモック（WebDriver 迂回）"""
+    """Mock SpeedtestZ instance (WebDriver bypassed)."""
     with patch.object(SpeedtestZ, "__init__", lambda self, *a, **kw: None):
         app = SpeedtestZ.__new__(SpeedtestZ)
         app.config = mock_config

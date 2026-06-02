@@ -109,7 +109,7 @@ def run_boxtest(app: SpeedtestZ) -> None:
             "//*[local-name()='tspan' and contains(., 'Avg:')]"
         )
 
-        # 数値項目
+        # Numeric items
         numeric_items = {
             "DownloadSpeed": f"{base_xp}/td[2]",
             "DownloadDuration": f"{base_xp}/td[3]",
@@ -119,7 +119,7 @@ def run_boxtest(app: SpeedtestZ) -> None:
             "UploadRTT": f"{base_xp}/td[7]",
             "latency": latency_xp,
         }
-        # 文字列項目（split しない）
+        # String items (not split)
         string_items = {
             "POP": f"{base_xp}/td[1]/b",
         }

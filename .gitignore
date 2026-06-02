@@ -5,6 +5,11 @@ __pycache__/
 dist/
 build/
 
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+
 # venv
 .venv/
 

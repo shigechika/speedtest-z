@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from speedtest_z.runner import SpeedtestZ
 
-# 利用可能なテストサイト一覧
+# List of available test sites
 AVAILABLE_SITES = [
     "cloudflare",
     "netflix",

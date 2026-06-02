@@ -3,7 +3,7 @@ set -e
 
 case "$1" in
     configure)
-        # speedtest-z システムユーザ作成
+        # Create the speedtest-z system user
         if ! getent passwd speedtest-z >/dev/null 2>&1; then
             adduser --system --group --home /var/lib/speedtest-z \
                 --no-create-home --quiet speedtest-z
@@ -14,13 +14,13 @@ case "$1" in
         install -d -o speedtest-z -g speedtest-z -m 0755 /var/lib/speedtest-z
         install -d -o speedtest-z -g speedtest-z -m 0755 /var/lib/speedtest-z/snapshots
 
-        # config.ini の権限設定（トークンを含む可能性があるため）
+        # Set config.ini permissions (it may contain tokens)
         if [ -f /etc/speedtest-z/config.ini ]; then
             chown root:speedtest-z /etc/speedtest-z/config.ini
             chmod 0640 /etc/speedtest-z/config.ini
         fi
 
-        # /etc/default/speedtest-z のリネーム（dh_install で配置した名前を修正）
+        # Rename /etc/default/speedtest-z (fix the name placed by dh_install)
         if [ -f /etc/default/speedtest-z.default ] && [ ! -f /etc/default/speedtest-z ]; then
             mv /etc/default/speedtest-z.default /etc/default/speedtest-z
         elif [ -f /etc/default/speedtest-z.default ]; then

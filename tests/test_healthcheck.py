@@ -1,4 +1,4 @@
-"""ヘルスチェック (--check) のテスト"""
+"""Tests for the health check (--check)."""
 
 import urllib.error
 from unittest.mock import MagicMock, patch
@@ -7,10 +7,10 @@ from speedtest_z.healthcheck import SITE_URLS, _check_url, check_sites
 
 
 class TestCheckUrl:
-    """_check_url() のテスト"""
+    """Tests for _check_url()."""
 
     def test_success_head(self):
-        """HEAD 成功時は (200, "OK") を返す"""
+        """Return (200, "OK") when HEAD succeeds."""
         mock_resp = MagicMock()
         mock_resp.status = 200
         mock_resp.reason = "OK"
@@ -23,7 +23,7 @@ class TestCheckUrl:
         assert reason == "OK"
 
     def test_fallback_to_get_on_405(self):
-        """HEAD で 405 の場合は GET にフォールバック"""
+        """Fall back to GET when HEAD returns 405."""
         mock_resp = MagicMock()
         mock_resp.status = 200
         mock_resp.reason = "OK"
@@ -57,7 +57,7 @@ class TestCheckUrl:
         assert status == 200
 
     def test_http_error(self):
-        """HTTP エラー（405以外）は即座にエラーコードを返す"""
+        """HTTP errors (other than 405) immediately return the error code."""
         with patch(
             "speedtest_z.healthcheck.urllib.request.urlopen",
             side_effect=urllib.error.HTTPError("url", 503, "Service Unavailable", {}, None),
@@ -66,7 +66,7 @@ class TestCheckUrl:
         assert status == 503
 
     def test_network_error(self):
-        """ネットワークエラーは (0, エラー文字列) を返す"""
+        """Network errors return (0, error string)."""
         with patch(
             "speedtest_z.healthcheck.urllib.request.urlopen",
             side_effect=Exception("Connection refused"),
@@ -77,10 +77,10 @@ class TestCheckUrl:
 
 
 class TestCheckSites:
-    """check_sites() のテスト"""
+    """Tests for check_sites()."""
 
     def test_all_ok_returns_0(self, capsys):
-        """全サイト OK の場合は 0 を返す"""
+        """Return 0 when all sites are OK."""
         mock_resp = MagicMock()
         mock_resp.status = 200
         mock_resp.reason = "OK"
@@ -92,12 +92,12 @@ class TestCheckSites:
         assert result == 0
         captured = capsys.readouterr()
         assert "Site Health Check:" in captured.out
-        # 全サイトが出力に含まれる
+        # All sites are included in the output
         for site in SITE_URLS:
             assert site in captured.out
 
     def test_failure_returns_1(self, capsys):
-        """1つでも失敗があれば 1 を返す"""
+        """Return 1 if even one site fails."""
         with patch(
             "speedtest_z.healthcheck.urllib.request.urlopen",
             side_effect=Exception("timeout"),
@@ -118,7 +118,7 @@ class TestCheckSites:
         assert "Connection refused" in captured.out
 
     def test_specific_sites(self, capsys):
-        """特定サイトのみチェック"""
+        """Check only specific sites."""
         mock_resp = MagicMock()
         mock_resp.status = 200
         mock_resp.reason = "OK"
@@ -131,28 +131,28 @@ class TestCheckSites:
         captured = capsys.readouterr()
         assert "cloudflare" in captured.out
         assert "netflix" in captured.out
-        # 指定していないサイトは出力されない
+        # Unspecified sites are not in the output
         assert "ookla" not in captured.out
 
     def test_unknown_site(self, capsys):
-        """存在しないサイト名は FAIL"""
+        """An unknown site name results in FAIL."""
         result = check_sites(["nonexistent"])
         assert result == 1
         captured = capsys.readouterr()
         assert "Unknown site" in captured.out
 
     def test_site_urls_has_all_sites(self):
-        """SITE_URLS が AVAILABLE_SITES と一致"""
+        """SITE_URLS matches AVAILABLE_SITES."""
         from speedtest_z.sites import AVAILABLE_SITES
 
         assert set(SITE_URLS.keys()) == set(AVAILABLE_SITES)
 
 
 class TestCliCheckFlag:
-    """CLI --check フラグのテスト"""
+    """Tests for the CLI --check flag."""
 
     def test_check_flag_parsed(self):
-        """--check フラグがパースされること"""
+        """The --check flag is parsed."""
         from speedtest_z.cli import _build_parser
 
         parser = _build_parser()
@@ -160,7 +160,7 @@ class TestCliCheckFlag:
         assert args.check is True
 
     def test_check_default_false(self):
-        """デフォルトで check=False"""
+        """check defaults to False."""
         from speedtest_z.cli import _build_parser
 
         parser = _build_parser()
@@ -168,7 +168,7 @@ class TestCliCheckFlag:
         assert args.check is False
 
     def test_check_with_sites(self):
-        """--check cloudflare netflix でサイト指定可能"""
+        """Sites can be specified with --check cloudflare netflix."""
         from speedtest_z.cli import _build_parser
 
         parser = _build_parser()

@@ -78,7 +78,7 @@ def run_inonius(app: SpeedtestZ) -> None:
 
         start_xpath = "/html/body/div/astro-island/dialog/div/div/form/button[2]"
         if app.auto_consent:
-            # --yes: 同意ダイアログを自動クリック（同意兼スタート）
+            # --yes: auto-click the consent dialog (accept and start in one)
             try:
                 start_btn = WebDriverWait(app.driver, 5).until(
                     EC.element_to_be_clickable((By.XPATH, start_xpath))
@@ -86,21 +86,21 @@ def run_inonius(app: SpeedtestZ) -> None:
                 start_btn.click()
                 logger.info("inonius: Consent accepted and started (auto)")
             except TimeoutException:
-                # Cookie で dialog が出ない → フォールバック
+                # Dialog suppressed by cookie consent: fall back
                 if not _inonius_fallback_start(app):
                     return
         else:
-            # --yes なし: ユーザ操作を待つか、Cookie で dialog が出ない場合のフォールバック
+            # No --yes: wait for user action, or fall back if the dialog is suppressed by cookie
             try:
                 dialog = WebDriverWait(app.driver, 5).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "dialog"))
                 )
-                # dialog が表示されたらユーザがクリックして閉じるのを待つ
+                # Once the dialog is shown, wait for the user to click and close it
                 logger.info("inonius: Waiting for user to accept consent dialog...")
                 WebDriverWait(app.driver, 120).until(lambda d: not dialog.is_displayed())
                 logger.info("inonius: Dialog closed by user")
             except TimeoutException:
-                # dialog が出ない（Cookie で記憶済み）→ フォールバック
+                # Dialog not shown (consent remembered by cookie): fall back
                 if not _inonius_fallback_start(app):
                     return
 

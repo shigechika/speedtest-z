@@ -1,4 +1,4 @@
-"""cloudflare サイトランナーのテスト"""
+"""Tests for the cloudflare site runner."""
 
 from unittest.mock import MagicMock, patch
 
@@ -8,7 +8,7 @@ from speedtest_z.sites.cloudflare import _extract_by_label, run_cloudflare
 
 
 def _make_driver_with_label(label_text, parent_text):
-    """ラベル付きの DOM 要素をモックした WebDriver を返す"""
+    """Return a WebDriver mock with a labeled DOM element."""
     driver = MagicMock()
     label_el = MagicMock()
     parent_el = MagicMock()
@@ -19,70 +19,70 @@ def _make_driver_with_label(label_text, parent_text):
 
 
 class TestExtractByLabel:
-    """_extract_by_label() の抽出ロジックテスト"""
+    """Tests for the extraction logic of _extract_by_label()."""
 
     def test_extract_download_mbps(self):
-        """Download 150.3 Mbps を抽出"""
+        """Extract Download 150.3 Mbps."""
         driver = _make_driver_with_label("Download", "Download 150.3 Mbps")
         result = _extract_by_label(driver, "Download", "Mbps")
         assert result == "150.3"
 
     def test_extract_upload_mbps(self):
-        """Upload 45.7 Mbps を抽出"""
+        """Extract Upload 45.7 Mbps."""
         driver = _make_driver_with_label("Upload", "Upload 45.7 Mbps")
         result = _extract_by_label(driver, "Upload", "Mbps")
         assert result == "45.7"
 
     def test_extract_latency_ms(self):
-        """Latency 12.5 ms を抽出"""
+        """Extract Latency 12.5 ms."""
         driver = _make_driver_with_label("Latency", "Latency 12.5 ms")
         result = _extract_by_label(driver, "Latency", "ms")
         assert result == "12.5"
 
     def test_extract_jitter_microseconds(self):
-        """Jitter がマイクロ秒 (μs) の場合、ミリ秒に変換"""
+        """Convert Jitter in microseconds (us) to milliseconds."""
         driver = _make_driver_with_label("Jitter", "Jitter 500 \u03bcs")
         result = _extract_by_label(driver, "Jitter", r"ms|\u03bcs|us")
         assert result == "0.500"
 
     def test_extract_jitter_us_ascii(self):
-        """Jitter が ASCII us の場合もミリ秒に変換"""
+        """Convert Jitter to milliseconds when the unit is ASCII us."""
         driver = _make_driver_with_label("Jitter", "Jitter 200 us")
         result = _extract_by_label(driver, "Jitter", r"ms|\u03bcs|us")
         assert result == "0.200"
 
     def test_extract_jitter_ms(self):
-        """Jitter が ms の場合はそのまま"""
+        """Keep Jitter as-is when the unit is ms."""
         driver = _make_driver_with_label("Jitter", "Jitter 3.2 ms")
         result = _extract_by_label(driver, "Jitter", r"ms|\u03bcs|us")
         assert result == "3.2"
 
     def test_extract_integer_value(self):
-        """整数値（小数点なし）も抽出可能"""
+        """Integer values (no decimal point) can also be extracted."""
         driver = _make_driver_with_label("Download", "Download 200 Mbps")
         result = _extract_by_label(driver, "Download", "Mbps")
         assert result == "200.0"
 
     def test_extract_no_element_returns_empty(self):
-        """要素が見つからない場合は空文字を返す"""
+        """Return an empty string when the element is not found."""
         driver = MagicMock()
         driver.find_element.side_effect = NoSuchElementException()
         result = _extract_by_label(driver, "Download", "Mbps")
         assert result == ""
 
     def test_extract_no_match_returns_empty(self):
-        """パターンに合致しない場合は空文字を返す"""
+        """Return an empty string when the pattern does not match."""
         driver = _make_driver_with_label("Download", "Download N/A")
         result = _extract_by_label(driver, "Download", "Mbps")
         assert result == ""
 
     def test_extract_parent_no_digits_goes_grandparent(self):
-        """parent に数字がない場合は grandparent を探索"""
+        """Search the grandparent when the parent has no digits."""
         driver = MagicMock()
         label_el = MagicMock()
         parent_el = MagicMock()
         grandparent_el = MagicMock()
-        parent_el.text = "Download"  # 数字なし
+        parent_el.text = "Download"  # no digits
         grandparent_el.text = "Download 99.9 Mbps"
         parent_el.find_element.return_value = grandparent_el
         label_el.find_element.return_value = parent_el
@@ -92,17 +92,17 @@ class TestExtractByLabel:
 
 
 class TestRunCloudflare:
-    """run_cloudflare() の統合テスト"""
+    """Integration tests for run_cloudflare()."""
 
     def test_skip_when_should_run_false(self, mock_app):
-        """_should_run が False の場合スキップ"""
+        """Skip when _should_run returns False."""
         mock_app._should_run = MagicMock(return_value=False)
         mock_app.send_results = MagicMock()
         run_cloudflare(mock_app)
         mock_app.send_results.assert_not_called()
 
     def test_skip_when_load_fails(self, mock_app):
-        """ページ読み込み失敗時にスキップ"""
+        """Skip when the page fails to load."""
         mock_app._should_run = MagicMock(return_value=True)
         mock_app._load_with_retry = MagicMock(return_value=False)
         mock_app.send_results = MagicMock()
@@ -110,7 +110,7 @@ class TestRunCloudflare:
         mock_app.send_results.assert_not_called()
 
     def test_sends_data_on_success(self, mock_app):
-        """正常にデータ抽出・送信される"""
+        """Data is extracted and sent successfully."""
         mock_app._should_run = MagicMock(return_value=True)
         mock_app._load_with_retry = MagicMock(return_value=True)
         mock_app.send_results = MagicMock()

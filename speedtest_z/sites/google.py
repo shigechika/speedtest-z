@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("speedtest-z")
 
-# 注意: speed.googlefiber.net は HTTPS 非対応（HTTP のみ）
+# Note: speed.googlefiber.net does not support HTTPS (HTTP only)
 URL = "http://speed.googlefiber.net/"
 
 
@@ -27,7 +27,7 @@ def run_google(app: SpeedtestZ) -> None:
 
     try:
         logger.info("google: OPEN")
-        # 注意: speed.googlefiber.net は HTTPS 非対応（HTTP のみ）
+        # Note: speed.googlefiber.net does not support HTTPS (HTTP only)
         if not app._load_with_retry(URL):
             return
 

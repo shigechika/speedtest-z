@@ -1,6 +1,6 @@
 #!/bin/sh
-# RPM %postun — パッケージ削除後に実行
-# $1: 0=最終削除, 1=アップグレード
+# RPM %postun — run after package removal
+# $1: 0=final removal, 1=upgrade
 
 if [ "$1" -eq 0 ]; then
     rm -rf /opt/venvs/speedtest-z

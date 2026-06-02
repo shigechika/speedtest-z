@@ -1,4 +1,4 @@
-"""Zabbix 送信ロジックのテスト"""
+"""Tests for the Zabbix send logic."""
 
 from unittest.mock import MagicMock, patch
 
@@ -7,7 +7,7 @@ from speedtest_z.sender import SenderManager
 
 
 def _make_app(dryrun=True, zabbix_enable=True):
-    """WebDriver を迂回して SpeedtestZ インスタンスを作成"""
+    """Create a SpeedtestZ instance, bypassing the WebDriver."""
     with patch.object(SpeedtestZ, "__init__", lambda self, *a, **kw: None):
         app = SpeedtestZ.__new__(SpeedtestZ)
         sender = MagicMock(spec=SenderManager)
@@ -30,7 +30,7 @@ def _make_app(dryrun=True, zabbix_enable=True):
 
 
 def _make_sender(dryrun=True, zabbix_enable=True):
-    """SenderManager インスタンスを直接作成"""
+    """Create a SenderManager instance directly."""
     with patch.object(SenderManager, "__init__", lambda self, *a, **kw: None):
         sender = SenderManager.__new__(SenderManager)
         sender.dry_run = dryrun
@@ -44,17 +44,17 @@ def _make_sender(dryrun=True, zabbix_enable=True):
 
 
 class TestSendResults:
-    """send_results() のテスト（SenderManager.send() を直接テスト）"""
+    """Tests for send_results() (directly testing SenderManager.send())."""
 
     def test_empty_list(self):
-        """空リストでは何もしない"""
+        """Does nothing for an empty list."""
         sender = _make_sender()
         with patch("speedtest_z.sender.Sender") as mock_sender:
             sender.send([])
             mock_sender.assert_not_called()
 
     def test_dryrun_no_send(self):
-        """dryrun=True では Sender.send_bulk() が呼ばれない"""
+        """Sender.send_bulk() is not called when dryrun=True."""
         sender = _make_sender(dryrun=True)
         data = [{"key": "speedtest.dl", "value": "100.5"}]
         with patch("speedtest_z.sender.Sender") as mock_sender:
@@ -62,7 +62,7 @@ class TestSendResults:
             mock_sender.assert_not_called()
 
     def test_send_called(self):
-        """dryrun=False では Sender が生成され send_bulk() が呼ばれる"""
+        """When dryrun=False, a Sender is created and send_bulk() is called."""
         sender = _make_sender(dryrun=False, zabbix_enable=True)
         data = [{"key": "speedtest.dl", "value": "100.5"}]
         with patch("speedtest_z.sender.Sender") as mock_sender_cls:
@@ -74,7 +74,7 @@ class TestSendResults:
             mock_instance.send_bulk.assert_called_once()
 
     def test_sender_data_construction(self):
-        """SenderData が正しく構築される"""
+        """SenderData is constructed correctly."""
         sender = _make_sender(dryrun=False, zabbix_enable=True)
         data = [
             {"key": "speedtest.dl", "value": "100.5"},
@@ -88,13 +88,13 @@ class TestSendResults:
             mock_sender_cls.return_value = mock_instance
             sender.send(data)
 
-            # デフォルトホスト名で SenderData が2回呼ばれる
+            # SenderData is called twice with the default host name
             assert mock_sd.call_count == 2
             mock_sd.assert_any_call("speedtest-agent", "speedtest.dl", "100.5")
             mock_sd.assert_any_call("speedtest-agent", "speedtest.ul", "50.2")
 
     def test_custom_host(self):
-        """データに host を含む場合はそちらを使う"""
+        """When the data includes a host, that one is used."""
         sender = _make_sender(dryrun=False, zabbix_enable=True)
         data = [{"host": "custom-host", "key": "speedtest.dl", "value": "99"}]
         with (
@@ -107,7 +107,7 @@ class TestSendResults:
             mock_sd.assert_called_once_with("custom-host", "speedtest.dl", "99")
 
     def test_send_error_handled(self):
-        """送信エラーでもクラッシュしない"""
+        """A send error does not crash the run."""
         sender = _make_sender(dryrun=False, zabbix_enable=True)
         data = [{"key": "speedtest.dl", "value": "100"}]
         with patch("speedtest_z.sender.Sender") as mock_sender_cls:
@@ -115,11 +115,11 @@ class TestSendResults:
             mock_instance.send_bulk.side_effect = Exception("Connection refused")
             mock_sender_cls.return_value = mock_instance
 
-            # 例外が伝播しないことを確認
+            # Verify the exception does not propagate
             sender.send(data)
 
     def test_delegation_from_app(self):
-        """SpeedtestZ.send_results() が SenderManager.send() に委譲すること"""
+        """SpeedtestZ.send_results() delegates to SenderManager.send()."""
         app = _make_app(dryrun=False, zabbix_enable=True)
         data = [{"key": "speedtest.dl", "value": "100.5"}]
         app.send_results(data)

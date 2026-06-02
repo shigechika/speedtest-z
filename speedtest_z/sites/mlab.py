@@ -36,7 +36,7 @@ def run_mlab(app: SpeedtestZ) -> None:
             except TimeoutException:
                 logger.debug("mlab: Consent checkbox not found (auto)")
         else:
-            # ユーザがチェックボックスをクリックするまで待つ
+            # Wait for the user to click the checkbox
             try:
                 chk_box = WebDriverWait(app.driver, 5).until(
                     EC.presence_of_element_located((By.ID, "demo-human"))
