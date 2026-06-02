@@ -322,7 +322,7 @@ class TestRunBoxtest:
             mock_app.wait.until.return_value = toggle_btn
             run_boxtest(mock_app)
 
-        mock_app.take_snapshot.assert_any_call("boxtest_final")
+        mock_app.take_snapshot.assert_any_call("boxtest")
 
     def test_size_toggle_clicks(self, mock_app):
         """Toggle button is clicked until target size is reached."""

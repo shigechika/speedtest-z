@@ -211,6 +211,9 @@ def main() -> None:
     if output_fmt in ("json", "csv"):
         from speedtest_z.output import OutputCollector
 
+        # Release the SenderManager's backends (e.g. the OTel exporter thread)
+        # before replacing it, so they do not leak for the rest of the run.
+        app.sender.close()
         app.sender = OutputCollector(output_fmt)
 
     try:

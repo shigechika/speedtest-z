@@ -93,8 +93,8 @@ class SpeedtestZ:
         # [snapshot]
         self.snapshot_enable = self.config.getboolean("snapshot", "enable", fallback=False)
         self.snapshot_dir = self.config.get("snapshot", "save_dir", fallback="./snapshots")
-        if self.snapshot_enable and not os.path.exists(self.snapshot_dir):
-            os.makedirs(self.snapshot_dir)
+        if self.snapshot_enable:
+            os.makedirs(self.snapshot_dir, exist_ok=True)
 
         # WebDriver の初期化
         self._init_driver()

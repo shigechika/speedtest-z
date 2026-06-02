@@ -138,7 +138,9 @@ def run_inonius(app: SpeedtestZ) -> None:
             try:
                 val = app.driver.find_element(By.XPATH, xpath).text
                 if key_suffix.endswith("_MSS"):
-                    val = val.split()[-1]
+                    # Take the last token safely to avoid IndexError on empty text.
+                    tokens = val.split()
+                    val = tokens[-1] if tokens else ""
                 if val:
                     full_key = f"inonius.{key_suffix}"
                     data.append(

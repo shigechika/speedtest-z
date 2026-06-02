@@ -39,6 +39,23 @@ class TestCheckUrl:
             status, reason = _check_url("https://example.com/")
         assert status == 200
 
+    def test_fallback_to_get_on_501(self):
+        """HEAD returning 501 (Not Implemented) also falls back to GET."""
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.reason = "OK"
+        mock_resp.__enter__ = lambda self: self
+        mock_resp.__exit__ = MagicMock(return_value=False)
+
+        def side_effect(req, timeout=10):
+            if req.get_method() == "HEAD":
+                raise urllib.error.HTTPError(req.full_url, 501, "Not Implemented", {}, None)
+            return mock_resp
+
+        with patch("speedtest_z.healthcheck.urllib.request.urlopen", side_effect=side_effect):
+            status, reason = _check_url("https://example.com/")
+        assert status == 200
+
     def test_http_error(self):
         """HTTP エラー（405以外）は即座にエラーコードを返す"""
         with patch(
@@ -89,6 +106,16 @@ class TestCheckSites:
         assert result == 1
         captured = capsys.readouterr()
         assert "FAIL" in captured.out
+
+    def test_failure_shows_reason(self, capsys):
+        """The failure reason is included in the output."""
+        with patch(
+            "speedtest_z.healthcheck.urllib.request.urlopen",
+            side_effect=Exception("Connection refused"),
+        ):
+            check_sites(["cloudflare"])
+        captured = capsys.readouterr()
+        assert "Connection refused" in captured.out
 
     def test_specific_sites(self, capsys):
         """特定サイトのみチェック"""

@@ -691,3 +691,26 @@ class TestSendEmptyFilter:
             sender.send(data)
         mock_instance.send_bulk.assert_not_called()
         mock_grafana.send.assert_not_called()
+
+
+# --- Plaintext endpoint detection ---
+
+
+class TestIsPlaintextRemote:
+    """_is_plaintext_remote() flags only non-local plaintext endpoints."""
+
+    def test_https_is_secure(self):
+        from speedtest_z.sender import _is_plaintext_remote
+
+        assert _is_plaintext_remote("https://example.com/push") is False
+
+    def test_http_remote_is_plaintext(self):
+        from speedtest_z.sender import _is_plaintext_remote
+
+        assert _is_plaintext_remote("http://example.com/push") is True
+
+    def test_http_localhost_not_flagged(self):
+        from speedtest_z.sender import _is_plaintext_remote
+
+        assert _is_plaintext_remote("http://localhost:4318/v1/metrics") is False
+        assert _is_plaintext_remote("http://127.0.0.1:9090/api/v1/write") is False

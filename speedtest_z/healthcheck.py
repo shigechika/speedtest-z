@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import urllib.error
 import urllib.request
 
 from speedtest_z.sites.boxtest import URL as BOXTEST_URL
@@ -55,7 +56,9 @@ def check_sites(sites: list[str] | None = None) -> int:
         label = "OK" if ok else "FAIL"
         if not ok:
             has_failure = True
-        print(f"  {site:<12}  {status}  {label}")
+            print(f"  {site:<12}  {status}  {label}  {reason}")
+        else:
+            print(f"  {site:<12}  {status}  {label}")
 
     return 1 if has_failure else 0
 
@@ -74,8 +77,10 @@ def _check_url(url: str, timeout: int = 10) -> tuple[int, str]:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 return (resp.status, resp.reason)
         except urllib.error.HTTPError as e:
-            if e.code == 405 and method == "HEAD":
-                continue  # HEAD 不可 → GET フォールバック
+            # Some servers reject HEAD with 405 (Method Not Allowed) or
+            # 501 (Not Implemented); fall back to GET in both cases.
+            if e.code in (405, 501) and method == "HEAD":
+                continue
             return (e.code, str(e.reason))
         except Exception as e:
             return (0, str(e))

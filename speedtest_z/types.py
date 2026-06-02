@@ -2,15 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Protocol, TypedDict
-
-
-class ZabbixItem(TypedDict):
-    """A single Zabbix trapper item."""
-
-    host: str
-    key: str
-    value: str
+from typing import Protocol
 
 
 class MetricSender(Protocol):

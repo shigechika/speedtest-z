@@ -145,7 +145,9 @@ def run_boxtest(app: SpeedtestZ) -> None:
         for key_suffix, xpath in numeric_items.items():
             try:
                 val = app.driver.find_element(By.XPATH, xpath).text
-                clean_val = val.replace("Avg:", "").replace("ms", "").strip().split()[0]
+                # Take the first token safely to avoid IndexError on empty text.
+                tokens = val.replace("Avg:", "").replace("ms", "").strip().split()
+                clean_val = tokens[0] if tokens else ""
                 data.append(
                     {
                         "host": app.zabbix_host,
@@ -160,9 +162,10 @@ def run_boxtest(app: SpeedtestZ) -> None:
 
         logger.debug(f"boxtest Result: {data}")
         app.send_results(data)
-        app.take_snapshot("boxtest")
 
     except Exception as e:
         logger.error(f"boxtest Error: {e}")
     finally:
-        app.take_snapshot("boxtest_final")
+        # Single snapshot in finally (consistent with the other site runners),
+        # so a snapshot is captured on early return too.
+        app.take_snapshot("boxtest")

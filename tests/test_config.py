@@ -51,6 +51,18 @@ class TestFindConfig:
         monkeypatch.chdir(tmp_path)
         assert _find_config("config.ini") == str(conf_dir / "config.ini")
 
+    def test_xdg_empty_string_falls_back_to_home(self, tmp_path, monkeypatch):
+        """XDG_CONFIG_HOME='' (set but empty) falls back to ~/.config, not a relative path."""
+        fake_home = tmp_path / "home"
+        conf_dir = fake_home / ".config" / "speedtest-z"
+        conf_dir.mkdir(parents=True)
+        (conf_dir / "config.ini").write_text("[general]\n")
+
+        monkeypatch.setenv("XDG_CONFIG_HOME", "")  # set but empty
+        monkeypatch.setenv("HOME", str(fake_home))
+        monkeypatch.chdir(tmp_path)
+        assert _find_config("config.ini") == str(conf_dir / "config.ini")
+
     def test_etc_fallback(self, tmp_path, monkeypatch):
         """/etc/speedtest-z/ にフォールバック"""
         monkeypatch.chdir(tmp_path)
