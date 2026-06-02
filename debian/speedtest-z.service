@@ -13,7 +13,7 @@ Group=speedtest-z
 NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=yes
-ReadWritePaths=/var/log/speedtest-z /var/lib/speedtest-z /tmp
+ReadWritePaths=/var/lib/speedtest-z /tmp
 PrivateTmp=yes
 
 [Install]

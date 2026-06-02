@@ -3,11 +3,8 @@ set -e
 
 case "$1" in
     purge)
-        # ログとデータディレクトリの削除
-        rm -rf /var/log/speedtest-z
+        # Remove data and config directories (logs live under /var/lib)
         rm -rf /var/lib/speedtest-z
-
-        # 設定ディレクトリの削除
         rm -rf /etc/speedtest-z
 
         # speedtest-z ユーザ/グループの削除
