@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.8.5](https://github.com/shigechika/speedtest-z/compare/v0.8.4...v0.8.5) (2026-06-02)
+
+
+### Bug Fixes
+
+* honor stream=stderr even when logging.ini is loaded ([#18](https://github.com/shigechika/speedtest-z/issues/18)) ([00e6b03](https://github.com/shigechika/speedtest-z/commit/00e6b0379f9aff826bee9533b61811ac5d7e02dd))
+
 ## [0.8.4](https://github.com/shigechika/speedtest-z/compare/v0.8.3...v0.8.4) (2026-06-02)
 
 
