@@ -67,9 +67,9 @@ python -m build
 
 - `.github/workflows/ci.yml` — push/PR 時に構文チェック + ビルドテスト（Python 3.10〜3.14）
 - `.github/workflows/release-please.yml` — main への push 時に release-please が Release PR を維持。マージで `vX.Y.Z` タグと GitHub Release を自動作成
-- `.github/workflows/release.yml` — `v*` タグ push 時に PyPI へ自動公開（Trusted Publishers）
-- `.github/workflows/deb.yml` — `v*` タグ push 時に jammy/noble 向け .deb ビルド → GitHub Release にアップロード
-- `.github/workflows/rpm.yml` — `v*` タグ push 時に Rocky 9 向け .rpm ビルド（fpm）→ GitHub Release にアップロード
+- `.github/workflows/release.yml` — Release 公開時（`release: published`）に PyPI へ自動公開（Trusted Publishers）。`verify` ジョブで pyproject の version とタグの一致を確認
+- `.github/workflows/deb.yml` — Release 公開時に jammy/noble 向け .deb ビルド → 当該 Release にアップロード（手動は workflow_dispatch）
+- `.github/workflows/rpm.yml` — Release 公開時に Rocky 9 向け .rpm ビルド（fpm）→ 当該 Release にアップロード（手動は workflow_dispatch）
 
 ## リリース手順（release-please）
 
@@ -78,9 +78,9 @@ python -m build
 1. **Conventional Commits** で main にマージする（`feat:` → minor、`fix:` → patch、`feat!:`/`BREAKING CHANGE` → 1.0 未満は minor）
 2. release-please が **Release PR** を自動で開く/更新する（次バージョン + CHANGELOG エントリを含む）
 3. README 等の更新が必要なら通常の PR で先に入れておく
-4. Release PR をマージすると `vX.Y.Z` タグと GitHub Release が作成され、`release.yml`（PyPI）・`deb.yml`・`rpm.yml` が発火する
+4. Release PR をマージすると `vX.Y.Z` タグと GitHub Release が公開され、その `release: published` イベントで `release.yml`（PyPI）・`deb.yml`・`rpm.yml` が発火する
 
-**重要: タグ起動を効かせるには PAT が必要。** release-please が `GITHUB_TOKEN` で作成したタグは他ワークフローを起動しない（GitHub の仕様）。リポジトリシークレット `RELEASE_PLEASE_TOKEN`（PAT もしくは GitHub App トークン）を設定すると、release-please が作るタグで PyPI/deb/rpm が自動発火する。未設定時は release-please 自体は動くが、ビルド/公開は手動発火（`deb.yml`/`rpm.yml` の workflow_dispatch 等）が必要。
+**重要: Release 起動には PAT が必要。** release-please が `GITHUB_TOKEN` で公開した Release は他ワークフローを起動しない（GitHub の仕様）。リポジトリシークレット `RELEASE_PLEASE_TOKEN`（PAT もしくは GitHub App トークン）を設定すると、release-please が公開する Release の `release: published` で PyPI/deb/rpm が自動発火する。未設定時は release-please 自体は動くが、ビルド/公開は手動発火（`deb.yml`/`rpm.yml` の workflow_dispatch 等）が必要。
 
 **重要: PyPI はバージョンの上書きを許可しない。** release-please は常に新しいバージョンを採番するためこの問題は基本的に起きないが、公開済みバージョンの再公開はできない点に留意する。
 
