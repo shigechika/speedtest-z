@@ -5,7 +5,11 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+    TimeoutException,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -35,7 +39,8 @@ def _inonius_is_running(driver) -> bool:  # type: ignore[no-untyped-def]
         try:
             if any(ch.isdigit() for ch in driver.find_element(By.XPATH, xpath).text):
                 return True
-        except NoSuchElementException:
+        except (NoSuchElementException, StaleElementReferenceException):
+            # Element absent or momentarily stale while polling: not yet running.
             continue
     return False
 

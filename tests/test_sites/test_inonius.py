@@ -2,7 +2,11 @@
 
 from unittest.mock import MagicMock, patch
 
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+    TimeoutException,
+)
 
 from speedtest_z.sites.inonius import (
     _inonius_fallback_start,
@@ -31,6 +35,11 @@ class TestInoniusIsRunning:
     def test_false_when_elements_missing(self, mock_app):
         """Missing progress elements mean the test is not running."""
         mock_app.driver.find_element.side_effect = NoSuchElementException("nope")
+        assert _inonius_is_running(mock_app.driver) is False
+
+    def test_false_when_elements_stale(self, mock_app):
+        """A stale element while polling is treated as not-yet-running, not an error."""
+        mock_app.driver.find_element.side_effect = StaleElementReferenceException("stale")
         assert _inonius_is_running(mock_app.driver) is False
 
 
