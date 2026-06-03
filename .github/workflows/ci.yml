@@ -10,6 +10,20 @@ permissions:
   contents: read
 
 jobs:
+  # Lint the GitHub Actions workflows themselves (incl. shellcheck on run blocks)
+  # so workflow mistakes are caught at PR time, not only when release.yml/deb.yml/
+  # rpm.yml run at release. Separate job so the test (3.x) check names stay stable.
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Lint workflows (actionlint)
+        shell: bash
+        run: |
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.12/scripts/download-actionlint.bash) 1.7.12
+          ./actionlint -color
+
   test:
     runs-on: ubuntu-latest
     strategy:
