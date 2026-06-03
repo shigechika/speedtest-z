@@ -67,8 +67,7 @@ jobs:
       - name: Rename .deb with codename suffix
         run: |
           for deb in ../speedtest-z_*.deb; do
-            newname=$(echo "$deb" | sed "s/\.deb$/~${{ matrix.codename }}.deb/")
-            mv "$deb" "$newname"
+            mv "$deb" "${deb%.deb}~${{ matrix.codename }}.deb"
           done
 
       # The GitHub Release already exists (this workflow is triggered by
