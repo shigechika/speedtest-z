@@ -124,6 +124,17 @@ uv tool install "speedtest-z[otel]"
 
 OpenTelemetry SDK と OTLP HTTP エクスポーターがインストールされます。
 
+### Zabbix ホストバージョンタグ（オプション）
+
+```bash
+pip install speedtest-z[zabbix-api]
+
+# uv を使う場合
+uv tool install "speedtest-z[zabbix-api]"
+```
+
+[zapi-mcp](https://github.com/shigechika/zapi-mcp) がインストールされ、トラッパー送信に加えて、実行中の speedtest-z バージョンを Zabbix API 経由で host tag（`speedtest-z=<version>`）として付与できます。`[zabbix]` セクションの `api_url` / `api_user` / `api_password` を設定すると有効になります。`api_url` は https を推奨し、`config.ini` は所有者のみ読めるよう権限を制限してください（パスワードは平文で保存されます）。Zabbix API ユーザーは最小権限（`host.update` のみ）を推奨します。
+
 ### タブ補完（任意）
 
 ```bash
@@ -165,6 +176,11 @@ enable = false           # true にすると Zabbix へ送信する
 server = 127.0.0.1       # 送信先 Zabbix Server
 port = 10051             # Zabbix トラッパーポート
 host = speedtest-agent   # Zabbix ホスト名
+# 任意: バージョンを host tag（speedtest-z=<version>）として Zabbix API 経由で付与。
+# speedtest-z[zabbix-api] が必要。api_url/api_user/api_password の3つすべて設定すると有効。
+# api_url = https://zabbix.example.com/api_jsonrpc.php
+# api_user = api-user
+# api_password = api-pass
 ```
 
 #### `[grafana]` セクション（オプション）

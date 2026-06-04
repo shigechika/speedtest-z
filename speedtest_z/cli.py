@@ -224,6 +224,9 @@ def main() -> None:
                 runner(app)
             else:
                 logger.warning(f"Unknown site: {site}")
+        # Stamp the running version onto the Zabbix host (no-op in dry-run,
+        # when the API is unconfigured, or for json/csv output).
+        app.stamp_version()
     except KeyboardInterrupt:
         logger.info("Interrupted by user")
     except Exception:

@@ -40,6 +40,9 @@ def _make_sender(dryrun=True, zabbix_enable=True):
         sender.zabbix_host = "speedtest-agent"
         sender.grafana_sender = None
         sender.otel_sender = None
+        sender.zabbix_api_url = ""
+        sender.zabbix_api_user = ""
+        sender.zabbix_api_password = ""
     return sender
 
 
@@ -124,3 +127,110 @@ class TestSendResults:
         data = [{"key": "speedtest.dl", "value": "100.5"}]
         app.send_results(data)
         app.sender.send.assert_called_once_with(data)
+
+
+class TestSetVersionTag:
+    """Tests for SenderManager.set_version_tag()."""
+
+    def _api_sender(self, dryrun=False, zabbix_enable=True):
+        """A sender with the Zabbix API fully configured."""
+        sender = _make_sender(dryrun=dryrun, zabbix_enable=zabbix_enable)
+        sender.zabbix_api_url = "https://z.example.com/api_jsonrpc.php"
+        sender.zabbix_api_user = "api-user"
+        sender.zabbix_api_password = "api-pass"
+        return sender
+
+    def _inject_zapi(self, monkeypatch):
+        """Inject a fake zapi_mcp.client.ZapiClient; return the class mock."""
+        import sys
+        import types
+
+        cls = MagicMock()
+        mod = types.ModuleType("zapi_mcp.client")
+        mod.ZapiClient = cls
+        monkeypatch.setitem(sys.modules, "zapi_mcp", types.ModuleType("zapi_mcp"))
+        monkeypatch.setitem(sys.modules, "zapi_mcp.client", mod)
+        return cls
+
+    def test_dryrun_skips(self, monkeypatch):
+        """No API call in dry-run, even when fully configured."""
+        cls = self._inject_zapi(monkeypatch)
+        self._api_sender(dryrun=True, zabbix_enable=True).set_version_tag("0.8.5")
+        cls.assert_not_called()
+
+    def test_disabled_skips(self, monkeypatch):
+        """No API call when Zabbix is disabled."""
+        cls = self._inject_zapi(monkeypatch)
+        self._api_sender(dryrun=False, zabbix_enable=False).set_version_tag("0.8.5")
+        cls.assert_not_called()
+
+    def test_unconfigured_skips(self, monkeypatch):
+        """No API call when the API credentials are absent."""
+        cls = self._inject_zapi(monkeypatch)
+        # _make_sender leaves the api_* fields empty.
+        _make_sender(dryrun=False, zabbix_enable=True).set_version_tag("0.8.5")
+        cls.assert_not_called()
+
+    def test_sets_host_tag(self, monkeypatch):
+        """The version is upserted as a host tag via ZapiClient."""
+        cls = self._inject_zapi(monkeypatch)
+        self._api_sender().set_version_tag("0.8.5")
+        cls.assert_called_once_with(
+            "https://z.example.com/api_jsonrpc.php", "api-user", "api-pass"
+        )
+        client = cls.return_value.__enter__.return_value
+        client.set_host_tag.assert_called_once_with("speedtest-agent", "speedtest-z", "0.8.5")
+
+    def test_missing_zapi_is_not_fatal(self, monkeypatch):
+        """A missing zapi-mcp install is logged, not raised."""
+        import sys
+
+        monkeypatch.setitem(sys.modules, "zapi_mcp", None)
+        monkeypatch.setitem(sys.modules, "zapi_mcp.client", None)
+        self._api_sender().set_version_tag("0.8.5")  # must not raise
+
+    def test_api_error_is_not_fatal(self, monkeypatch):
+        """An API/connection error is logged, not raised."""
+        cls = self._inject_zapi(monkeypatch)
+        cls.return_value.__enter__.side_effect = Exception("connection refused")
+        self._api_sender().set_version_tag("0.8.5")  # must not raise
+
+    def test_plaintext_api_url_warns(self, monkeypatch, caplog):
+        """A non-https api_url warns about plaintext but still proceeds."""
+        cls = self._inject_zapi(monkeypatch)
+        sender = self._api_sender()
+        sender.zabbix_api_url = "http://z.example.com/api_jsonrpc.php"
+        with caplog.at_level("WARNING", logger="speedtest-z"):
+            sender.set_version_tag("0.8.5")
+        cls.assert_called_once()  # still attempts the call
+        assert any("plaintext" in r.getMessage() for r in caplog.records)
+
+    def test_partial_config_warns_and_skips(self, monkeypatch, caplog):
+        """Partial API config (one field missing) warns and makes no API call."""
+        cls = self._inject_zapi(monkeypatch)
+        sender = _make_sender(dryrun=False, zabbix_enable=True)
+        sender.zabbix_api_url = "https://z.example.com/api_jsonrpc.php"
+        sender.zabbix_api_user = "api-user"
+        # api_password left empty -> partial config
+        with caplog.at_level("WARNING", logger="speedtest-z"):
+            sender.set_version_tag("0.8.5")
+        cls.assert_not_called()
+        assert any("partially configured" in r.getMessage() for r in caplog.records)
+
+
+def test_stamp_version_delegates_to_sender():
+    """SpeedtestZ.stamp_version() forwards __version__ to set_version_tag."""
+    from speedtest_z import __version__
+
+    app = _make_app(dryrun=False, zabbix_enable=True)
+    app.stamp_version()
+    app.sender.set_version_tag.assert_called_once_with(__version__)
+
+
+def test_stamp_version_noop_for_output_collector():
+    """stamp_version() is a no-op when the sender lacks set_version_tag (json/csv)."""
+    from speedtest_z.output import OutputCollector
+
+    app = _make_app()
+    app.sender = OutputCollector("json")
+    app.stamp_version()  # must not raise

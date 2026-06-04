@@ -214,6 +214,18 @@ class SpeedtestZ:
         """
         self.sender.send(data_list)
 
+    def stamp_version(self) -> None:
+        """Stamp the running version onto the Zabbix host as a tag.
+
+        Delegates to SenderManager.set_version_tag() when available; this is a
+        no-op for OutputCollector (json/csv mode), which has no such method.
+        """
+        stamp = getattr(self.sender, "set_version_tag", None)
+        if callable(stamp):
+            from speedtest_z import __version__
+
+            stamp(__version__)
+
     def _get_window_position(self) -> tuple[int, int]:
         """Calculate top-right window position based on OS."""
         if platform.system() == "Linux":
