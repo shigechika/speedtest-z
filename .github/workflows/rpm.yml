@@ -55,7 +55,7 @@ jobs:
           /opt/venvs/speedtest-z/bin/pip install --upgrade pip setuptools
           # Version is static in pyproject.toml (managed by release-please),
           # so no SETUPTOOLS_SCM_PRETEND_VERSION is needed.
-          /opt/venvs/speedtest-z/bin/pip install ".[grafana,otel]"
+          /opt/venvs/speedtest-z/bin/pip install ".[grafana,otel,zabbix-api]"
           /opt/venvs/speedtest-z/bin/speedtest-z --version
 
       - name: Prepare staging directory

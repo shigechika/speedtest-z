@@ -160,7 +160,7 @@ class SenderManager:
         Sets the host tag ``speedtest-z=<version>`` via the Zabbix JSON-RPC API
         (separate from the trapper send path). No-op in dry-run, when Zabbix is
         disabled, or when the API is not configured. Requires the optional
-        ``zapi-mcp`` package; a missing install or an API failure is logged,
+        ``zapi-lib`` package; a missing install or an API failure is logged,
         not fatal.
         """
         if self.dry_run or not self.zabbix_enable:
@@ -182,11 +182,11 @@ class SenderManager:
                 "[zabbix] api_url is not https; the API password would be sent over plaintext"
             )
         try:
-            from zapi_mcp.client import ZapiClient
+            from zapi_lib import ZapiClient
         except ImportError:
             logger.warning(
-                "zapi-mcp not installed; cannot set the version host tag. "
-                "Install zapi-mcp to enable it."
+                "zapi-lib not installed; cannot set the version host tag. "
+                "Install speedtest-z[zabbix-api] to enable it."
             )
             return
         try:

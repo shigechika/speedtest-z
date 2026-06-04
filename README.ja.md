@@ -133,7 +133,7 @@ pip install speedtest-z[zabbix-api]
 uv tool install "speedtest-z[zabbix-api]"
 ```
 
-[zapi-mcp](https://github.com/shigechika/zapi-mcp) がインストールされ、トラッパー送信に加えて、実行中の speedtest-z バージョンを Zabbix API 経由で host tag（`speedtest-z=<version>`）として付与できます。`[zabbix]` セクションの `api_url` / `api_user` / `api_password` を設定すると有効になります。`api_url` は https を推奨し、`config.ini` は所有者のみ読めるよう権限を制限してください（パスワードは平文で保存されます）。Zabbix API ユーザーは最小権限（`host.update` のみ）を推奨します。
+[zapi-lib](https://github.com/shigechika/zapi-lib) がインストールされ、トラッパー送信に加えて、実行中の speedtest-z バージョンを Zabbix API 経由で host tag（`speedtest-z=<version>`）として付与できます。`[zabbix]` セクションの `api_url` / `api_user` / `api_password` を設定すると有効になります。`api_url` は https を推奨し、`config.ini` は所有者のみ読めるよう権限を制限してください（パスワードは平文で保存されます）。Zabbix API ユーザーは最小権限（`host.update` のみ）を推奨します。
 
 ### タブ補完（任意）
 

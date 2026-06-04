@@ -141,15 +141,14 @@ class TestSetVersionTag:
         return sender
 
     def _inject_zapi(self, monkeypatch):
-        """Inject a fake zapi_mcp.client.ZapiClient; return the class mock."""
+        """Inject a fake zapi_lib.ZapiClient; return the class mock."""
         import sys
         import types
 
         cls = MagicMock()
-        mod = types.ModuleType("zapi_mcp.client")
+        mod = types.ModuleType("zapi_lib")
         mod.ZapiClient = cls
-        monkeypatch.setitem(sys.modules, "zapi_mcp", types.ModuleType("zapi_mcp"))
-        monkeypatch.setitem(sys.modules, "zapi_mcp.client", mod)
+        monkeypatch.setitem(sys.modules, "zapi_lib", mod)
         return cls
 
     def test_dryrun_skips(self, monkeypatch):
@@ -182,11 +181,10 @@ class TestSetVersionTag:
         client.set_host_tag.assert_called_once_with("speedtest-agent", "speedtest-z", "0.8.5")
 
     def test_missing_zapi_is_not_fatal(self, monkeypatch):
-        """A missing zapi-mcp install is logged, not raised."""
+        """A missing zapi-lib install is logged, not raised."""
         import sys
 
-        monkeypatch.setitem(sys.modules, "zapi_mcp", None)
-        monkeypatch.setitem(sys.modules, "zapi_mcp.client", None)
+        monkeypatch.setitem(sys.modules, "zapi_lib", None)
         self._api_sender().set_version_tag("0.8.5")  # must not raise
 
     def test_api_error_is_not_fatal(self, monkeypatch):
