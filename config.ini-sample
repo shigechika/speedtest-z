@@ -15,6 +15,12 @@ enable = false
 server = 127.0.0.1
 port = 10051
 host = speedtest-agent
+# Optional: stamp the running version onto the host as a tag (speedtest-z=<version>)
+# via the Zabbix JSON-RPC API. Separate from the trapper send above; requires the
+# zapi-mcp package. All three must be set to enable it.
+# api_url = https://zabbix.example.com/api_jsonrpc.php
+# api_user = api-user
+# api_password = api-pass
 
 [snapshot]
 # Screenshot settings

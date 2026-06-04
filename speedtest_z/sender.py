@@ -44,6 +44,11 @@ class SenderManager:
         self.zabbix_server = config.get("zabbix", "server", fallback="127.0.0.1")
         self.zabbix_port = config.getint("zabbix", "port", fallback=10051)
         self.zabbix_host = host
+        # Optional Zabbix JSON-RPC API (for host tags); separate from the
+        # trapper send path above. All three must be set to enable it.
+        self.zabbix_api_url = config.get("zabbix", "api_url", fallback="")
+        self.zabbix_api_user = config.get("zabbix", "api_user", fallback="")
+        self.zabbix_api_password = config.get("zabbix", "api_password", fallback="")
 
         # Grafana
         self.grafana_sender = None
@@ -148,6 +153,37 @@ class SenderManager:
                 self.otel_sender.send(data_list)
             except Exception:
                 logger.exception("Failed to send to OTel")
+
+    def set_version_tag(self, version: str) -> None:
+        """Stamp the running speedtest-z version onto the Zabbix host as a tag.
+
+        Sets the host tag ``speedtest-z=<version>`` via the Zabbix JSON-RPC API
+        (separate from the trapper send path). No-op in dry-run, when Zabbix is
+        disabled, or when the API is not configured. Requires the optional
+        ``zapi-mcp`` package; a missing install or an API failure is logged,
+        not fatal.
+        """
+        if self.dry_run or not self.zabbix_enable:
+            return
+        if not (self.zabbix_api_url and self.zabbix_api_user and self.zabbix_api_password):
+            logger.debug("[zabbix] API not configured; skipping version host tag")
+            return
+        try:
+            from zapi_mcp.client import ZapiClient
+        except ImportError:
+            logger.warning(
+                "zapi-mcp not installed; cannot set the version host tag. "
+                "Install zapi-mcp to enable it."
+            )
+            return
+        try:
+            with ZapiClient(
+                self.zabbix_api_url, self.zabbix_api_user, self.zabbix_api_password
+            ) as client:
+                client.set_host_tag(self.zabbix_host, "speedtest-z", version)
+            logger.info(f"Zabbix host tag set: speedtest-z={version} on {self.zabbix_host}")
+        except Exception:
+            logger.exception("Failed to set the Zabbix version host tag")
 
     def close(self) -> None:
         """Shut down backends that need cleanup."""
