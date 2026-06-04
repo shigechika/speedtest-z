@@ -14,7 +14,7 @@ Selenium を使って複数の速度テストサイト（Cloudflare, Netflix/fas
 
 - `speedtest_z/cli.py` — CLI エントリポイント（`main()`）
 - `speedtest_z/runner.py` — SpeedtestZ コアクラス（WebDriver 管理・サイト実行オーケストレーション）
-- `speedtest_z/sender.py` — SenderManager（Zabbix/Grafana/OTel バックエンド一括管理）
+- `speedtest_z/sender.py` — SenderManager（Zabbix/Grafana/OTel バックエンド一括管理）。`set_version_tag()` で Zabbix host tag `speedtest-z=<version>` を付与（要 `pip install speedtest-z[zabbix-api]` ＝ zapi-lib）
 - `speedtest_z/grafana.py` — Grafana Cloud Prometheus Remote Write 送信（Protobuf エンコーダー + GrafanaSender）
 - `speedtest_z/otel.py` — OpenTelemetry OTLP 送信（OtelSender、要 `pip install speedtest-z[otel]`）
 - `speedtest_z/config.py` — 設定ファイル探索・ログ設定
@@ -86,14 +86,16 @@ python -m build
 
 ## config.ini の設計
 
-- `[general]` の `dry_run`（旧名 `dryrun` もフォールバックでサポート）
+- `[general]` の `dry_run`（旧名 `dryrun` もフォールバックでサポート）。`chrome_profile_dir`（Cookie/同意の永続化先、デフォルト `~/.config/speedtest-z/chrome-profile`）
 - `[zabbix]` に `enable` フラグ（デフォルト `false`）。`enable = true` で Zabbix 送信が有効
+- `[zabbix]` の `api_url` / `api_user` / `api_password`（任意・3つ揃えると有効）。全サイト完走後に host tag `speedtest-z=<version>` を Zabbix JSON-RPC API で付与（`SenderManager.set_version_tag()` → `runner.stamp_version()`）。`--dry-run` / Zabbix 無効 / 未設定 / `--output json,csv` では no-op
 - `[grafana]` セクション（オプション）。`enable = true` + `remote_write_url` / `username` / `token` で Grafana Cloud 送信
 - `[otel]` セクション（オプション）。`enable = true` + `endpoint` / `headers` で OTLP 送信
 - `--dry-run` 時は Zabbix も Grafana も OTel も送信しない（外部送信を全て止める一貫したルール）
 - `--output json/csv` 時は stdout 出力のみ（バックエンド送信なし）。ログは stderr に出力されるため `2>/dev/null` で抑制可能
 - `cramjam` は optional dependency: `pip install speedtest-z[grafana]`
 - `opentelemetry-*` は optional dependency: `pip install speedtest-z[otel]`
+- `zapi-lib` は optional dependency: `pip install speedtest-z[zabbix-api]`（host tag 用。httpx のみ依存で MCP スタックは引かない。.deb/.rpm は extras に含めてビルド）
 - `SenderManager.send()` が全バックエンド（Zabbix + Grafana + OTel）への送信を一括管理
 - `--output json/csv` 時は `OutputCollector` が `SenderManager` の代わりに `app.sender` に差し替わる（`MetricSender` プロトコル準拠）
 
