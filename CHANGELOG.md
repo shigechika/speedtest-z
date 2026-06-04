@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.10.0](https://github.com/shigechika/speedtest-z/compare/v0.9.0...v0.10.0) (2026-06-04)
+
+
+### Features
+
+* depend on zapi-lib for the host-tag feature (+ deb/rpm extras) ([#26](https://github.com/shigechika/speedtest-z/issues/26)) ([dd76345](https://github.com/shigechika/speedtest-z/commit/dd7634544a79ffa06ac8a1945b58c4933258d2af))
+
 ## [0.9.0](https://github.com/shigechika/speedtest-z/compare/v0.8.5...v0.9.0) (2026-06-04)
 
 
