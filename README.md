@@ -147,7 +147,7 @@ pip install speedtest-z[zabbix-api]
 uv tool install "speedtest-z[zabbix-api]"
 ```
 
-This installs [zapi-mcp](https://github.com/shigechika/zapi-mcp) so speedtest-z can stamp its running version onto the Zabbix host as a tag (`speedtest-z=<version>`) via the Zabbix JSON-RPC API, alongside the trapper send path. Set `api_url` / `api_user` / `api_password` under `[zabbix]` to enable it.
+This installs [zapi-mcp](https://github.com/shigechika/zapi-mcp) so speedtest-z can stamp its running version onto the Zabbix host as a tag (`speedtest-z=<version>`) via the Zabbix JSON-RPC API, alongside the trapper send path. Set `api_url` / `api_user` / `api_password` under `[zabbix]` to enable it. Use an `https` `api_url`, keep `config.ini` readable only by its owner (the password is stored in plaintext), and prefer a least-privilege Zabbix API user (`host.update` only).
 
 ### Tab Completion (optional)
 

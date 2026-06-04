@@ -194,3 +194,43 @@ class TestSetVersionTag:
         cls = self._inject_zapi(monkeypatch)
         cls.return_value.__enter__.side_effect = Exception("connection refused")
         self._api_sender().set_version_tag("0.8.5")  # must not raise
+
+    def test_plaintext_api_url_warns(self, monkeypatch, caplog):
+        """A non-https api_url warns about plaintext but still proceeds."""
+        cls = self._inject_zapi(monkeypatch)
+        sender = self._api_sender()
+        sender.zabbix_api_url = "http://z.example.com/api_jsonrpc.php"
+        with caplog.at_level("WARNING", logger="speedtest-z"):
+            sender.set_version_tag("0.8.5")
+        cls.assert_called_once()  # still attempts the call
+        assert any("plaintext" in r.getMessage() for r in caplog.records)
+
+    def test_partial_config_warns_and_skips(self, monkeypatch, caplog):
+        """Partial API config (one field missing) warns and makes no API call."""
+        cls = self._inject_zapi(monkeypatch)
+        sender = _make_sender(dryrun=False, zabbix_enable=True)
+        sender.zabbix_api_url = "https://z.example.com/api_jsonrpc.php"
+        sender.zabbix_api_user = "api-user"
+        # api_password left empty -> partial config
+        with caplog.at_level("WARNING", logger="speedtest-z"):
+            sender.set_version_tag("0.8.5")
+        cls.assert_not_called()
+        assert any("partially configured" in r.getMessage() for r in caplog.records)
+
+
+def test_stamp_version_delegates_to_sender():
+    """SpeedtestZ.stamp_version() forwards __version__ to set_version_tag."""
+    from speedtest_z import __version__
+
+    app = _make_app(dryrun=False, zabbix_enable=True)
+    app.stamp_version()
+    app.sender.set_version_tag.assert_called_once_with(__version__)
+
+
+def test_stamp_version_noop_for_output_collector():
+    """stamp_version() is a no-op when the sender lacks set_version_tag (json/csv)."""
+    from speedtest_z.output import OutputCollector
+
+    app = _make_app()
+    app.sender = OutputCollector("json")
+    app.stamp_version()  # must not raise

@@ -18,6 +18,8 @@ host = speedtest-agent
 # Optional: stamp the running version onto the host as a tag (speedtest-z=<version>)
 # via the Zabbix JSON-RPC API. Separate from the trapper send above; requires the
 # zapi-mcp package. All three must be set to enable it.
+# NOTE: api_password is stored in plaintext. Restrict this file (e.g. chmod 600)
+# and use a least-privilege Zabbix API user (host.update only); prefer https.
 # api_url = https://zabbix.example.com/api_jsonrpc.php
 # api_user = api-user
 # api_password = api-pass

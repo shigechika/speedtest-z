@@ -165,9 +165,22 @@ class SenderManager:
         """
         if self.dry_run or not self.zabbix_enable:
             return
-        if not (self.zabbix_api_url and self.zabbix_api_user and self.zabbix_api_password):
-            logger.debug("[zabbix] API not configured; skipping version host tag")
+        api_fields = (self.zabbix_api_url, self.zabbix_api_user, self.zabbix_api_password)
+        if not all(api_fields):
+            if any(api_fields):
+                # Partial config is almost certainly a mistake (e.g. password
+                # left blank); surface it rather than skipping silently.
+                logger.warning(
+                    "[zabbix] API partially configured; set api_url, api_user and "
+                    "api_password to set the version host tag"
+                )
+            else:
+                logger.debug("[zabbix] API not configured; skipping version host tag")
             return
+        if _is_plaintext_remote(self.zabbix_api_url):
+            logger.warning(
+                "[zabbix] api_url is not https; the API password would be sent over plaintext"
+            )
         try:
             from zapi_mcp.client import ZapiClient
         except ImportError:
