@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.9.0](https://github.com/shigechika/speedtest-z/compare/v0.8.5...v0.9.0) (2026-06-04)
+
+
+### Features
+
+* stamp speedtest-z version onto the Zabbix host as a tag ([#24](https://github.com/shigechika/speedtest-z/issues/24)) ([801ec55](https://github.com/shigechika/speedtest-z/commit/801ec5565f496efe4388022524004c7941508a3e))
+
 ## [0.8.5](https://github.com/shigechika/speedtest-z/compare/v0.8.4...v0.8.5) (2026-06-02)
 
 
