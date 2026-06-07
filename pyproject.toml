@@ -37,7 +37,7 @@ test = ["pytest", "pytest-cov"]
 completion = ["argcomplete"]
 grafana = ["cramjam"]
 otel = ["opentelemetry-api", "opentelemetry-sdk", "opentelemetry-exporter-otlp-proto-http"]
-zabbix-api = ["zapi-lib>=0.1,<1"]
+zabbix-api = ["zapi-lib>=0.1"]
 
 [project.urls]
 Homepage = "https://github.com/shigechika/speedtest-z"
