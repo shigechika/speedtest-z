@@ -85,11 +85,14 @@ the API call itself, breaks this contract.
 ## 5. Optional-dependency extras must degrade gracefully, not crash
 
 `grafana` (`cramjam`), `otel` (`opentelemetry-*`), and `zabbix-api`
-(`zapi-lib`) are all optional extras. `SenderManager.__init__` imports each
-lazily inside its own `try/except ImportError` and logs the install hint
+(`zapi-lib`) are all optional extras, each imported lazily inside its own
+`try/except ImportError` that logs the install hint
 (`pip install speedtest-z[...]`) rather than crashing when the section is
-enabled but the extra isn't installed. Hold new optional-backend code to the
-same pattern.
+enabled but the extra isn't installed. `SenderManager.__init__` does this for
+`grafana`/`otel`; the `zabbix-api` (`zapi-lib`) import happens on the
+version-tag path (`SenderManager.set_version_tag()`, see §4), not in
+`__init__`. Hold new optional-backend code to the same lazy,
+install-hint-logging pattern.
 
 ## 6. Test conventions
 
