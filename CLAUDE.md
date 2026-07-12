@@ -21,7 +21,7 @@ Selenium を使って複数の速度テストサイト（Cloudflare, Netflix/fas
 - `speedtest_z/i18n.py` — ロケール判定・メッセージ辞書
 - `speedtest_z/output.py` — JSON/CSV 出力（OutputCollector、MetricSender 互換）
 - `speedtest_z/healthcheck.py` — `--check` URL 疎通確認
-- `speedtest_z/types.py` — ZabbixItem TypedDict + MetricSender プロトコル
+- `speedtest_z/types.py` — MetricSender プロトコル（メトリクスバックエンドの型）
 - `speedtest_z/sites/` — サイトごとのランナー（`run_xxx(app)` 関数）
 - `speedtest_z/__init__.py` — バージョン情報（`importlib.metadata` で取得。バージョンは `pyproject.toml` の静的 `version` を release-please が管理）
 - `config.ini` — 実行設定（探索順: CLI → CWD → ~/.config/speedtest-z/ → /etc/speedtest-z/）
@@ -67,7 +67,7 @@ python -m build
 
 - `.github/workflows/ci.yml` — push/PR 時に構文チェック + ビルドテスト（Python 3.10〜3.14）
 - `.github/workflows/release-please.yml` — main への push 時に release-please が Release PR を維持。マージで `vX.Y.Z` タグと GitHub Release を自動作成
-- `.github/workflows/release.yml` — Release 公開時（`release: published`）に PyPI へ自動公開（Trusted Publishers）。`verify` ジョブで pyproject の version とタグの一致を確認
+- `.github/workflows/release.yml` — Release 公開時（`release: published`）に **TestPyPI（`testpypi` 環境ゲート）→ PyPI** の順で自動公開（Trusted Publishers）。`verify` ジョブで pyproject の version とタグの一致を確認し、公開後に `notify-homebrew` ジョブが `HOMEBREW_TAP_TOKEN` で shigechika/homebrew-tap の更新を dispatch する
 - `.github/workflows/deb.yml` — Release 公開時に jammy/noble 向け .deb ビルド → 当該 Release にアップロード（手動は workflow_dispatch）
 - `.github/workflows/rpm.yml` — Release 公開時に Rocky 9 向け .rpm ビルド（fpm）→ 当該 Release にアップロード（手動は workflow_dispatch）
 
@@ -99,6 +99,17 @@ python -m build
 - `SenderManager.send()` が全バックエンド（Zabbix + Grafana + OTel）への送信を一括管理
 - `--output json/csv` 時は `OutputCollector` が `SenderManager` の代わりに `app.sender` に差し替わる（`MetricSender` プロトコル準拠）
 
+## テストサイトの追加
+
+新しい速度計測サイトを1つ足すには複数箇所への登録が必要で、どれか漏れると**黙って失敗する**（例: `healthcheck.SITE_URLS` に無いサイトは `--check` から外れる／テンプレートに項目が無いと Zabbix が trapper 値を捨てる）。以下すべてを揃えること:
+
+1. `speedtest_z/sites/<name>.py` — `run_<name>(app)` ランナーと `URL` 定数
+2. `speedtest_z/sites/__init__.py` — `AVAILABLE_SITES` と `get_site_runners()` に登録
+3. `speedtest_z/healthcheck.py` — `URL` の import と `SITE_URLS` エントリ
+4. `config.ini-sample` — `[frequency]` セクションのエントリ
+5. `speedtest-z_templates.yaml` — Zabbix アイテム定義
+6. `tests/test_sites/` — 対応するテストモジュール
+
 ## コーディングルール
 
 - **Python ファイルを編集したら、コミット前に必ず `ruff format` と `ruff check` を実行すること**
@@ -106,6 +117,7 @@ python -m build
   - `ruff check speedtest_z/ tests/` — lint チェック
   - CI で `ruff format --check` が走るため、未整形のままコミットすると CI が失敗する
   - 過去に2回この失敗でパッチバージョンを消費している（v0.8.2 等）
+- **`mypy speedtest_z/` も CI の必須ゲート**（ruff だけでなく型エラーでも CI が落ちる）。ローカルでは `pip install -e ".[test,dev]"` で mypy を導入してから実行する
 
 ## 注意事項
 
