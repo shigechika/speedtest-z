@@ -9,6 +9,7 @@ speedtest-z [options] [site ...]
 | Option | Description |
 |--------|-------------|
 | `-V`, `--version` | Show program version and exit |
+| `-m`, `--man` | Show the manual (README) in a pager and exit |
 | `-c`, `--config CONFIG` | Config file path (default: `./config.ini` or `~/.config/speedtest-z/config.ini`) |
 | `-n`, `--dry-run` | Test run (do not send data to Zabbix) |
 | `--headless` | Run Chrome in headless mode |

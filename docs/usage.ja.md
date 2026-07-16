@@ -9,6 +9,7 @@ speedtest-z [options] [site ...]
 | オプション | 説明 |
 |-----------|------|
 | `-V`, `--version` | バージョン表示 |
+| `-m`, `--man` | マニュアル（README）をページャで表示して終了 |
 | `-c`, `--config CONFIG` | 設定ファイル指定 |
 | `-n`, `--dry-run` | テスト実行（Zabbix へ送信しない） |
 | `--headless` | ヘッドレスモードで実行 |

@@ -4,7 +4,7 @@
 
 設定ファイルは以下の順序で探索されます（`-c` / `--config` で明示指定も可能）：
 
-1. CLI で指定されたパス（`-c` / `--config`）
+1. CLI で指定されたパス（`-c` / `--config`。指定したファイルが存在しない場合、他の場所へのフォールバックは行われません）
 2. カレントディレクトリの `./config.ini`
 3. `~/.config/speedtest-z/config.ini`（XDG_CONFIG_HOME）
 4. `/etc/speedtest-z/config.ini`（システム全体、`.deb` パッケージで使用）

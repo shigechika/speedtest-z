@@ -12,7 +12,7 @@ sudo cp deploy/speedtest-z.timer /etc/systemd/system/
 # 必要に応じてサービスファイルの ExecStart パスを編集
 sudo systemctl daemon-reload
 
-# タイマーを有効化・起動（6分間隔で実行）
+# タイマーを有効化・起動（10分間隔で実行）
 sudo systemctl enable --now speedtest-z.timer
 
 # 動作確認

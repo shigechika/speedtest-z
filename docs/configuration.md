@@ -2,11 +2,12 @@
 
 ## config.ini
 
-The configuration file is searched in the following order (`-c` / `--config` can override):
+The configuration file is searched in the following order:
 
-1. `./config.ini` in the current directory
-2. `~/.config/speedtest-z/config.ini` (XDG_CONFIG_HOME)
-3. `/etc/speedtest-z/config.ini` (system-wide, used by `.deb` package)
+1. Path given with `-c` / `--config` (used as-is; if the file does not exist, there is no fallback to the other locations)
+2. `./config.ini` in the current directory
+3. `~/.config/speedtest-z/config.ini` (XDG_CONFIG_HOME)
+4. `/etc/speedtest-z/config.ini` (system-wide, used by `.deb` package)
 
 Copy `config.ini-sample` to one of these locations and edit as needed.
 
