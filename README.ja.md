@@ -4,7 +4,7 @@
 [![CI](https://github.com/shigechika/speedtest-z/actions/workflows/ci.yml/badge.svg)](https://github.com/shigechika/speedtest-z/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/pypi/pyversions/speedtest-z)](https://pypi.org/project/speedtest-z/)
 
-[English](https://github.com/shigechika/speedtest-z/blob/main/README.md)
+[English](https://github.com/shigechika/speedtest-z/blob/main/README.md) | [ドキュメント](https://shigechika.github.io/speedtest-z/ja/)
 
 speedtest-z は Web ブラウザで主要な速度テストサイトを自動巡回。ユーザ体験そのままの回線品質を定点観測できます。
 
@@ -150,7 +150,7 @@ eval "$(register-python-argcomplete speedtest-z)"
 
 設定ファイルは以下の順序で探索されます（`-c` / `--config` で明示指定も可能）：
 
-1. CLI で指定されたパス（`-c` / `--config`）
+1. CLI で指定されたパス（`-c` / `--config`。指定したファイルが存在しない場合、他の場所へのフォールバックは行われません）
 2. カレントディレクトリの `./config.ini`
 3. `~/.config/speedtest-z/config.ini`（XDG_CONFIG_HOME）
 4. `/etc/speedtest-z/config.ini`（システム全体、`.deb` パッケージで使用）
@@ -248,6 +248,7 @@ speedtest-z [options] [site ...]
 | オプション | 説明 |
 |-----------|------|
 | `-V`, `--version` | バージョン表示 |
+| `-m`, `--man` | マニュアル（README）をページャで表示して終了 |
 | `-c`, `--config CONFIG` | 設定ファイル指定 |
 | `-n`, `--dry-run` | テスト実行（Zabbix へ送信しない） |
 | `--headless` | ヘッドレスモードで実行 |
@@ -411,7 +412,7 @@ sudo cp deploy/speedtest-z.timer /etc/systemd/system/
 # 必要に応じてサービスファイルの ExecStart パスを編集
 sudo systemctl daemon-reload
 
-# タイマーを有効化・起動（6分間隔で実行）
+# タイマーを有効化・起動（10分間隔で実行）
 sudo systemctl enable --now speedtest-z.timer
 
 # 動作確認

@@ -4,7 +4,7 @@
 [![CI](https://github.com/shigechika/speedtest-z/actions/workflows/ci.yml/badge.svg)](https://github.com/shigechika/speedtest-z/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/pypi/pyversions/speedtest-z)](https://pypi.org/project/speedtest-z/)
 
-[日本語版 / Japanese](https://github.com/shigechika/speedtest-z/blob/main/README.ja.md)
+[日本語版 / Japanese](https://github.com/shigechika/speedtest-z/blob/main/README.ja.md) | [Documentation](https://shigechika.github.io/speedtest-z/)
 
 speedtest-z automates major speed test sites with a web browser, capturing real user-experience network quality for continuous monitoring.
 
@@ -162,11 +162,12 @@ Add the `eval` line to your shell profile (`~/.bashrc` or `~/.zshrc`) to enable 
 
 ### config.ini
 
-The configuration file is searched in the following order (`-c` / `--config` can override):
+The configuration file is searched in the following order:
 
-1. `./config.ini` in the current directory
-2. `~/.config/speedtest-z/config.ini` (XDG_CONFIG_HOME)
-3. `/etc/speedtest-z/config.ini` (system-wide, used by `.deb` package)
+1. Path given with `-c` / `--config` (used as-is; if the file does not exist, there is no fallback to the other locations)
+2. `./config.ini` in the current directory
+3. `~/.config/speedtest-z/config.ini` (XDG_CONFIG_HOME)
+4. `/etc/speedtest-z/config.ini` (system-wide, used by `.deb` package)
 
 Copy `config.ini-sample` to one of these locations and edit as needed.
 
@@ -247,6 +248,7 @@ speedtest-z [options] [site ...]
 | Option | Description |
 |--------|-------------|
 | `-V`, `--version` | Show program version and exit |
+| `-m`, `--man` | Show the manual (README) in a pager and exit |
 | `-c`, `--config CONFIG` | Config file path (default: `./config.ini` or `~/.config/speedtest-z/config.ini`) |
 | `-n`, `--dry-run` | Test run (do not send data to Zabbix) |
 | `--headless` | Run Chrome in headless mode |
@@ -400,24 +402,26 @@ For manual (pip) installations, the `deploy/` directory contains systemd unit fi
 
 | File | Description |
 |------|-------------|
-| `speedtest-z.service` | Service unit (runs `speedtest-z` from the venv) |
-| `speedtest-z.timer` | Timer unit (runs every 6 minutes) |
+| `speedtest-z.service` | Service unit (runs `speedtest-z` as the `speedtest-z` user -- edit `ExecStart` / `User` to match your setup) |
+| `speedtest-z.timer` | Timer unit (runs every 10 minutes) |
 | `SeleniumCleaner.cron` | Cron job to clean up stale Chrome temp files |
 
 ### Setup
 
+The service unit sets `User=` / `Group=`, so install it as a **system** unit (user units under `~/.config/systemd/user/` cannot switch users and will fail):
+
 ```bash
 # Copy unit files
-cp deploy/speedtest-z.service ~/.config/systemd/user/
-cp deploy/speedtest-z.timer ~/.config/systemd/user/
+sudo cp deploy/speedtest-z.service /etc/systemd/system/
+sudo cp deploy/speedtest-z.timer /etc/systemd/system/
 
-# Reload and enable
-systemctl --user daemon-reload
-systemctl --user enable --now speedtest-z.timer
+# Edit the ExecStart path / User for your environment, then:
+sudo systemctl daemon-reload
+sudo systemctl enable --now speedtest-z.timer
 
 # Check status
-systemctl --user status speedtest-z.timer
-systemctl --user list-timers
+systemctl status speedtest-z.timer
+systemctl list-timers speedtest-z.timer
 ```
 
 Optionally, install the cron job for cleaning up stale Chrome temporary directories:

@@ -40,3 +40,6 @@ staging/
 
 # バックアップ
 *~
+
+# MkDocs build output
+site/
