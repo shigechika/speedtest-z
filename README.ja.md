@@ -4,7 +4,7 @@
 [![CI](https://github.com/shigechika/speedtest-z/actions/workflows/ci.yml/badge.svg)](https://github.com/shigechika/speedtest-z/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/pypi/pyversions/speedtest-z)](https://pypi.org/project/speedtest-z/)
 
-[English](https://github.com/shigechika/speedtest-z/blob/main/README.md)
+[English](https://github.com/shigechika/speedtest-z/blob/main/README.md) | [ドキュメント](https://shigechika.github.io/speedtest-z/ja/)
 
 speedtest-z は Web ブラウザで主要な速度テストサイトを自動巡回。ユーザ体験そのままの回線品質を定点観測できます。
 

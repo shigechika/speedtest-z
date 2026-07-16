@@ -1,0 +1,77 @@
+site_name: speedtest-z
+site_description: >-
+  Automated multi-site speed test runner — drives real browser speed tests
+  with Selenium and ships results to Zabbix, Grafana Cloud, or any OTLP
+  backend.
+site_url: https://shigechika.github.io/speedtest-z/
+repo_url: https://github.com/shigechika/speedtest-z
+repo_name: shigechika/speedtest-z
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.footer
+    - content.code.copy
+    - content.action.edit
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix
+      languages:
+        - locale: en
+          name: English
+          default: true
+          build: true
+        - locale: ja
+          name: 日本語
+          build: true
+          nav_translations:
+            Home: ホーム
+            Installation: インストール
+            Configuration: 設定ファイル
+            Usage: 使い方
+            Supported Test Sites: 対応テストサイト
+            Integrations: 連携
+            Deployment (systemd): デプロイ（systemd）
+            Troubleshooting: トラブルシューティング
+
+nav:
+  - Home: index.md
+  - Installation: install.md
+  - Configuration: configuration.md
+  - Usage: usage.md
+  - Supported Test Sites: sites.md
+  - Integrations: integrations.md
+  - Deployment (systemd): deployment.md
+  - Troubleshooting: troubleshooting.md
