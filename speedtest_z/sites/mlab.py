@@ -3,19 +3,52 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 if TYPE_CHECKING:
+    from selenium.webdriver.remote.webdriver import WebDriver
+    from selenium.webdriver.remote.webelement import WebElement
+
     from speedtest_z.runner import SpeedtestZ
 
 logger = logging.getLogger("speedtest-z")
 
 URL = "https://speed.measurementlab.net/"
+
+# Data-policy consent checkbox: current site id first, legacy id as fallback
+CONSENT_IDS = ("privacyConsent", "demo-human")
+
+
+def _find_consent(driver: WebDriver) -> WebElement | None:
+    """Return the consent checkbox element, or None if not present."""
+    for consent_id in CONSENT_IDS:
+        try:
+            return driver.find_element(By.ID, consent_id)
+        except NoSuchElementException:
+            continue
+    return None
+
+
+def _consent_checked(driver: WebDriver) -> bool:
+    """Return True when the consent checkbox exists and is checked."""
+    chk_box = _find_consent(driver)
+    return chk_box is not None and chk_box.is_selected()
+
+
+def _enabled_start_button(driver: WebDriver) -> WebElement | Literal[False]:
+    """Return the start button once it no longer carries the disabled class."""
+    try:
+        btn = driver.find_element(By.CSS_SELECTOR, "a.startButton")
+    except NoSuchElementException:
+        return False
+    if "disabled" in (btn.get_attribute("class") or ""):
+        return False
+    return btn
 
 
 def run_mlab(app: SpeedtestZ) -> None:
@@ -30,7 +63,7 @@ def run_mlab(app: SpeedtestZ) -> None:
 
         if app.auto_consent:
             try:
-                chk_box = app.wait.until(EC.presence_of_element_located((By.ID, "demo-human")))
+                chk_box = app.wait.until(lambda d: _find_consent(d))
                 app.driver.execute_script("arguments[0].click();", chk_box)
                 logger.info("mlab: Consent checked (auto)")
             except TimeoutException:
@@ -38,23 +71,20 @@ def run_mlab(app: SpeedtestZ) -> None:
         else:
             # Wait for the user to click the checkbox
             try:
-                chk_box = WebDriverWait(app.driver, 5).until(
-                    EC.presence_of_element_located((By.ID, "demo-human"))
-                )
+                chk_box = WebDriverWait(app.driver, 5).until(lambda d: _find_consent(d))
                 if not chk_box.is_selected():
                     logger.info("mlab: Waiting for user to check consent checkbox...")
-                    WebDriverWait(app.driver, 120).until(
-                        lambda d: d.find_element(By.ID, "demo-human").is_selected()
-                    )
+                    WebDriverWait(app.driver, 120).until(_consent_checked)
                     logger.info("mlab: Consent checked by user")
             except TimeoutException:
                 logger.debug("mlab: Consent checkbox not found or not checked")
 
         try:
-            start_btn = app.wait.until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "a.startButton"))
-            )
-            start_btn.click()
+            # The button keeps a "disabled" class until consent is given, and
+            # an overlay can intercept a native click, so wait for the class to
+            # clear and click via JavaScript.
+            start_btn = app.wait.until(_enabled_start_button)
+            app.driver.execute_script("arguments[0].click();", start_btn)
             logger.info("mlab: START")
         except Exception as e:
             logger.error(f"mlab: Start button issue: {e}")

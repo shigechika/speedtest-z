@@ -1,10 +1,10 @@
 """Tests for the M-Lab site runner."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
-from speedtest_z.sites.mlab import run_mlab
+from speedtest_z.sites.mlab import _enabled_start_button, _find_consent, run_mlab
 
 
 def _mock_find_element_results(
@@ -25,6 +25,54 @@ def _mock_find_element_results(
         return el
 
     return _find
+
+
+class TestMlabHelpers:
+    """Tests for the consent/start-button helpers."""
+
+    def test_find_consent_prefers_current_id(self):
+        """The current site id (privacyConsent) is tried first."""
+        driver = MagicMock()
+        el = MagicMock()
+        driver.find_element.return_value = el
+        assert _find_consent(driver) is el
+        assert driver.find_element.call_args[0][1] == "privacyConsent"
+
+    def test_find_consent_falls_back_to_legacy_id(self):
+        """The legacy id (demo-human) is used when the current one is absent."""
+        driver = MagicMock()
+        el = MagicMock()
+        driver.find_element.side_effect = [NoSuchElementException(), el]
+        assert _find_consent(driver) is el
+        assert driver.find_element.call_args[0][1] == "demo-human"
+
+    def test_find_consent_returns_none_when_absent(self):
+        """None is returned when no consent checkbox exists."""
+        driver = MagicMock()
+        driver.find_element.side_effect = NoSuchElementException()
+        assert _find_consent(driver) is None
+
+    def test_enabled_start_button_waits_out_disabled_class(self):
+        """False is returned while the button still has the disabled class."""
+        driver = MagicMock()
+        btn = MagicMock()
+        btn.get_attribute.return_value = "button special startButton big disabled"
+        driver.find_element.return_value = btn
+        assert _enabled_start_button(driver) is False
+
+    def test_enabled_start_button_returns_button(self):
+        """The button is returned once the disabled class is gone."""
+        driver = MagicMock()
+        btn = MagicMock()
+        btn.get_attribute.return_value = "button special startButton big"
+        driver.find_element.return_value = btn
+        assert _enabled_start_button(driver) is btn
+
+    def test_enabled_start_button_absent(self):
+        """False is returned when the button does not exist yet."""
+        driver = MagicMock()
+        driver.find_element.side_effect = NoSuchElementException()
+        assert _enabled_start_button(driver) is False
 
 
 class TestRunMlab:
@@ -114,7 +162,11 @@ class TestRunMlab:
             mock_wdw.return_value.until.return_value = True
             run_mlab(mock_app)
 
-        mock_app.driver.execute_script.assert_called_once()
+        # Both the consent checkbox and the start button are clicked via JS
+        assert mock_app.driver.execute_script.call_count == 2
+        assert mock_app.driver.execute_script.call_args_list[0] == call(
+            "arguments[0].click();", chk_box
+        )
 
     def test_start_button_error_returns_early(self, mock_app):
         """Return early when start button is not clickable."""

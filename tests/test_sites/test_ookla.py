@@ -2,32 +2,14 @@
 
 from unittest.mock import MagicMock, patch
 
-from selenium.common.exceptions import (
-    NoSuchElementException,
-    TimeoutException,
-)
+from selenium.common.exceptions import TimeoutException
 
 from speedtest_z.sites.ookla import run_ookla
 
 
-def _mock_find_element_results(download="250.5", upload="80.3", ping="5"):
-    """Return a side_effect function for find_element returning result texts."""
-    results = {
-        "download-speed": download,
-        "upload-speed": upload,
-        "ping-speed": ping,
-        "result-data-large": "visible",
-    }
-
-    def _find(by, class_name):
-        if class_name in results:
-            el = MagicMock()
-            el.text = results[class_name]
-            el.is_displayed.return_value = True
-            return el
-        raise NoSuchElementException(f"Element {class_name} not found")
-
-    return _find
+def _result(download="250.5", upload="80.3", ping="5"):
+    """Return a result dict as produced by the extraction JavaScript."""
+    return {"download": download, "upload": upload, "ping": ping}
 
 
 class TestRunOokla:
@@ -57,7 +39,7 @@ class TestRunOokla:
         mock_app.send_results = MagicMock()
         mock_app.take_snapshot = MagicMock()
         mock_app.MAX_RETRIES = 3
-        mock_app.driver.find_element.side_effect = _mock_find_element_results("300.0", "95.5", "3")
+        mock_app.driver.execute_script.return_value = _result("300.0", "95.5", "3")
 
         with (
             patch("speedtest_z.sites.ookla.WebDriverWait") as mock_wdw,
@@ -65,7 +47,7 @@ class TestRunOokla:
         ):
             mock_wdw.return_value.until.side_effect = [
                 TimeoutException(),  # consent dialog not found
-                "SUCCESS",  # _check_result_or_error
+                True,  # completion (URL changed to /result/<id>)
             ]
             mock_app.wait.until.return_value = MagicMock()  # start button
             run_ookla(mock_app)
@@ -81,7 +63,7 @@ class TestRunOokla:
         assert data[2]["value"] == "3"
 
     def test_start_button_error_retries(self, mock_app):
-        """Retry when start button click fails."""
+        """Retry when start button click fails, reloading the top page."""
         mock_app._should_run = MagicMock(return_value=True)
         mock_app._load_with_retry = MagicMock(return_value=True)
         mock_app.auto_consent = True
@@ -100,9 +82,11 @@ class TestRunOokla:
             run_ookla(mock_app)
 
         mock_app.send_results.assert_not_called()
+        # Each attempt loads the top page (refresh would stay on /result/<id>)
+        assert mock_app._load_with_retry.call_count == 2
 
-    def test_error_popup_triggers_retry(self, mock_app):
-        """Retry when error popup is detected."""
+    def test_invalid_result_triggers_retry(self, mock_app):
+        """Retry when the result page yields no numeric download value."""
         mock_app._should_run = MagicMock(return_value=True)
         mock_app._load_with_retry = MagicMock(return_value=True)
         mock_app.auto_consent = True
@@ -110,19 +94,10 @@ class TestRunOokla:
         mock_app.send_results = MagicMock()
         mock_app.take_snapshot = MagicMock()
         mock_app.MAX_RETRIES = 2
-
-        call_count = [0]
-
-        def _mock_find(by, selector):
-            call_count[0] += 1
-            el = MagicMock()
-            el.text = "300.0" if "download" in selector else "95.5"
-            if "ping" in selector:
-                el.text = "3"
-            el.is_displayed.return_value = True
-            return el
-
-        mock_app.driver.find_element.side_effect = _mock_find
+        mock_app.driver.execute_script.side_effect = [
+            _result(download="", upload="", ping=""),  # 1st attempt: parse failure
+            _result("300.0", "95.5", "3"),  # 2nd attempt: success
+        ]
 
         with (
             patch("speedtest_z.sites.ookla.WebDriverWait") as mock_wdw,
@@ -130,18 +105,18 @@ class TestRunOokla:
         ):
             mock_wdw.return_value.until.side_effect = [
                 TimeoutException(),  # consent 1st attempt
-                "ERROR",  # 1st attempt result check
+                True,  # completion 1st attempt
                 TimeoutException(),  # consent 2nd attempt
-                "SUCCESS",  # 2nd attempt result check
+                True,  # completion 2nd attempt
             ]
             mock_app.wait.until.return_value = MagicMock()  # start button
             run_ookla(mock_app)
 
         mock_app.send_results.assert_called_once()
-        mock_app.take_snapshot.assert_any_call("ookla_error_1")
+        mock_app.take_snapshot.assert_any_call("ookla_error_parse_1")
 
     def test_timeout_triggers_retry(self, mock_app):
-        """Retry when timeout occurs waiting for results."""
+        """Retry when timeout occurs waiting for the result URL."""
         mock_app._should_run = MagicMock(return_value=True)
         mock_app._load_with_retry = MagicMock(return_value=True)
         mock_app.auto_consent = True
@@ -156,9 +131,9 @@ class TestRunOokla:
         ):
             mock_wdw.return_value.until.side_effect = [
                 TimeoutException(),  # consent 1st
-                TimeoutException(),  # results timeout 1st
+                TimeoutException(),  # completion timeout 1st
                 TimeoutException(),  # consent 2nd
-                TimeoutException(),  # results timeout 2nd
+                TimeoutException(),  # completion timeout 2nd
             ]
             mock_app.wait.until.return_value = MagicMock()
             run_ookla(mock_app)
@@ -183,7 +158,7 @@ class TestRunOokla:
         ):
             mock_wdw.return_value.until.side_effect = [
                 TimeoutException(),  # consent
-                "ERROR",  # error popup
+                TimeoutException(),  # completion timeout
             ]
             mock_app.wait.until.return_value = MagicMock()
             run_ookla(mock_app)
@@ -199,7 +174,10 @@ class TestRunOokla:
         mock_app.send_results = MagicMock()
         mock_app.take_snapshot = MagicMock()
         mock_app.MAX_RETRIES = 1
-        mock_app.driver.find_element.side_effect = _mock_find_element_results()
+        mock_app.driver.execute_script.side_effect = [
+            None,  # consent click
+            _result(),  # result extraction
+        ]
 
         consent_btn = MagicMock()
         with (
@@ -208,14 +186,14 @@ class TestRunOokla:
         ):
             mock_wdw.return_value.until.side_effect = [
                 consent_btn,  # consent dialog found
-                "SUCCESS",  # results
+                True,  # completion
             ]
             mock_app.wait.until.return_value = MagicMock()
             run_ookla(mock_app)
 
-        mock_app.driver.execute_script.assert_called_once_with(
-            "arguments[0].click();", consent_btn
-        )
+        first_call = mock_app.driver.execute_script.call_args_list[0]
+        assert first_call[0] == ("arguments[0].click();", consent_btn)
+        mock_app.send_results.assert_called_once()
 
     def test_manual_consent_mode(self, mock_app):
         """In manual consent mode, wait for user to dismiss banner."""
@@ -226,7 +204,7 @@ class TestRunOokla:
         mock_app.send_results = MagicMock()
         mock_app.take_snapshot = MagicMock()
         mock_app.MAX_RETRIES = 1
-        mock_app.driver.find_element.side_effect = _mock_find_element_results()
+        mock_app.driver.execute_script.return_value = _result()
 
         banner = MagicMock()
         with (
@@ -236,7 +214,7 @@ class TestRunOokla:
             mock_wdw.return_value.until.side_effect = [
                 banner,  # banner visible
                 True,  # banner dismissed
-                "SUCCESS",  # results
+                True,  # completion
             ]
             mock_app.wait.until.return_value = MagicMock()
             run_ookla(mock_app)
@@ -252,7 +230,7 @@ class TestRunOokla:
         mock_app.send_results = MagicMock()
         mock_app.take_snapshot = MagicMock()
         mock_app.MAX_RETRIES = 1
-        mock_app.driver.find_element.side_effect = _mock_find_element_results()
+        mock_app.driver.execute_script.return_value = _result()
 
         server_elem = MagicMock()
         server_elem.text = "CurrentServer"  # different from ookla_server
@@ -268,7 +246,7 @@ class TestRunOokla:
             mock_wdw.return_value.until.side_effect = [
                 TimeoutException(),  # consent
                 server_elem,  # current server element
-                "SUCCESS",  # results
+                True,  # completion
             ]
             mock_app.wait.until.side_effect = [
                 change_link,  # Change Server link
@@ -291,7 +269,7 @@ class TestRunOokla:
         mock_app.take_snapshot = MagicMock()
         mock_app.MAX_RETRIES = 1
         mock_app.zabbix_host = "my-host"
-        mock_app.driver.find_element.side_effect = _mock_find_element_results()
+        mock_app.driver.execute_script.return_value = _result()
 
         with (
             patch("speedtest_z.sites.ookla.WebDriverWait") as mock_wdw,
@@ -299,7 +277,7 @@ class TestRunOokla:
         ):
             mock_wdw.return_value.until.side_effect = [
                 TimeoutException(),
-                "SUCCESS",
+                True,
             ]
             mock_app.wait.until.return_value = MagicMock()
             run_ookla(mock_app)
