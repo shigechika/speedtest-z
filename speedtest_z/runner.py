@@ -106,7 +106,10 @@ class SpeedtestZ:
         """Handle SIGTERM signal for graceful shutdown."""
         logger.info("SIGTERM received, shutting down...")
         self.close()
-        sys.exit(0)
+        # 128 + SIGTERM, mirroring the 130 (128+SIGINT) exit in cli.main() —
+        # an interrupted run must not report success (exit 0). The shipped
+        # systemd units list both codes in SuccessExitStatus.
+        sys.exit(143)
 
     def _init_driver(self) -> None:
         """Initialize Chrome WebDriver."""

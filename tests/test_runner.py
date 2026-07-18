@@ -4,6 +4,8 @@ import argparse
 import configparser
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from speedtest_z.runner import SpeedtestZ
 from speedtest_z.sender import SenderManager
 
@@ -481,6 +483,21 @@ class TestClose:
         app.driver.quit.side_effect = Exception("session already closed")
         app.close()  # should not raise
         app.sender.close.assert_called_once()
+
+
+class TestHandleSigterm:
+    """Tests for the SIGTERM handler."""
+
+    def test_sigterm_closes_and_exits_143(self):
+        """SIGTERM closes the app and exits with 143 (128+SIGTERM)."""
+        import signal as signal_mod
+
+        app = _make_app()
+        app.close = MagicMock()
+        with pytest.raises(SystemExit) as exc_info:
+            app._handle_sigterm(signal_mod.SIGTERM, None)
+        assert exc_info.value.code == 143
+        app.close.assert_called_once()
 
 
 class TestSenderManagerClose:

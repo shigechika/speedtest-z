@@ -4,8 +4,10 @@ Description=speedtest-z service
 [Service]
 Type=simple
 EnvironmentFile=-/etc/default/speedtest-z
-# パスは環境に合わせて変更してください
+# Adjust the path to your environment
 ExecStart=/home/speedtest-z/.local/bin/speedtest-z $SPEEDTEST_Z_OPTS
+# Interrupted runs exit 130 (SIGINT) / 143 (SIGTERM); treat both as clean stops
+SuccessExitStatus=130 143
 WorkingDirectory=/home/speedtest-z
 User=speedtest-z
 Group=speedtest-z
