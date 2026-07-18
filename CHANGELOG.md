@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.10.1](https://github.com/shigechika/speedtest-z/compare/v0.10.0...v0.10.1) (2026-07-18)
+
+
+### Bug Fixes
+
+* adapt ookla and mlab runners to site UI changes, exit 130 on Ctrl-C ([#38](https://github.com/shigechika/speedtest-z/issues/38)) ([6cf6870](https://github.com/shigechika/speedtest-z/commit/6cf68703c9e7ae4fe93810cafd13b3c1b79862f2))
+
 ## [0.10.0](https://github.com/shigechika/speedtest-z/compare/v0.9.0...v0.10.0) (2026-06-04)
 
 
