@@ -291,8 +291,8 @@ class TestMainConfirmPrompt:
             main()
             mock_stz.assert_called_once()
 
-    def test_prompt_shown_with_yes_flag(self):
-        """The confirmation prompt is still shown on a TTY even with --yes."""
+    def test_prompt_skipped_with_yes_flag(self):
+        """--yes skips the confirmation prompt even on a TTY."""
         with (
             patch("speedtest_z.cli._build_parser") as mock_parser,
             patch("speedtest_z.cli._setup_logging"),
@@ -300,7 +300,7 @@ class TestMainConfirmPrompt:
             patch("speedtest_z.runner.SpeedtestZ") as mock_stz,
             patch("speedtest_z.cli.get_site_runners", return_value={}),
             patch("sys.stdin") as mock_stdin,
-            patch("builtins.input", return_value="y") as mock_input,
+            patch("builtins.input") as mock_input,
         ):
             mock_args = self._make_args(yes=True)
             mock_parser.return_value.parse_args.return_value = mock_args
@@ -308,7 +308,7 @@ class TestMainConfirmPrompt:
             mock_app = MagicMock()
             mock_stz.return_value = mock_app
             main()
-            mock_input.assert_called_once()
+            mock_input.assert_not_called()
             mock_stz.assert_called_once()
 
     def test_prompt_skipped_on_non_tty(self):

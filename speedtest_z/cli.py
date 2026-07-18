@@ -139,11 +139,11 @@ def _init_logging(args: argparse.Namespace) -> None:
 def _confirm_execution(args: argparse.Namespace, sites: list[str]) -> bool:
     """Show confirmation prompt on TTY and return True to continue.
 
-    The prompt is always shown on TTY regardless of the --yes flag.
-    Returns True if the user confirms or stdin is not a TTY.
-    Returns False if the user declines.
+    Returns True without prompting when stdin is not a TTY (pipe/cron) or
+    when --yes was given (-y answers every prompt, matching the usual CLI
+    convention). Otherwise prompts and returns False if the user declines.
     """
-    if not sys.stdin.isatty():
+    if not sys.stdin.isatty() or getattr(args, "yes", False):
         return True
 
     site_list = ", ".join(sites)
