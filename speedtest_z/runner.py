@@ -205,7 +205,11 @@ class SpeedtestZ:
             self.driver.save_screenshot(filepath)
             logger.debug(f"Snapshot saved: {filename}")
         except Exception as e:
-            logger.warning(f"Failed to take snapshot: {e}")
+            # Keep the WARNING to one short line: a dead driver (e.g. after
+            # Ctrl-C also killed Chrome) raises with a multi-line urllib3
+            # message. Full detail goes to DEBUG.
+            logger.warning(f"Failed to take snapshot: {type(e).__name__}")
+            logger.debug(f"Snapshot failure detail: {e}")
 
     def send_results(self, data_list: list[dict[str, str]]) -> None:
         """Send measurement results to enabled backends (Zabbix, Grafana, OTel).

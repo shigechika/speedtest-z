@@ -3,14 +3,11 @@
 from __future__ import annotations
 
 import logging
+import re
 import time
 from typing import TYPE_CHECKING
 
-from selenium.common.exceptions import (
-    NoSuchElementException,
-    StaleElementReferenceException,
-    TimeoutException,
-)
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -22,6 +19,67 @@ logger = logging.getLogger("speedtest-z")
 
 URL = "https://www.speedtest.net/"
 
+# The redesigned UI (React/MUI, observed 2026-07) has no stable ids/classes on
+# the GO button; the aria-label is the only semantic hook. The trailing "i"
+# makes the match case-insensitive so a cosmetic case change cannot break it.
+START_BUTTON = (By.CSS_SELECTOR, 'button[aria-label^="start speed test" i]')
+
+# Result values render as <h3 class="... font-mono ..."> inside a small
+# labelled container, and latency values as bare numeric spans. The utility
+# (Tailwind) class names carry no semantics, so extract everything in one
+# JavaScript pass. Each h3 is classified by its NEAREST labelled ancestor
+# ("Download Mbps 92.98" / "Upload Mbps 87.07"); a wider ancestor whose text
+# contains both labels is ambiguous and must be skipped, otherwise the
+# download value would also be reported as upload.
+_EXTRACT_RESULTS_JS = """
+const results = {download: null, upload: null};
+for (const h of document.querySelectorAll('h3.font-mono')) {
+  let box = h.parentElement;
+  for (let i = 0; i < 4 && box; i++) {
+    const t = (box.textContent || '').toLowerCase();
+    if (t.length < 60 && (t.includes('download') || t.includes('upload'))) {
+      if (!(t.includes('download') && t.includes('upload'))) {
+        const key = t.includes('download') ? 'download' : 'upload';
+        if (results[key] === null) results[key] = h.textContent.trim();
+      }
+      break;
+    }
+    box = box.parentElement;
+  }
+}
+const isNum = (t) => /^[0-9]+(\\.[0-9]+)?$/.test(t);
+let ping = null;
+// The three latency rows each carry an icon labelled "Idle Latency" /
+// "Download Latency" / "Upload Latency"; anchor idle ping to its icon so a
+// layout reorder cannot swap in a different latency value.
+const idleIcon = document.querySelector('[aria-label="idle latency" i]');
+if (idleIcon && idleIcon.parentElement) {
+  const span = [...idleIcon.parentElement.querySelectorAll('span')]
+    .find(s => isNum((s.textContent || '').trim()));
+  if (span) ping = span.textContent.trim();
+}
+if (ping === null) {
+  const pings = [...document.querySelectorAll('span[class*="min-w"]')]
+    .map(e => (e.textContent || '').trim())
+    .filter(isNum);
+  ping = pings[0] || null;
+}
+return {download: results.download, upload: results.upload, ping: ping};
+"""
+
+
+def _clean_number(text: str) -> str:
+    """Normalize a scraped value to a bare numeric string.
+
+    Strips thousands separators and unit suffixes ("1,053.9" -> "1053.9",
+    "92.98 Mbps" -> "92.98"); returns "" when no numeric token remains, so
+    callers can treat the value as a parse failure. Zabbix items are FLOAT
+    and would reject a comma- or unit-decorated string.
+    """
+    tokens = text.replace(",", "").split()
+    token = tokens[0] if tokens else ""
+    return token if re.fullmatch(r"[0-9]+(\.[0-9]+)?", token) else ""
+
 
 def run_ookla(app: SpeedtestZ) -> None:
     """Run Ookla Speedtest (speedtest.net)."""
@@ -32,13 +90,15 @@ def run_ookla(app: SpeedtestZ) -> None:
         try:
             logger.info(f"ookla: OPEN (Attempt {attempt + 1}/{app.MAX_RETRIES})")
 
+            # On retries, navigate back to the top page: a finished attempt
+            # leaves the browser on a /result/<id> URL where refresh() would
+            # not offer a new test.
             if attempt > 0:
                 logger.info("ookla: Reloading page...")
-                app.driver.refresh()
+            if not app._load_with_retry(URL):
+                return
+            if attempt > 0:
                 time.sleep(5)
-            else:
-                if not app._load_with_retry(URL):
-                    return
 
             if app.auto_consent:
                 try:
@@ -61,7 +121,10 @@ def run_ookla(app: SpeedtestZ) -> None:
                 except TimeoutException:
                     logger.debug("ookla: Privacy banner not found or not dismissed")
 
-            # Server Selection
+            # Server Selection (best effort: written for the pre-2026 UI; the
+            # redesigned UI keeps a "Change Server" link but the surrounding
+            # selectors are unverified. Failures fall through to the default
+            # auto-selected server.)
             if app.ookla_server is not None:
                 need_change = True
                 try:
@@ -132,65 +195,38 @@ def run_ookla(app: SpeedtestZ) -> None:
                             logger.warning(f"ookla: Server selection failed: {e}")
 
             try:
-                start_btn = app.wait.until(
-                    EC.element_to_be_clickable((By.CLASS_NAME, "start-text"))
-                )
+                start_btn = app.wait.until(EC.element_to_be_clickable(START_BUTTON))
                 start_btn.click()
                 logger.info("ookla: START")
             except Exception as e:
                 logger.warning(f"ookla: Start button error: {e}")
                 continue
 
-            def _check_result_or_error(d):
-                try:
-                    try:
-                        if d.find_element(
-                            By.CSS_SELECTOR,
-                            ".error-container, .notification-error",
-                        ).is_displayed():
-                            return "ERROR"
-                    except NoSuchElementException:
-                        pass
-
-                    try:
-                        if d.find_element(By.CLASS_NAME, "result-data-large").is_displayed():
-                            dl = d.find_element(By.CLASS_NAME, "download-speed").text
-                            ul = d.find_element(By.CLASS_NAME, "upload-speed").text
-                            if (
-                                dl
-                                and ul
-                                and dl not in ["\u2014", "-"]
-                                and ul not in ["\u2014", "-"]
-                            ):
-                                return "SUCCESS"
-                    except NoSuchElementException:
-                        pass
-                except StaleElementReferenceException:
-                    pass
-                return False
-
+            # A finished test navigates to /result/<id>; an error popup or a
+            # stalled test never does, so the timeout below covers both.
             try:
-                status = WebDriverWait(app.driver, 90).until(_check_result_or_error)
+                WebDriverWait(app.driver, 90).until(lambda d: "/result/" in d.current_url)
             except TimeoutException:
                 logger.error("ookla: Timeout waiting for results.")
-                status = "TIMEOUT"
-
-            if status == "ERROR":
-                logger.warning("ookla: Detected Error Popup. Retrying...")
-                app.take_snapshot(f"ookla_error_{attempt + 1}")
-                continue
-            elif status == "TIMEOUT":
                 app.take_snapshot(f"ookla_timeout_{attempt + 1}")
                 continue
 
             logger.info("ookla: COMPLETED")
             time.sleep(2)
 
-            download = app.driver.find_element(By.CLASS_NAME, "download-speed").text
-            upload = app.driver.find_element(By.CLASS_NAME, "upload-speed").text
-            ping = app.driver.find_element(By.CLASS_NAME, "ping-speed").text
+            result = app.driver.execute_script(_EXTRACT_RESULTS_JS) or {}
+            download = _clean_number(result.get("download") or "")
+            upload = _clean_number(result.get("upload") or "")
+            ping = _clean_number(result.get("ping") or "")
 
             logger.debug(f"ookla Result: {download=} {upload=} {ping=}")
+
+            # Both throughput values must parse, or the attempt is retried —
+            # sending a partial result would hide an extraction regression.
+            if not download or not upload:
+                logger.error("ookla: Invalid download/upload value; retrying.")
+                app.take_snapshot(f"ookla_error_parse_{attempt + 1}")
+                continue
 
             data = [
                 {
@@ -203,12 +239,19 @@ def run_ookla(app: SpeedtestZ) -> None:
                     "key": "ookla.upload",
                     "value": upload,
                 },
-                {
-                    "host": app.zabbix_host,
-                    "key": "ookla.ping",
-                    "value": ping,
-                },
             ]
+            if ping:
+                data.append(
+                    {
+                        "host": app.zabbix_host,
+                        "key": "ookla.ping",
+                        "value": ping,
+                    }
+                )
+            else:
+                # The ping span heuristic is weaker than the labelled h3s;
+                # do not fail a good throughput measurement over it.
+                logger.warning("ookla: ping value missing; sending download/upload only.")
             app.send_results(data)
             app.take_snapshot("ookla")
             return

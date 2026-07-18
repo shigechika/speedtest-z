@@ -216,6 +216,7 @@ def main() -> None:
         app.sender.close()
         app.sender = OutputCollector(output_fmt)
 
+    interrupted = False
     try:
         site_runners = get_site_runners()
         for site in sites:
@@ -229,11 +230,17 @@ def main() -> None:
         app.stamp_version()
     except KeyboardInterrupt:
         logger.info("Interrupted by user")
+        interrupted = True
     except Exception:
         # Surface a non-zero exit code so systemd/cron can detect the failure.
         logger.exception("Fatal Error")
         sys.exit(1)
     finally:
         app.close()
+
+    if interrupted:
+        # 128 + SIGINT, the conventional exit code for Ctrl-C. Also skips the
+        # FINISH log line, which would misleadingly suggest a complete run.
+        sys.exit(130)
 
     logger.info("speedtest-z: FINISH")
