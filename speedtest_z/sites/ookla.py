@@ -90,6 +90,61 @@ def _clean_number(text: str) -> str:
     return token if re.fullmatch(r"[0-9]+(\.[0-9]+)?", token) else ""
 
 
+# Wait predicates below return Literal[False] (not None) for the miss case:
+# selenium's WebDriverWait.until() stubs narrow `Literal[False] | T` to `T`
+# (same convention as speedtest_z/sites/mlab.py).
+
+DIALOG_SELECTOR = '[role="dialog"]'
+
+
+def _visible_change_button(driver: WebDriver) -> WebElement | Literal[False]:
+    """Return the visible "Change Server" button, or False while absent.
+
+    The page renders two responsive variants of the button;
+    element_to_be_clickable would latch onto the first match even when it is
+    the hidden one, so pick whichever is actually displayed.
+    """
+    for btn in driver.find_elements(By.XPATH, "//button[normalize-space()='Change Server']"):
+        if btn.is_displayed() and btn.is_enabled():
+            return btn
+    return False
+
+
+def _server_rows(driver: WebDriver) -> list[WebElement] | Literal[False]:
+    """Return non-empty server rows in the dialog, or False while absent.
+
+    Re-locates the dialog on every poll: a React re-render can replace the
+    node and make a captured reference stale. Rows are div[role=button] list
+    items; icon-only buttons (close, Select Automatically) are <button> tags
+    or have no text.
+    """
+    try:
+        dlg = driver.find_element(By.CSS_SELECTOR, DIALOG_SELECTOR)
+        rows = [
+            r
+            for r in dlg.find_elements(By.CSS_SELECTOR, 'div[role="button"]')
+            if (r.text or "").strip()
+        ]
+    except (NoSuchElementException, StaleElementReferenceException):
+        return False
+    return rows or False
+
+
+def _close_dialog(app: SpeedtestZ) -> None:
+    """Close an open server dialog so it cannot block the GO button.
+
+    MUI dialogs trap focus inside themselves and close on Escape; also wait
+    for the node to disappear so a surviving overlay is at least logged.
+    """
+    try:
+        app.driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+        WebDriverWait(app.driver, 3).until_not(
+            EC.presence_of_element_located((By.CSS_SELECTOR, DIALOG_SELECTOR))
+        )
+    except Exception as e:
+        logger.debug(f"ookla: Dialog close not confirmed: {e}")
+
+
 def _select_server(app: SpeedtestZ) -> None:
     """Pin the measurement server on the redesigned UI (best effort).
 
@@ -106,58 +161,43 @@ def _select_server(app: SpeedtestZ) -> None:
     if not server:
         return
 
-    def _visible_change_button(driver: WebDriver) -> WebElement | Literal[False]:
-        # The page renders two "Change Server" buttons (responsive variants);
-        # element_to_be_clickable would latch onto the first match even when
-        # it is the hidden one, so pick whichever is actually displayed.
-        for btn in driver.find_elements(By.XPATH, "//button[normalize-space()='Change Server']"):
-            if btn.is_displayed() and btn.is_enabled():
-                return btn
-        return False
-
     try:
         # The button appears only after "Finding optimal server..." resolves
         change_btn = WebDriverWait(app.driver, 15).until(_visible_change_button)
         change_btn.click()
         dialog = WebDriverWait(app.driver, 5).until(
-            EC.visibility_of_element_located((By.CSS_SELECTOR, '[role="dialog"]'))
+            EC.visibility_of_element_located((By.CSS_SELECTOR, DIALOG_SELECTOR))
         )
 
-        # The dialog header shows the currently selected server
-        if server.lower() in dialog.text[:150].lower():
+        # Only the dialog title names the currently selected server; the
+        # dialog body already lists nearby servers, so matching on the whole
+        # dialog text would false-positive when the target is merely nearby.
+        title_text = ""
+        with contextlib.suppress(NoSuchElementException):
+            title_text = dialog.find_element(By.CSS_SELECTOR, ".MuiDialogTitle-root").text
+        if server.lower() in title_text.lower():
             logger.info(f"ookla: Server already selected ({server}).")
-            app.driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+            _close_dialog(app)
             return
 
         search_box = dialog.find_element(By.CSS_SELECTOR, 'input[type="text"]')
+        search_box.clear()
         search_box.send_keys(server)
 
-        def _server_rows(driver: WebDriver) -> list[WebElement] | Literal[False]:
-            # Re-locate the dialog on every poll: a React re-render can
-            # replace the node and make a captured reference stale. Rows are
-            # div[role=button] list items; icon-only buttons (close, Select
-            # Automatically) are <button> tags or have no text.
-            try:
-                dlg = driver.find_element(By.CSS_SELECTOR, '[role="dialog"]')
-                rows = [
-                    r
-                    for r in dlg.find_elements(By.CSS_SELECTOR, 'div[role="button"]')
-                    if (r.text or "").strip()
-                ]
-            except (NoSuchElementException, StaleElementReferenceException):
-                return False
-            return rows or False
-
         rows = WebDriverWait(app.driver, 10).until(_server_rows)
-        target = next((r for r in rows if server.lower() in r.text.lower()), rows[0])
+        target = next((r for r in rows if server.lower() in r.text.lower()), None)
+        if target is None:
+            # Do not click an arbitrary row: a wrong server pinned silently is
+            # worse than falling back to the auto-selected one.
+            logger.warning(f"ookla: No server row matched '{server}'; using auto-selected server.")
+            _close_dialog(app)
+            return
         label = target.text.splitlines()[0] if target.text else server
         target.click()
         logger.info(f"ookla: Server selected ({label})")
     except Exception as e:
         logger.warning(f"ookla: Server selection failed; using auto-selected server: {e}")
-        # Close a possibly-open dialog so it cannot block the GO button
-        with contextlib.suppress(Exception):
-            app.driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+        _close_dialog(app)
 
 
 def run_ookla(app: SpeedtestZ) -> None:
