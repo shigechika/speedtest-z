@@ -4,12 +4,31 @@ from unittest.mock import MagicMock, patch
 
 from selenium.common.exceptions import TimeoutException
 
-from speedtest_z.sites.ookla import run_ookla
+from speedtest_z.sites.ookla import _clean_number, run_ookla
 
 
 def _result(download="250.5", upload="80.3", ping="5"):
     """Return a result dict as produced by the extraction JavaScript."""
     return {"download": download, "upload": upload, "ping": ping}
+
+
+class TestCleanNumber:
+    """Tests for _clean_number()."""
+
+    def test_plain_number_passes_through(self):
+        assert _clean_number("92.98") == "92.98"
+        assert _clean_number("17") == "17"
+
+    def test_thousands_separator_stripped(self):
+        assert _clean_number("1,053.9") == "1053.9"
+
+    def test_unit_suffix_stripped(self):
+        assert _clean_number("92.98 Mbps") == "92.98"
+
+    def test_non_numeric_rejected(self):
+        assert _clean_number("") == ""
+        assert _clean_number("—") == ""
+        assert _clean_number("Mbps") == ""
 
 
 class TestRunOokla:
@@ -84,6 +103,52 @@ class TestRunOokla:
         mock_app.send_results.assert_not_called()
         # Each attempt loads the top page (refresh would stay on /result/<id>)
         assert mock_app._load_with_retry.call_count == 2
+
+    def test_comma_separated_values_normalized(self, mock_app):
+        """Thousands separators are stripped before sending to Zabbix."""
+        mock_app._should_run = MagicMock(return_value=True)
+        mock_app._load_with_retry = MagicMock(return_value=True)
+        mock_app.auto_consent = True
+        mock_app.ookla_server = None
+        mock_app.send_results = MagicMock()
+        mock_app.take_snapshot = MagicMock()
+        mock_app.MAX_RETRIES = 1
+        mock_app.driver.execute_script.return_value = _result("1,053.9", "1,002.1", "8.4")
+
+        with (
+            patch("speedtest_z.sites.ookla.WebDriverWait") as mock_wdw,
+            patch("speedtest_z.sites.ookla.time"),
+        ):
+            mock_wdw.return_value.until.side_effect = [TimeoutException(), True]
+            mock_app.wait.until.return_value = MagicMock()
+            run_ookla(mock_app)
+
+        data = mock_app.send_results.call_args[0][0]
+        assert data[0]["value"] == "1053.9"
+        assert data[1]["value"] == "1002.1"
+        assert data[2]["value"] == "8.4"
+
+    def test_missing_ping_sends_throughput_only(self, mock_app):
+        """A missing ping does not fail the run; download/upload still send."""
+        mock_app._should_run = MagicMock(return_value=True)
+        mock_app._load_with_retry = MagicMock(return_value=True)
+        mock_app.auto_consent = True
+        mock_app.ookla_server = None
+        mock_app.send_results = MagicMock()
+        mock_app.take_snapshot = MagicMock()
+        mock_app.MAX_RETRIES = 1
+        mock_app.driver.execute_script.return_value = _result("300.0", "95.5", None)
+
+        with (
+            patch("speedtest_z.sites.ookla.WebDriverWait") as mock_wdw,
+            patch("speedtest_z.sites.ookla.time"),
+        ):
+            mock_wdw.return_value.until.side_effect = [TimeoutException(), True]
+            mock_app.wait.until.return_value = MagicMock()
+            run_ookla(mock_app)
+
+        data = mock_app.send_results.call_args[0][0]
+        assert [d["key"] for d in data] == ["ookla.download", "ookla.upload"]
 
     def test_invalid_result_triggers_retry(self, mock_app):
         """Retry when the result page yields no numeric download value."""

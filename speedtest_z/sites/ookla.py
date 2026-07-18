@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import time
 from typing import TYPE_CHECKING
 
@@ -19,8 +20,9 @@ logger = logging.getLogger("speedtest-z")
 URL = "https://www.speedtest.net/"
 
 # The redesigned UI (React/MUI, observed 2026-07) has no stable ids/classes on
-# the GO button; the aria-label is the only semantic hook.
-START_BUTTON = (By.CSS_SELECTOR, 'button[aria-label^="start speed test"]')
+# the GO button; the aria-label is the only semantic hook. The trailing "i"
+# makes the match case-insensitive so a cosmetic case change cannot break it.
+START_BUTTON = (By.CSS_SELECTOR, 'button[aria-label^="start speed test" i]')
 
 # Result values render as <h3 class="... font-mono ..."> inside a small
 # labelled container, and latency values as bare numeric spans. The utility
@@ -45,11 +47,38 @@ for (const h of document.querySelectorAll('h3.font-mono')) {
     box = box.parentElement;
   }
 }
-const pings = [...document.querySelectorAll('span[class*="min-w"]')]
-  .map(e => (e.textContent || '').trim())
-  .filter(t => /^[0-9]+$/.test(t));
-return {download: results.download, upload: results.upload, ping: pings[0] || null};
+const isNum = (t) => /^[0-9]+(\\.[0-9]+)?$/.test(t);
+let ping = null;
+// The three latency rows each carry an icon labelled "Idle Latency" /
+// "Download Latency" / "Upload Latency"; anchor idle ping to its icon so a
+// layout reorder cannot swap in a different latency value.
+const idleIcon = document.querySelector('[aria-label="idle latency" i]');
+if (idleIcon && idleIcon.parentElement) {
+  const span = [...idleIcon.parentElement.querySelectorAll('span')]
+    .find(s => isNum((s.textContent || '').trim()));
+  if (span) ping = span.textContent.trim();
+}
+if (ping === null) {
+  const pings = [...document.querySelectorAll('span[class*="min-w"]')]
+    .map(e => (e.textContent || '').trim())
+    .filter(isNum);
+  ping = pings[0] || null;
+}
+return {download: results.download, upload: results.upload, ping: ping};
 """
+
+
+def _clean_number(text: str) -> str:
+    """Normalize a scraped value to a bare numeric string.
+
+    Strips thousands separators and unit suffixes ("1,053.9" -> "1053.9",
+    "92.98 Mbps" -> "92.98"); returns "" when no numeric token remains, so
+    callers can treat the value as a parse failure. Zabbix items are FLOAT
+    and would reject a comma- or unit-decorated string.
+    """
+    tokens = text.replace(",", "").split()
+    token = tokens[0] if tokens else ""
+    return token if re.fullmatch(r"[0-9]+(\.[0-9]+)?", token) else ""
 
 
 def run_ookla(app: SpeedtestZ) -> None:
@@ -61,17 +90,15 @@ def run_ookla(app: SpeedtestZ) -> None:
         try:
             logger.info(f"ookla: OPEN (Attempt {attempt + 1}/{app.MAX_RETRIES})")
 
+            # On retries, navigate back to the top page: a finished attempt
+            # leaves the browser on a /result/<id> URL where refresh() would
+            # not offer a new test.
             if attempt > 0:
-                # Navigate back to the top page: a finished attempt leaves the
-                # browser on a /result/<id> URL where refresh() would not
-                # offer a new test.
                 logger.info("ookla: Reloading page...")
-                if not app._load_with_retry(URL):
-                    return
+            if not app._load_with_retry(URL):
+                return
+            if attempt > 0:
                 time.sleep(5)
-            else:
-                if not app._load_with_retry(URL):
-                    return
 
             if app.auto_consent:
                 try:
@@ -188,14 +215,16 @@ def run_ookla(app: SpeedtestZ) -> None:
             time.sleep(2)
 
             result = app.driver.execute_script(_EXTRACT_RESULTS_JS) or {}
-            download = result.get("download") or ""
-            upload = result.get("upload") or ""
-            ping = result.get("ping") or ""
+            download = _clean_number(result.get("download") or "")
+            upload = _clean_number(result.get("upload") or "")
+            ping = _clean_number(result.get("ping") or "")
 
             logger.debug(f"ookla Result: {download=} {upload=} {ping=}")
 
-            if not any(c.isdigit() for c in download):
-                logger.error("ookla: Invalid download value; skipping send.")
+            # Both throughput values must parse, or the attempt is retried —
+            # sending a partial result would hide an extraction regression.
+            if not download or not upload:
+                logger.error("ookla: Invalid download/upload value; retrying.")
                 app.take_snapshot(f"ookla_error_parse_{attempt + 1}")
                 continue
 
@@ -210,12 +239,19 @@ def run_ookla(app: SpeedtestZ) -> None:
                     "key": "ookla.upload",
                     "value": upload,
                 },
-                {
-                    "host": app.zabbix_host,
-                    "key": "ookla.ping",
-                    "value": ping,
-                },
             ]
+            if ping:
+                data.append(
+                    {
+                        "host": app.zabbix_host,
+                        "key": "ookla.ping",
+                        "value": ping,
+                    }
+                )
+            else:
+                # The ping span heuristic is weaker than the labelled h3s;
+                # do not fail a good throughput measurement over it.
+                logger.warning("ookla: ping value missing; sending download/upload only.")
             app.send_results(data)
             app.take_snapshot("ookla")
             return

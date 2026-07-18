@@ -4,7 +4,12 @@ from unittest.mock import MagicMock, call, patch
 
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
-from speedtest_z.sites.mlab import _enabled_start_button, _find_consent, run_mlab
+from speedtest_z.sites.mlab import (
+    CONSENT_SELECTOR,
+    _enabled_start_button,
+    _find_consent,
+    run_mlab,
+)
 
 
 def _mock_find_element_results(
@@ -30,21 +35,18 @@ def _mock_find_element_results(
 class TestMlabHelpers:
     """Tests for the consent/start-button helpers."""
 
-    def test_find_consent_prefers_current_id(self):
-        """The current site id (privacyConsent) is tried first."""
+    def test_consent_selector_covers_current_and_legacy_ids(self):
+        """The combined selector matches both the current and legacy ids."""
+        assert "#privacyConsent" in CONSENT_SELECTOR
+        assert "#demo-human" in CONSENT_SELECTOR
+
+    def test_find_consent_returns_element(self):
+        """The consent checkbox element is returned when present."""
         driver = MagicMock()
         el = MagicMock()
         driver.find_element.return_value = el
         assert _find_consent(driver) is el
-        assert driver.find_element.call_args[0][1] == "privacyConsent"
-
-    def test_find_consent_falls_back_to_legacy_id(self):
-        """The legacy id (demo-human) is used when the current one is absent."""
-        driver = MagicMock()
-        el = MagicMock()
-        driver.find_element.side_effect = [NoSuchElementException(), el]
-        assert _find_consent(driver) is el
-        assert driver.find_element.call_args[0][1] == "demo-human"
+        assert driver.find_element.call_args[0][1] == CONSENT_SELECTOR
 
     def test_find_consent_returns_none_when_absent(self):
         """None is returned when no consent checkbox exists."""
@@ -53,12 +55,12 @@ class TestMlabHelpers:
         assert _find_consent(driver) is None
 
     def test_enabled_start_button_waits_out_disabled_class(self):
-        """False is returned while the button still has the disabled class."""
+        """None is returned while the button still has the disabled class."""
         driver = MagicMock()
         btn = MagicMock()
         btn.get_attribute.return_value = "button special startButton big disabled"
         driver.find_element.return_value = btn
-        assert _enabled_start_button(driver) is False
+        assert _enabled_start_button(driver) is None
 
     def test_enabled_start_button_returns_button(self):
         """The button is returned once the disabled class is gone."""
@@ -69,10 +71,10 @@ class TestMlabHelpers:
         assert _enabled_start_button(driver) is btn
 
     def test_enabled_start_button_absent(self):
-        """False is returned when the button does not exist yet."""
+        """None is returned when the button does not exist yet."""
         driver = MagicMock()
         driver.find_element.side_effect = NoSuchElementException()
-        assert _enabled_start_button(driver) is False
+        assert _enabled_start_button(driver) is None
 
 
 class TestRunMlab:
@@ -154,6 +156,7 @@ class TestRunMlab:
         mock_app.driver.find_element.side_effect = _mock_find_element_results()
 
         chk_box = MagicMock()
+        chk_box.is_selected.return_value = False
         with patch("speedtest_z.sites.mlab.WebDriverWait") as mock_wdw:
             mock_app.wait.until.side_effect = [
                 chk_box,  # consent checkbox
@@ -167,6 +170,30 @@ class TestRunMlab:
         assert mock_app.driver.execute_script.call_args_list[0] == call(
             "arguments[0].click();", chk_box
         )
+
+    def test_auto_consent_prechecked_not_clicked(self, mock_app):
+        """A pre-checked consent checkbox must not be toggled off."""
+        mock_app._should_run = MagicMock(return_value=True)
+        mock_app._load_with_retry = MagicMock(return_value=True)
+        mock_app.auto_consent = True
+        mock_app.send_results = MagicMock()
+        mock_app.take_snapshot = MagicMock()
+        mock_app.driver.find_element.side_effect = _mock_find_element_results()
+
+        chk_box = MagicMock()
+        chk_box.is_selected.return_value = True
+        with patch("speedtest_z.sites.mlab.WebDriverWait") as mock_wdw:
+            mock_app.wait.until.side_effect = [
+                chk_box,  # consent checkbox (already checked)
+                MagicMock(),  # start button
+            ]
+            mock_wdw.return_value.until.return_value = True
+            run_mlab(mock_app)
+
+        # Only the start button is JS-clicked; the checkbox is left alone
+        assert mock_app.driver.execute_script.call_count == 1
+        for js_call in mock_app.driver.execute_script.call_args_list:
+            assert js_call[0][1] is not chk_box
 
     def test_start_button_error_returns_early(self, mock_app):
         """Return early when start button is not clickable."""
