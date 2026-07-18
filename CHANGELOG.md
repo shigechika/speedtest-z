@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.10.3](https://github.com/shigechika/speedtest-z/compare/v0.10.2...v0.10.3) (2026-07-18)
+
+
+### Bug Fixes
+
+* exit 143 on SIGTERM and declare interrupt codes in systemd units ([#47](https://github.com/shigechika/speedtest-z/issues/47)) ([c4a9847](https://github.com/shigechika/speedtest-z/commit/c4a98478a845c61e0858f8ba1259b37cc3c60383))
+* rewrite ookla server selection for the redesigned UI ([#48](https://github.com/shigechika/speedtest-z/issues/48)) ([a7b74f1](https://github.com/shigechika/speedtest-z/commit/a7b74f1ee0c699e8b147f6f40cd5b0123e77306d))
+
 ## [0.10.2](https://github.com/shigechika/speedtest-z/compare/v0.10.1...v0.10.2) (2026-07-18)
 
 
