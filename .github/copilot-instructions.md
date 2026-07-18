@@ -14,6 +14,10 @@ See `CLAUDE.md` for the authoritative command list, architecture map, and
 config.ini design — read it before reviewing changes to `runner.py`,
 `sender.py`, or any `sites/*.py`.
 
+Write review comments in English. `CLAUDE.md`'s Japanese-conversation rule
+applies to interactive assistant sessions, not to review comments on this
+public repository.
+
 # Build & validate
 
 ```bash
