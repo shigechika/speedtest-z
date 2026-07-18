@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.10.2](https://github.com/shigechika/speedtest-z/compare/v0.10.1...v0.10.2) (2026-07-18)
+
+
+### Bug Fixes
+
+* make -y/--yes skip the execution confirmation prompt ([#44](https://github.com/shigechika/speedtest-z/issues/44)) ([60c390e](https://github.com/shigechika/speedtest-z/commit/60c390e221b78cb68ec2c6bdec5429cc676f2b98))
+
 ## [0.10.1](https://github.com/shigechika/speedtest-z/compare/v0.10.0...v0.10.1) (2026-07-18)
 
 
