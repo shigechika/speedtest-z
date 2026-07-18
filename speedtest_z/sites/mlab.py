@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
@@ -24,28 +24,33 @@ URL = "https://speed.measurementlab.net/"
 CONSENT_SELECTOR = "#privacyConsent, #demo-human"
 
 
-def _find_consent(driver: WebDriver) -> WebElement | None:
-    """Return the consent checkbox element, or None if not present."""
+# Both wait predicates return Literal[False] (not None) for the miss case:
+# selenium's WebDriverWait.until() stubs narrow `Literal[False] | T` to `T`,
+# so False keeps mypy happy at the call sites while None would not.
+
+
+def _find_consent(driver: WebDriver) -> WebElement | Literal[False]:
+    """Return the consent checkbox element, or False if not present."""
     try:
         return driver.find_element(By.CSS_SELECTOR, CONSENT_SELECTOR)
     except NoSuchElementException:
-        return None
+        return False
 
 
 def _consent_checked(driver: WebDriver) -> bool:
     """Return True when the consent checkbox exists and is checked."""
     chk_box = _find_consent(driver)
-    return chk_box is not None and chk_box.is_selected()
+    return bool(chk_box and chk_box.is_selected())
 
 
-def _enabled_start_button(driver: WebDriver) -> WebElement | None:
+def _enabled_start_button(driver: WebDriver) -> WebElement | Literal[False]:
     """Return the start button once it no longer carries the disabled class."""
     try:
         btn = driver.find_element(By.CSS_SELECTOR, "a.startButton")
     except NoSuchElementException:
-        return None
+        return False
     if "disabled" in (btn.get_attribute("class") or ""):
-        return None
+        return False
     return btn
 
 

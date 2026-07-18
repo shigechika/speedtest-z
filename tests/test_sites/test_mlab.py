@@ -48,19 +48,19 @@ class TestMlabHelpers:
         assert _find_consent(driver) is el
         assert driver.find_element.call_args[0][1] == CONSENT_SELECTOR
 
-    def test_find_consent_returns_none_when_absent(self):
-        """None is returned when no consent checkbox exists."""
+    def test_find_consent_returns_false_when_absent(self):
+        """False is returned when no consent checkbox exists."""
         driver = MagicMock()
         driver.find_element.side_effect = NoSuchElementException()
-        assert _find_consent(driver) is None
+        assert _find_consent(driver) is False
 
     def test_enabled_start_button_waits_out_disabled_class(self):
-        """None is returned while the button still has the disabled class."""
+        """False is returned while the button still has the disabled class."""
         driver = MagicMock()
         btn = MagicMock()
         btn.get_attribute.return_value = "button special startButton big disabled"
         driver.find_element.return_value = btn
-        assert _enabled_start_button(driver) is None
+        assert _enabled_start_button(driver) is False
 
     def test_enabled_start_button_returns_button(self):
         """The button is returned once the disabled class is gone."""
@@ -71,10 +71,10 @@ class TestMlabHelpers:
         assert _enabled_start_button(driver) is btn
 
     def test_enabled_start_button_absent(self):
-        """None is returned when the button does not exist yet."""
+        """False is returned when the button does not exist yet."""
         driver = MagicMock()
         driver.find_element.side_effect = NoSuchElementException()
-        assert _enabled_start_button(driver) is None
+        assert _enabled_start_button(driver) is False
 
 
 class TestRunMlab:
