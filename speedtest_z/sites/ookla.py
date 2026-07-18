@@ -8,7 +8,11 @@ import re
 import time
 from typing import TYPE_CHECKING, Literal
 
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+    TimeoutException,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -129,13 +133,19 @@ def _select_server(app: SpeedtestZ) -> None:
         search_box.send_keys(server)
 
         def _server_rows(driver: WebDriver) -> list[WebElement] | Literal[False]:
-            # Rows are div[role=button] list items; icon-only buttons (close,
-            # Select Automatically) are <button> tags or have no text
-            rows = [
-                r
-                for r in dialog.find_elements(By.CSS_SELECTOR, 'div[role="button"]')
-                if (r.text or "").strip()
-            ]
+            # Re-locate the dialog on every poll: a React re-render can
+            # replace the node and make a captured reference stale. Rows are
+            # div[role=button] list items; icon-only buttons (close, Select
+            # Automatically) are <button> tags or have no text.
+            try:
+                dlg = driver.find_element(By.CSS_SELECTOR, '[role="dialog"]')
+                rows = [
+                    r
+                    for r in dlg.find_elements(By.CSS_SELECTOR, 'div[role="button"]')
+                    if (r.text or "").strip()
+                ]
+            except (NoSuchElementException, StaleElementReferenceException):
+                return False
             return rows or False
 
         rows = WebDriverWait(app.driver, 10).until(_server_rows)
