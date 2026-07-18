@@ -7,6 +7,8 @@ Wants=network-online.target
 Type=simple
 EnvironmentFile=-/etc/default/speedtest-z
 ExecStart=/usr/bin/speedtest-z $SPEEDTEST_Z_OPTS
+# Interrupted runs exit 130 (SIGINT) / 143 (SIGTERM); treat both as clean stops
+SuccessExitStatus=130 143
 WorkingDirectory=/var/lib/speedtest-z
 User=speedtest-z
 Group=speedtest-z
