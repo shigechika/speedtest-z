@@ -4,7 +4,10 @@ dry_run = true
 headless = false
 # Timeout in seconds
 timeout = 30
-# Ookla test server (omit for auto-select)
+# Ookla test server (omit for auto-select). Best effort: on the redesigned
+# speedtest.net the server picker only renders after server discovery
+# resolves, which has been observed to stall under automated (Selenium)
+# Chrome — the runner then falls back to the auto-selected server.
 # ookla_server = IPA CyberLab 400G
 # Chrome profile directory (for persisting cookies and consent)
 # chrome_profile_dir = ~/.config/speedtest-z/chrome-profile

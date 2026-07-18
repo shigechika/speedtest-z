@@ -2,17 +2,22 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import re
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 if TYPE_CHECKING:
+    from selenium.webdriver.remote.webdriver import WebDriver
+    from selenium.webdriver.remote.webelement import WebElement
+
     from speedtest_z.runner import SpeedtestZ
 
 logger = logging.getLogger("speedtest-z")
@@ -81,6 +86,70 @@ def _clean_number(text: str) -> str:
     return token if re.fullmatch(r"[0-9]+(\.[0-9]+)?", token) else ""
 
 
+def _select_server(app: SpeedtestZ) -> None:
+    """Pin the measurement server on the redesigned UI (best effort).
+
+    Flow verified in a human-driven browser 2026-07-18: the pre-test page has
+    a "Change Server" <button> (the pre-2026 LINK_TEXT selector matched only
+    <a> tags), which opens a [role="dialog"] with a single text input; result
+    rows are div[role="button"] list items and the dialog closes on
+    selection. Caveat: under automated (Selenium) Chrome the pre-test server
+    discovery has been observed to stall ("Finding optimal server..."), in
+    which case the button never renders and this helper times out after 15s.
+    Any failure falls through to the auto-selected server.
+    """
+    server = app.ookla_server
+    if not server:
+        return
+
+    def _visible_change_button(driver: WebDriver) -> WebElement | Literal[False]:
+        # The page renders two "Change Server" buttons (responsive variants);
+        # element_to_be_clickable would latch onto the first match even when
+        # it is the hidden one, so pick whichever is actually displayed.
+        for btn in driver.find_elements(By.XPATH, "//button[normalize-space()='Change Server']"):
+            if btn.is_displayed() and btn.is_enabled():
+                return btn
+        return False
+
+    try:
+        # The button appears only after "Finding optimal server..." resolves
+        change_btn = WebDriverWait(app.driver, 15).until(_visible_change_button)
+        change_btn.click()
+        dialog = WebDriverWait(app.driver, 5).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR, '[role="dialog"]'))
+        )
+
+        # The dialog header shows the currently selected server
+        if server.lower() in dialog.text[:150].lower():
+            logger.info(f"ookla: Server already selected ({server}).")
+            app.driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+            return
+
+        search_box = dialog.find_element(By.CSS_SELECTOR, 'input[type="text"]')
+        search_box.send_keys(server)
+
+        def _server_rows(driver: WebDriver) -> list[WebElement] | Literal[False]:
+            # Rows are div[role=button] list items; icon-only buttons (close,
+            # Select Automatically) are <button> tags or have no text
+            rows = [
+                r
+                for r in dialog.find_elements(By.CSS_SELECTOR, 'div[role="button"]')
+                if (r.text or "").strip()
+            ]
+            return rows or False
+
+        rows = WebDriverWait(app.driver, 10).until(_server_rows)
+        target = next((r for r in rows if server.lower() in r.text.lower()), rows[0])
+        label = target.text.splitlines()[0] if target.text else server
+        target.click()
+        logger.info(f"ookla: Server selected ({label})")
+    except Exception as e:
+        logger.warning(f"ookla: Server selection failed; using auto-selected server: {e}")
+        # Close a possibly-open dialog so it cannot block the GO button
+        with contextlib.suppress(Exception):
+            app.driver.switch_to.active_element.send_keys(Keys.ESCAPE)
+
+
 def run_ookla(app: SpeedtestZ) -> None:
     """Run Ookla Speedtest (speedtest.net)."""
     if not app._should_run("ookla"):
@@ -92,7 +161,9 @@ def run_ookla(app: SpeedtestZ) -> None:
 
             # On retries, navigate back to the top page: a finished attempt
             # leaves the browser on a /result/<id> URL where refresh() would
-            # not offer a new test.
+            # not offer a new test. A sustained reload failure (after
+            # _load_with_retry's own retries) aborts the runner instead of
+            # burning the remaining attempts on an unreachable page (#41).
             if attempt > 0:
                 logger.info("ookla: Reloading page...")
             if not app._load_with_retry(URL):
@@ -121,78 +192,10 @@ def run_ookla(app: SpeedtestZ) -> None:
                 except TimeoutException:
                     logger.debug("ookla: Privacy banner not found or not dismissed")
 
-            # Server Selection (best effort: written for the pre-2026 UI; the
-            # redesigned UI keeps a "Change Server" link but the surrounding
-            # selectors are unverified. Failures fall through to the default
-            # auto-selected server.)
+            # Server selection (best effort; falls through to the
+            # auto-selected server on any failure)
             if app.ookla_server is not None:
-                need_change = True
-                try:
-                    curr_srv_elem = WebDriverWait(app.driver, 10).until(
-                        EC.visibility_of_element_located((By.CLASS_NAME, "hostUrl"))
-                    )
-                    if app.ookla_server in curr_srv_elem.text:
-                        logger.info(f"ookla: Server match ({curr_srv_elem.text}).")
-                        need_change = False
-                except Exception as e:
-                    logger.debug(f"ookla: Could not read current server: {e}")
-
-                if need_change:
-                    logger.info("ookla: Search [Change Server]")
-                    is_success = False
-                    for _ in range(3):
-                        try:
-                            xp = app.wait.until(
-                                EC.element_to_be_clickable((By.LINK_TEXT, "Change Server"))
-                            )
-                            xp.click()
-                            is_success = True
-                            break
-                        except Exception as e:
-                            logger.debug(f"ookla: Change Server click retry: {e}")
-                            time.sleep(1)
-
-                    if not is_success:
-                        try:
-                            xp = app.driver.find_element(
-                                By.XPATH,
-                                "//a[contains(text(), 'Change Server')]",
-                            )
-                            app.driver.execute_script("arguments[0].click();", xp)
-                            is_success = True
-                        except Exception as e:
-                            logger.debug(f"ookla: Change Server JS fallback failed: {e}")
-
-                    if is_success:
-                        try:
-                            search_box = app.wait.until(
-                                EC.visibility_of_element_located((By.ID, "host-search"))
-                            )
-                            search_box.clear()
-                            search_box.send_keys(app.ookla_server)
-                            app.wait.until(
-                                EC.presence_of_element_located(
-                                    (
-                                        By.XPATH,
-                                        '//*[@id="find-servers"]//ul/li/a',
-                                    )
-                                )
-                            )
-                            time.sleep(1)
-                            server_list = app.driver.find_elements(
-                                By.XPATH,
-                                '//*[@id="find-servers"]//ul/li/a',
-                            )
-                            target_found = False
-                            for item in server_list:
-                                if app.ookla_server in item.text:
-                                    item.click()
-                                    target_found = True
-                                    break
-                            if not target_found and server_list:
-                                server_list[0].click()
-                        except Exception as e:
-                            logger.warning(f"ookla: Server selection failed: {e}")
+                _select_server(app)
 
             try:
                 start_btn = app.wait.until(EC.element_to_be_clickable(START_BUTTON))

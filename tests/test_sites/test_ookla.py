@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from selenium.common.exceptions import TimeoutException
 
-from speedtest_z.sites.ookla import _clean_number, run_ookla
+from speedtest_z.sites.ookla import _clean_number, _select_server, run_ookla
 
 
 def _result(download="250.5", upload="80.3", ping="5"):
@@ -29,6 +29,81 @@ class TestCleanNumber:
         assert _clean_number("") == ""
         assert _clean_number("—") == ""
         assert _clean_number("Mbps") == ""
+
+
+class TestSelectServer:
+    """Tests for _select_server() against the redesigned server dialog."""
+
+    def _app(self, server="TestServer"):
+        """Build a minimal mock app with ookla_server set."""
+        app = MagicMock()
+        app.ookla_server = server
+        return app
+
+    def test_noop_when_server_unset(self):
+        """Nothing happens when ookla_server is not configured."""
+        app = self._app(server=None)
+        with patch("speedtest_z.sites.ookla.WebDriverWait") as mock_wdw:
+            _select_server(app)
+        mock_wdw.assert_not_called()
+
+    def test_skips_dialog_when_already_selected(self):
+        """The dialog is closed without searching when the server matches."""
+        app = self._app()
+        change_btn = MagicMock()
+        dialog = MagicMock()
+        dialog.text = "TESTSERVER Tokyo Select Automatically"
+        with patch("speedtest_z.sites.ookla.WebDriverWait") as mock_wdw:
+            mock_wdw.return_value.until.side_effect = [change_btn, dialog]
+            _select_server(app)
+        change_btn.click.assert_called_once()
+        dialog.find_element.assert_not_called()
+
+    def test_searches_and_selects_matching_row(self):
+        """The row whose text contains ookla_server is clicked."""
+        app = self._app()
+        change_btn = MagicMock()
+        dialog = MagicMock()
+        dialog.text = "OtherServer Tokyo Select Automatically"
+        search_box = MagicMock()
+        dialog.find_element.return_value = search_box
+        row_other = MagicMock()
+        row_other.text = "Osaka - OtherServer"
+        row_match = MagicMock()
+        row_match.text = "Tokyo - TestServer 400G"
+        with patch("speedtest_z.sites.ookla.WebDriverWait") as mock_wdw:
+            mock_wdw.return_value.until.side_effect = [
+                change_btn,  # Change Server button
+                dialog,  # dialog visible
+                [row_other, row_match],  # server rows
+            ]
+            _select_server(app)
+        search_box.send_keys.assert_called_once_with("TestServer")
+        row_match.click.assert_called_once()
+        row_other.click.assert_not_called()
+
+    def test_falls_back_to_first_row_without_match(self):
+        """The first row is clicked when no row text matches."""
+        app = self._app()
+        change_btn = MagicMock()
+        dialog = MagicMock()
+        dialog.text = "OtherServer Tokyo"
+        dialog.find_element.return_value = MagicMock()
+        row1 = MagicMock()
+        row1.text = "Osaka - Alpha"
+        row2 = MagicMock()
+        row2.text = "Nagoya - Beta"
+        with patch("speedtest_z.sites.ookla.WebDriverWait") as mock_wdw:
+            mock_wdw.return_value.until.side_effect = [change_btn, dialog, [row1, row2]]
+            _select_server(app)
+        row1.click.assert_called_once()
+
+    def test_failure_is_nonfatal(self):
+        """A missing Change Server button logs a warning and returns."""
+        app = self._app()
+        with patch("speedtest_z.sites.ookla.WebDriverWait") as mock_wdw:
+            mock_wdw.return_value.until.side_effect = TimeoutException()
+            _select_server(app)  # must not raise
 
 
 class TestRunOokla:
@@ -286,8 +361,8 @@ class TestRunOokla:
 
         mock_app.send_results.assert_called_once()
 
-    def test_server_selection(self, mock_app):
-        """Server selection flow when ookla_server is set."""
+    def test_server_selection_invoked_when_configured(self, mock_app):
+        """_select_server is called once when ookla_server is set."""
         mock_app._should_run = MagicMock(return_value=True)
         mock_app._load_with_retry = MagicMock(return_value=True)
         mock_app.auto_consent = True
@@ -297,32 +372,20 @@ class TestRunOokla:
         mock_app.MAX_RETRIES = 1
         mock_app.driver.execute_script.return_value = _result()
 
-        server_elem = MagicMock()
-        server_elem.text = "CurrentServer"  # different from ookla_server
-        change_link = MagicMock()
-        search_box = MagicMock()
-        server_item = MagicMock()
-        server_item.text = "TestServer - Fast"
-
         with (
             patch("speedtest_z.sites.ookla.WebDriverWait") as mock_wdw,
             patch("speedtest_z.sites.ookla.time"),
+            patch("speedtest_z.sites.ookla._select_server") as mock_select,
         ):
             mock_wdw.return_value.until.side_effect = [
                 TimeoutException(),  # consent
-                server_elem,  # current server element
                 True,  # completion
             ]
-            mock_app.wait.until.side_effect = [
-                change_link,  # Change Server link
-                search_box,  # host-search box
-                MagicMock(),  # server list presence
-                MagicMock(),  # start button
-            ]
-            mock_app.driver.find_elements.return_value = [server_item]
+            mock_app.wait.until.return_value = MagicMock()
             run_ookla(mock_app)
 
-        server_item.click.assert_called_once()
+        mock_select.assert_called_once_with(mock_app)
+        mock_app.send_results.assert_called_once()
 
     def test_zabbix_host_in_data(self, mock_app):
         """Each data item includes the correct zabbix_host."""
