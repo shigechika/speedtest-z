@@ -84,6 +84,8 @@ python -m build
 
 **重要: PyPI はバージョンの上書きを許可しない。** release-please は常に新しいバージョンを採番するためこの問題は基本的に起きないが、公開済みバージョンの再公開はできない点に留意する。
 
+**deb/rpm 失敗時の復旧**: 同じ run の **「Re-run failed jobs」** で再開する（draft への `--clobber` 再アップロードは冪等）。**「Re-run all jobs」は使わない** — release-please がリリース済みと判定して全ジョブ skip となり、draft が未公開のまま残る。座礁した draft の手動復旧は `gh release upload <tag> <資産>` → PAT（`RELEASE_PLEASE_TOKEN` 相当）で `gh release edit <tag> --draft=false`（`GITHUB_TOKEN` で公開すると release.yml が発火しない）。
+
 ## config.ini の設計
 
 - `[general]` の `dry_run`（旧名 `dryrun` もフォールバックでサポート）。`chrome_profile_dir`（Cookie/同意の永続化先、デフォルト `~/.config/speedtest-z/chrome-profile`）
