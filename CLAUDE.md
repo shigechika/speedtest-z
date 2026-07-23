@@ -66,10 +66,10 @@ python -m build
 ## CI/CD
 
 - `.github/workflows/ci.yml` — push/PR 時に構文チェック + ビルドテスト（Python 3.10〜3.14）
-- `.github/workflows/release-please.yml` — main への push 時に release-please が Release PR を維持。マージで `vX.Y.Z` タグと GitHub Release を自動作成
+- `.github/workflows/release-please.yml` — main への push 時に release-please が Release PR を維持。マージで GitHub Release を **draft** 作成 → deb/rpm を reusable workflow として呼び出し資産を添付 → `publish-release` ジョブが draft を公開（この時点で `vX.Y.Z` タグ作成）。draft → 添付 → 公開の順序は Immutable Releases 対応のため（公開後は資産の追加・変更・削除不可）
 - `.github/workflows/release.yml` — Release 公開時（`release: published`）に **TestPyPI（`testpypi` 環境ゲート）→ PyPI** の順で自動公開（Trusted Publishers）。`verify` ジョブで pyproject の version とタグの一致を確認し、公開後に `notify-homebrew` ジョブが `HOMEBREW_TAP_TOKEN` で shigechika/homebrew-tap の更新を dispatch する
-- `.github/workflows/deb.yml` — Release 公開時に jammy/noble 向け .deb ビルド → 当該 Release にアップロード（手動は workflow_dispatch）
-- `.github/workflows/rpm.yml` — Release 公開時に Rocky 9 向け .rpm ビルド（fpm）→ 当該 Release にアップロード（手動は workflow_dispatch）
+- `.github/workflows/deb.yml` — `release-please.yml` から `workflow_call`（tag 入力）で呼ばれ jammy/noble 向け .deb ビルド → draft Release にアップロード（手動は workflow_dispatch、添付なし）
+- `.github/workflows/rpm.yml` — 同じく `workflow_call` で Rocky 9 向け .rpm ビルド（fpm）→ draft Release にアップロード（手動は workflow_dispatch、添付なし）
 
 ## リリース手順（release-please）
 
@@ -78,11 +78,13 @@ python -m build
 1. **Conventional Commits** で main にマージする（`feat:` → minor、`fix:` → patch、`feat!:`/`BREAKING CHANGE` → 1.0 未満は minor）
 2. release-please が **Release PR** を自動で開く/更新する（次バージョン + CHANGELOG エントリを含む）
 3. README 等の更新が必要なら通常の PR で先に入れておく
-4. Release PR をマージすると `vX.Y.Z` タグと GitHub Release が公開され、その `release: published` イベントで `release.yml`（PyPI）・`deb.yml`・`rpm.yml` が発火する
+4. Release PR をマージすると GitHub Release が **draft** で作成され、`deb.yml`・`rpm.yml` が .deb/.rpm を draft に添付、完了後に `publish-release` ジョブが公開する（この時点で `vX.Y.Z` タグ作成）。公開の `release: published` イベントで `release.yml`（PyPI）が発火する
 
-**重要: Release 起動には PAT が必要。** release-please が `GITHUB_TOKEN` で公開した Release は他ワークフローを起動しない（GitHub の仕様）。リポジトリシークレット `RELEASE_PLEASE_TOKEN`（PAT もしくは GitHub App トークン）を設定すると、release-please が公開する Release の `release: published` で PyPI/deb/rpm が自動発火する。未設定時は release-please 自体は動くが、ビルド/公開は手動発火（`deb.yml`/`rpm.yml` の workflow_dispatch 等）が必要。
+**重要: Release 起動には PAT が必要。** `GITHUB_TOKEN` で公開した Release は他ワークフローを起動しない（GitHub の仕様）。リポジトリシークレット `RELEASE_PLEASE_TOKEN`（PAT もしくは GitHub App トークン）を設定すると、`publish-release` ジョブが公開する Release の `release: published` で PyPI パイプラインが自動発火する。未設定時は release-please 自体は動くが、PyPI 公開は手動発火が必要。
 
 **重要: PyPI はバージョンの上書きを許可しない。** release-please は常に新しいバージョンを採番するためこの問題は基本的に起きないが、公開済みバージョンの再公開はできない点に留意する。
+
+**deb/rpm 失敗時の復旧**: 同じ run の **「Re-run failed jobs」** で再開する（draft への `--clobber` 再アップロードは冪等）。**「Re-run all jobs」は使わない** — release-please がリリース済みと判定して全ジョブ skip となり、draft が未公開のまま残る。座礁した draft の手動復旧は `gh release upload <tag> <資産>` → PAT（`RELEASE_PLEASE_TOKEN` 相当）で `gh release edit <tag> --draft=false`（`GITHUB_TOKEN` で公開すると release.yml が発火しない）。
 
 ## config.ini の設計
 
