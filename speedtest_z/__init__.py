@@ -28,4 +28,4 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     __version__ = version("speedtest-z")
 except PackageNotFoundError:
-    __version__ = "0.11.0"
+    __version__ = "0.12.0"
