@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.14.0](https://github.com/shigechika/speedtest-z/compare/v0.13.0...v0.14.0) (2026-08-08)
+
+
+### Features
+
+* --headed を --no-headless のエイリアスとして追加 ([8a9a9c6](https://github.com/shigechika/speedtest-z/commit/8a9a9c62379b3414df28e73319c5d1bce5bc5005))
+* --man / -m オプションでマニュアル表示を追加 ([065cfc3](https://github.com/shigechika/speedtest-z/commit/065cfc3ee882e7caf499bd37a8f601e4d408e363))
+* add .deb packaging with dh-virtualenv and /etc/speedtest-z/ config path ([24af5a4](https://github.com/shigechika/speedtest-z/commit/24af5a423274a8702d311683c521e8fa672fa211))
+* add /etc/default/speedtest-z support for systemd option injection ([c93fd1b](https://github.com/shigechika/speedtest-z/commit/c93fd1b9a6b12dd3641933db23e36c86283e470b))
+* add config.ini-sample URL to error messages and epilog to --help ([06e97d6](https://github.com/shigechika/speedtest-z/commit/06e97d679c2427c4736e08078b8a3166798296ca))
+* add Grafana Cloud integration and improve config.ini design ([1183426](https://github.com/shigechika/speedtest-z/commit/118342649a7d48b1d1369e1bcc5a8b848ea121a1))
+* add graphs to Zabbix template (Download/Upload/Latency/Jitter) ([7410a17](https://github.com/shigechika/speedtest-z/commit/7410a17cabde32afe8c1ac845b7d6a15c3cfc380))
+* add Homebrew tap support ([1b8ea69](https://github.com/shigechika/speedtest-z/commit/1b8ea692fab2c785562a4a572a5ea6514ecf0af6))
+* add OpenTelemetry (OTLP) metrics export support ([9b68ba0](https://github.com/shigechika/speedtest-z/commit/9b68ba0403257add2453cface70a1312de03ded7))
+* add pr-gate.yml admission control caller ([#58](https://github.com/shigechika/speedtest-z/issues/58)) ([d18d85a](https://github.com/shigechika/speedtest-z/commit/d18d85a938902ab7d4138b464bdba81a5f5ebcb9))
+* add RPM packaging with fpm for RHEL 9 / Rocky Linux 9 ([6ac661a](https://github.com/shigechika/speedtest-z/commit/6ac661aecefaccc184305a7d56e9d8a0833a92a1))
+* config.ini 必須化と TTY 確認プロンプトで誤起動を防止 ([a083591](https://github.com/shigechika/speedtest-z/commit/a083591f44ca6c7d887f05a0f8deb467cb466e88))
+* depend on zapi-lib for the host-tag feature (+ deb/rpm extras) ([#26](https://github.com/shigechika/speedtest-z/issues/26)) ([dd76345](https://github.com/shigechika/speedtest-z/commit/dd7634544a79ffa06ac8a1945b58c4933258d2af))
+* docstring 英語化、python -m 対応、argcomplete タブ補完 ([0a85b0c](https://github.com/shigechika/speedtest-z/commit/0a85b0c83f42011a51616ea8281ff2114c9125e5))
+* persist Chrome profile and guard consent dialogs with --yes ([ecc1722](https://github.com/shigechika/speedtest-z/commit/ecc17226874515f077aedf949aa075e55ec0b49d))
+* stamp speedtest-z version onto the Zabbix host as a tag ([#24](https://github.com/shigechika/speedtest-z/issues/24)) ([801ec55](https://github.com/shigechika/speedtest-z/commit/801ec5565f496efe4388022524004c7941508a3e))
+* ユーザ向けメッセージをロケールに応じて日英切り替え ([b97b508](https://github.com/shigechika/speedtest-z/commit/b97b5089bbc574d2fa10c026638137aaadfdb468))
+* 速度テスト結果の投稿用 Issue テンプレートを追加 ([c9ec28a](https://github.com/shigechika/speedtest-z/commit/c9ec28a79f7b512f06fbf052113baab840def6fb))
+
+
+### Bug Fixes
+
+* adapt ookla and mlab runners to site UI changes, exit 130 on Ctrl-C ([#38](https://github.com/shigechika/speedtest-z/issues/38)) ([6cf6870](https://github.com/shigechika/speedtest-z/commit/6cf68703c9e7ae4fe93810cafd13b3c1b79862f2))
+* add build-essential/adduser deps, remove duplicate conffiles ([7e7c71d](https://github.com/shigechika/speedtest-z/commit/7e7c71dd6446a984030e3b7ccf07f1959c940b0a))
+* add python3-virtualenv to deb build dependencies ([4422be7](https://github.com/shigechika/speedtest-z/commit/4422be7f6ca1d563beadfcfee81b5e2fc1b3b7fc))
+* add stream parameter to _setup_logging() for json/csv stderr output ([a1fa095](https://github.com/shigechika/speedtest-z/commit/a1fa095acb7688daa888f9a201b57d7bec2af741))
+* address priority findings from full-branch code review ([#9](https://github.com/shigechika/speedtest-z/issues/9)) ([4944fa4](https://github.com/shigechika/speedtest-z/commit/4944fa4bbed0bfef071da73f4b5f535d9eb0492b))
+* CLI でサイト明示指定時は frequency スロットルをスキップ ([11fcf49](https://github.com/shigechika/speedtest-z/commit/11fcf49fa6c764d25865657a326e0786fe4f2d1e))
+* exit 143 on SIGTERM and declare interrupt codes in systemd units ([#47](https://github.com/shigechika/speedtest-z/issues/47)) ([c4a9847](https://github.com/shigechika/speedtest-z/commit/c4a98478a845c61e0858f8ba1259b37cc3c60383))
+* Google Fiber の URL を HTTP に戻す ([69edd81](https://github.com/shigechika/speedtest-z/commit/69edd81d4511bea5535b74c5d71d4758f87d6b7f))
+* Grafana HTTP error handling, config key validation, cloudflare unit check ([319ce3f](https://github.com/shigechika/speedtest-z/commit/319ce3fb2103476b5fa9efc048f35518e93d576d))
+* harden deploy/packaging scripts (cron scope, drop unused /var/log) ([#12](https://github.com/shigechika/speedtest-z/issues/12)) ([b24bb71](https://github.com/shigechika/speedtest-z/commit/b24bb71cb4d3a9fa658fabe360673fa51ce87944))
+* honor stream=stderr even when logging.ini is loaded ([#18](https://github.com/shigechika/speedtest-z/issues/18)) ([00e6b03](https://github.com/shigechika/speedtest-z/commit/00e6b0379f9aff826bee9533b61811ac5d7e02dd))
+* low-severity robustness and hygiene cleanups ([#11](https://github.com/shigechika/speedtest-z/issues/11)) ([8c694af](https://github.com/shigechika/speedtest-z/commit/8c694afca7c534330aebeffd6d46a0c23fd2ea4d))
+* make -y/--yes skip the execution confirmation prompt ([#44](https://github.com/shigechika/speedtest-z/issues/44)) ([60c390e](https://github.com/shigechika/speedtest-z/commit/60c390e221b78cb68ec2c6bdec5429cc676f2b98))
+* README.md の日本語版リンクテキストを修正 ([c176a7e](https://github.com/shigechika/speedtest-z/commit/c176a7e00cdd4ae465a13456b524d6266687c4a3))
+* rewrite ookla server selection for the redesigned UI ([#48](https://github.com/shigechika/speedtest-z/issues/48)) ([a7b74f1](https://github.com/shigechika/speedtest-z/commit/a7b74f1ee0c699e8b147f6f40cd5b0123e77306d))
+* skip OtelSender tests when opentelemetry is not installed ([c10c14f](https://github.com/shigechika/speedtest-z/commit/c10c14fc8fc2d57538e3f95864caaed12ccf3056))
+* use Sender.send_bulk() for zappix v1.x API compatibility ([b1810de](https://github.com/shigechika/speedtest-z/commit/b1810de71d5e57e6f40dcfd96b94a5541dea3104))
+
+
+### Refactoring
+
+* extract _init_logging and _confirm_execution from main() ([27024f9](https://github.com/shigechika/speedtest-z/commit/27024f942a103ff669c991d0eca732c04ecc7d28)), closes [#5](https://github.com/shigechika/speedtest-z/issues/5)
+* extract SenderManager from SpeedtestZ ([89c0148](https://github.com/shigechika/speedtest-z/commit/89c0148e3d98eb3d5dee7c72030c0c5b4a9b6680)), closes [#4](https://github.com/shigechika/speedtest-z/issues/4)
+* replace bare except-pass with logger.debug/exception ([23cc574](https://github.com/shigechika/speedtest-z/commit/23cc5740469aed51514bcba53df8d71182d5c6aa))
+* replace OutputCollector monkey-patch with sender interface ([9116e03](https://github.com/shigechika/speedtest-z/commit/9116e03154efee47c2490709f3329c202145ed8d)), closes [#6](https://github.com/shigechika/speedtest-z/issues/6)
+* split monolithic main.py into modular package structure ([dd386fc](https://github.com/shigechika/speedtest-z/commit/dd386fc4fe32d021852d019727df8cdd10b3b1f2))
+
 ## [0.13.0](https://github.com/shigechika/speedtest-z/compare/v0.12.0...v0.13.0) (2026-08-08)
 
 
