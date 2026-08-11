@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.16.1](https://github.com/shigechika/speedtest-z/compare/v0.16.0...v0.16.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* **release:** set force-tag-creation to prevent a release-please loop ([#66](https://github.com/shigechika/speedtest-z/issues/66)) ([f108bb3](https://github.com/shigechika/speedtest-z/commit/f108bb331b80fdfab0edc6370f2712254ccce5b1))
+
 ## [0.16.0](https://github.com/shigechika/speedtest-z/compare/v0.15.0...v0.16.0) (2026-08-09)
 
 
