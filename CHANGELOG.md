@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.16.2](https://github.com/shigechika/speedtest-z/compare/v0.16.1...v0.16.2) (2026-08-13)
+
+
+### Bug Fixes
+
+* add explicit workflow permissions ([#67](https://github.com/shigechika/speedtest-z/issues/67)) ([0721cc6](https://github.com/shigechika/speedtest-z/commit/0721cc62c5fa9a67b904a877eec1212b317b99f7))
+
 ## [0.16.1](https://github.com/shigechika/speedtest-z/compare/v0.16.0...v0.16.1) (2026-08-11)
 
 
