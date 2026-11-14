@@ -29,7 +29,7 @@ mypy speedtest_z/
 pytest tests/ -v
 ```
 
-This mirrors `.github/workflows/ci.yml` (matrix over Python 3.10-3.14, plus an
+This mirrors `.github/workflows/ci.yml` (matrix over Python 3.11-3.15, plus an
 `actionlint` job on the workflows themselves). Unlike some sibling repos,
 **style and typing are enforced here** — `ruff check`, `ruff format --check`,
 and `mypy speedtest_z/` all gate the PR. Do flag formatting/lint/type issues

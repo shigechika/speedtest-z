@@ -2,7 +2,7 @@
 
 ## 前提条件
 
-- Python >= 3.10
+- Python >= 3.11
 - Google Chrome ブラウザ（pip ではインストールされません）
 
 ## Homebrew (macOS)

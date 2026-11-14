@@ -28,7 +28,7 @@ speedtest-z は Web ブラウザで主要な速度テストサイトを自動巡
 
 ## 前提条件
 
-- Python >= 3.10
+- Python >= 3.11
 - Google Chrome ブラウザ（pip ではインストールされません）
 
 ## インストール
