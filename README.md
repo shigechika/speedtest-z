@@ -42,7 +42,7 @@ speedtest-z automates major speed test sites with a web browser, capturing real 
 
 ## Prerequisites
 
-- Python >= 3.10
+- Python >= 3.11
 - Google Chrome browser (not installable via pip -- must be installed separately)
 
 ## Installation

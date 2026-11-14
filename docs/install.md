@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Python >= 3.10
+- Python >= 3.11
 - Google Chrome browser (not installable via pip -- must be installed separately)
 
 ## Homebrew (macOS)

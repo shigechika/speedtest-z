@@ -6,7 +6,7 @@ import csv
 import io
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 class OutputCollector:
@@ -27,7 +27,7 @@ class OutputCollector:
 
     def add(self, data_list: list[dict[str, str]]) -> None:
         """Buffer a batch of Zabbix-style dicts."""
-        ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        ts = datetime.now(UTC).isoformat(timespec="seconds")
         for item in data_list:
             self._records.append(
                 {
