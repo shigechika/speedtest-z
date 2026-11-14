@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.17.1](https://github.com/shigechika/speedtest-z/compare/v0.17.0...v0.17.1) (2026-11-14)
+
+
+### Bug Fixes
+
+* **deb:** stop building the Ubuntu 22.04 (jammy) package ([#74](https://github.com/shigechika/speedtest-z/issues/74)) ([586eda2](https://github.com/shigechika/speedtest-z/commit/586eda214d2dc8bb273b502dc30b45c8b0335853))
+
 ## [0.17.0](https://github.com/shigechika/speedtest-z/compare/v0.16.2...v0.17.0) (2026-11-14)
 
 
