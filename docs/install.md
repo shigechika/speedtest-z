@@ -20,10 +20,9 @@ Download the `.deb` package for your distribution from [GitHub Releases](https:/
 ```bash
 # Ubuntu 24.04 (Noble)
 sudo dpkg -i speedtest-z_*~noble.deb
-
-# Ubuntu 22.04 (Jammy)
-sudo dpkg -i speedtest-z_*~jammy.deb
 ```
+
+Ubuntu 22.04 (Jammy) ships Python 3.10, below the required 3.11, so no `.deb` is built for it; install from PyPI with Python 3.11 or later instead.
 
 The `.deb` package includes all Python dependencies in a self-contained virtualenv (`/opt/venvs/speedtest-z/`), systemd service/timer (installed disabled), and config files in `/etc/speedtest-z/`.
 

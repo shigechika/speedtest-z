@@ -68,7 +68,7 @@ python -m build
 - `.github/workflows/ci.yml` — push/PR 時に構文チェック + ビルドテスト（Python 3.11〜3.15）
 - `.github/workflows/release-please.yml` — main への push 時に release-please が Release PR を維持。マージで GitHub Release を **draft** 作成 → deb/rpm を reusable workflow として呼び出し資産を添付 → `publish-release` ジョブが draft を公開（この時点で `vX.Y.Z` タグ作成）。draft → 添付 → 公開の順序は Immutable Releases 対応のため（公開後は資産の追加・変更・削除不可）
 - `.github/workflows/release.yml` — Release 公開時（`release: published`）に **TestPyPI（`testpypi` 環境ゲート）→ PyPI** の順で自動公開（Trusted Publishers）。`verify` ジョブで pyproject の version とタグの一致を確認し、公開後に `notify-homebrew` ジョブが `HOMEBREW_TAP_TOKEN` で shigechika/homebrew-tap の更新を dispatch する
-- `.github/workflows/deb.yml` — `release-please.yml` から `workflow_call`（tag 入力）で呼ばれ jammy/noble 向け .deb ビルド → draft Release にアップロード（手動は workflow_dispatch、添付なし）
+- `.github/workflows/deb.yml` — `release-please.yml` から `workflow_call`（tag 入力）で呼ばれ noble 向け .deb をビルド（jammy は標準の Python が 3.10 で requires-python を満たさないため対象外） → draft Release にアップロード（手動は workflow_dispatch、添付なし）
 - `.github/workflows/rpm.yml` — 同じく `workflow_call` で Rocky 9 向け .rpm ビルド（fpm）→ draft Release にアップロード（手動は workflow_dispatch、添付なし）
 
 ## リリース手順（release-please）

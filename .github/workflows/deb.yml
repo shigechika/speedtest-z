@@ -26,8 +26,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
-            codename: jammy
           - os: ubuntu-24.04
             codename: noble
     runs-on: ${{ matrix.os }}
