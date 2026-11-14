@@ -20,10 +20,9 @@ macOS Sonoma (14) / Sequoia (15) の Apple Silicon 向けにビルド済み bott
 ```bash
 # Ubuntu 24.04 (Noble)
 sudo dpkg -i speedtest-z_*~noble.deb
-
-# Ubuntu 22.04 (Jammy)
-sudo dpkg -i speedtest-z_*~jammy.deb
 ```
+
+Ubuntu 22.04（Jammy）の標準の Python は 3.10 で、必要な 3.11 に届かないため `.deb` は作っていません。Python 3.11 以降で PyPI から導入してください。
 
 `.deb` パッケージは Python 依存をすべて含む自己完結型 virtualenv（`/opt/venvs/speedtest-z/`）、systemd service/timer（無効状態でインストール）、設定ファイル（`/etc/speedtest-z/`）を含みます。
 
