@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.17.0](https://github.com/shigechika/speedtest-z/compare/v0.16.2...v0.17.0) (2026-11-14)
+
+
+### Features
+
+* drop Python 3.10 (EOL) and add Python 3.15 support ([#70](https://github.com/shigechika/speedtest-z/issues/70)) ([e98f053](https://github.com/shigechika/speedtest-z/commit/e98f053c0595298a93511ea62c94bc30c89fd889))
+
 ## [0.16.2](https://github.com/shigechika/speedtest-z/compare/v0.16.1...v0.16.2) (2026-08-13)
 
 
